@@ -1,0 +1,5 @@
+372:          (useful for the Haldia Refinery demo tender with folder-based vendors)
+477:     # Strategy 2: Fallback to PQC folder data (demo/Haldia tender only)
+939:     Priority order (no hardcoded defaults):
+1011:     Falls back to PQC-folder data for demo tenders with no DB bids.
+1086:         # This matches the actual GEM eligibility check — no hardcoded multiplier

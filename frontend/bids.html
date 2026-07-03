@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Bid - GEM Tender</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Submit Bid</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Participate in published tenders</p>
+                </div>
+                <div class="user-profile">
+                    <div style="text-align: right;">
+                        <div id="user-name" style="font-weight: 500;">User</div>
+                        <div id="user-role" style="font-size: 0.8rem; color: var(--text-muted);">Role</div>
+                    </div>
+                    <div class="avatar" id="user-avatar">U</div>
+                </div>
+            </header>
+
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <form id="submit-bid-form">
+                    <div class="form-group">
+                        <label class="form-label">Select Tender</label>
+                        <select id="b_tender" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Select Your Vendor Profile</label>
+                        <select id="b_vendor" class="form-control" required></select>
+                        <small style="color: var(--warning); display: block; margin-top: 4px;">* For demo purposes, you can select any vendor</small>
+                    </div>
+                    <div class="d-flex gap-3 mb-4">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Base Bid Amount (₹)</label>
+                            <input type="number" id="b_amount" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Taxes (₹)</label>
+                            <input type="number" id="b_taxes" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Delivery Period (Days)</label>
+                        <input type="number" id="b_delivery" class="form-control" required>
+                    </div>
+                    <div class="text-right" style="margin-top: 32px;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Formal Bid</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+        loadUserProfile();
+
+        async function init() {
+            try {
+                // Load Tenders
+                const tenders = await ApiClient.getTenders('Published');
+                const tenderSelect = document.getElementById('b_tender');
+                tenders.forEach(t => {
+                    tenderSelect.innerHTML += `<option value="${t.id}">${t.bid_number} - ${t.title}</option>`;
+                });
+
+                // If URL has tender_id, select it
+                const urlParams = new URLSearchParams(window.location.search);
+                if(urlParams.has('tender_id')) {
+                    tenderSelect.value = urlParams.get('tender_id');
+                }
+
+                // Load Vendors
+                const vendors = await ApiClient.request('/vendors/');
+                const vendorSelect = document.getElementById('b_vendor');
+                vendors.forEach(v => {
+                    vendorSelect.innerHTML += `<option value="${v.id}">${v.company_name} (${v.gem_reg_no})</option>`;
+                });
+            } catch(e) {}
+        }
+
+        document.getElementById('submit-bid-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                tender_id: parseInt(document.getElementById('b_tender').value),
+                vendor_id: parseInt(document.getElementById('b_vendor').value),
+                bid_amount: parseFloat(document.getElementById('b_amount').value),
+                taxes: parseFloat(document.getElementById('b_taxes').value),
+                delivery_period: parseInt(document.getElementById('b_delivery').value)
+            };
+
+            const btn = e.target.querySelector('button');
+            const original = btn.innerHTML;
+            btn.innerHTML = 'Submitting...';
+            btn.disabled = true;
+
+            try {
+                await ApiClient.submitBid(data);
+                showToast("Bid submitted successfully!");
+                setTimeout(() => window.location.href = 'tenders.html', 1500);
+            } catch(error) {
+                showToast(error.message, 'error');
+                btn.innerHTML = original;
+                btn.disabled = false;
+            }
+        });
+
+        init();
+
+    </script>
+</body>
+</html>

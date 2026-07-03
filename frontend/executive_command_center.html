@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Executive Intelligence Command Center - GEM Tender</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background: #020617; color: #f8fafc; }
+        
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 28px;
+            margin-bottom: 32px;
+        }
+        @media(max-width: 1200px) {
+            .layout-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Gauge & Health */
+        .health-score-container {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+        .gauge-svg {
+            position: relative;
+            width: 160px;
+            height: 160px;
+        }
+        .gauge-circle-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.04);
+            stroke-width: 10;
+        }
+        .gauge-circle-fill {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 10;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dasharray 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 8px var(--primary));
+        }
+        .gauge-text {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .gauge-score {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gauge-grade {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 4px;
+        }
+
+        /* Anomaly Grid */
+        .anomaly-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        @media(max-width: 768px) {
+            .anomaly-grid { grid-template-columns: 1fr; }
+        }
+        .anomaly-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .anomaly-box:hover {
+            border-color: rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02);
+            transform: translateY(-2px);
+        }
+        .anomaly-lbl {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        .anomaly-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-top: 4px;
+        }
+        .anomaly-count {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        .anomaly-count.clean {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .anomaly-count.active-threat {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: pulse-threat 2s infinite;
+        }
+        @keyframes pulse-threat {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Typewriter Terminal Console */
+        .terminal-console {
+            background: #090d16;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 20px;
+            font-family: 'Fira Code', 'Courier New', Courier, monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            max-height: 280px;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+        }
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .terminal-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* What-If Section */
+        .vendor-selection-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+        .vendor-item {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .vendor-item:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            transform: translateX(4px);
+        }
+        .vendor-item.active {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.08);
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.12);
+        }
+        .simulation-console {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .impact-card {
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .impact-card.critical {
+            background: rgba(239, 68, 68, 0.04);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-left: 5px solid #ef4444;
+        }
+        .impact-card.high {
+            background: rgba(245, 158, 11, 0.04);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-left: 5px solid #f59e0b;
+        }
+        .impact-card.low {
+            background: rgba(16, 185, 129, 0.04);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-left: 5px solid #10b981;
+        }
+        
+        /* Bar Chart Comparison */
+        .bar-chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.03);
+            margin-top: 16px;
+        }
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .bar-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            width: 120px;
+            font-weight: 600;
+        }
+        .bar-track {
+            flex: 1;
+            height: 18px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 9px;
+            overflow: hidden;
+            position: relative;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 9px;
+            transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            padding-right: 8px;
+            justify-content: flex-end;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .sparkline-container {
+            display: inline-flex;
+            align-items: center;
+        }
+        .sparkline-svg {
+            stroke: #a78bfa;
+            stroke-width: 2.2;
+            fill: none;
+            filter: drop-shadow(0 0 3px rgba(167, 139, 250, 0.4));
+        }
+
+        /* Factor List */
+        .factor-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .factor-box {
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255,255,255,0.02);
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+        .factor-val {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation Menu -->
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <!-- Main Body -->
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>AI Executive Command Center</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Ecosystem health metrics, bid trend regression models, and blacklist cost simulators</p>
+                </div>
+            </header>
+
+            <!-- Layout Grid: Left (Health/Anomalies/Brief) & Right (Predictive/What-If) -->
+            <div class="layout-grid">
+                <!-- LEFT COLUMN: SYSTEM DIAGNOSTICS -->
+                <div style="display:flex; flex-direction:column; gap:24px;">
+                    <!-- System Health & Gauge -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 20px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="activity" style="color:var(--primary);"></i> Ecosystem Health Index
+                        </h3>
+                        <div class="health-score-container">
+                            <div class="gauge-svg">
+                                <svg width="160" height="160">
+                                    <circle class="gauge-circle-bg" cx="80" cy="80" r="70"></circle>
+                                    <circle class="gauge-circle-fill" id="health-gauge" cx="80" cy="80" r="70" stroke-dasharray="440" stroke-dashoffset="440"></circle>
+                                </svg>
+                                <div class="gauge-text">
+                                    <div class="gauge-score" id="health-score">--</div>
+                                    <div class="gauge-grade" id="health-grade">Grade --</div>
+                                </div>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:0.05em;">Diagnosis Factors</div>
+                                <div class="factor-grid" id="factor-list">
+                                    <!-- Dynamic Factors -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Anomaly Correlation Grid -->
+                    <div class="card">
+                        <h3 style="font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="shield-alert" style="color:#ef4444;"></i> Anomaly Correlation Matrix
+                        </h3>
+                        <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: -12px;">Identifies multi-variable collusive pattern alerts operating in the background database.</p>
+                        
+                        <div class="anomaly-grid" id="anomaly-matrix-container">
+                            <!-- Dynamic Anomaly Cards -->
+                        </div>
+                    </div>
+
+                    <!-- Executive Procurement Brief -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 14px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="terminal" style="color:#10b981;"></i> Auto-Generated Executive Brief
+                        </h3>
+                        <div class="terminal-console">
+                            <div class="terminal-header">
+                                <div class="terminal-dots">
+                                    <span class="terminal-dot" style="background:#ef4444;"></span>
+                                    <span class="terminal-dot" style="background:#f59e0b;"></span>
+                                    <span class="terminal-dot" style="background:#10b981;"></span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <i data-lucide="shield-check" style="width:12px;height:12px;color:#10b981;"></i>
+                                    <span>Verified Blockchain Hash</span>
+                                </div>
+                            </div>
+                            <div id="brief-text">Syncing intelligence feeds...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: SIMULATORS & REGRESSION -->
+                <div style="display:flex; flex-direction:column; gap:24px;">
+                    <!-- Linear Regression Price Forecasting -->
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 12px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="trending-up" style="color:#a78bfa;"></i> Linear Regression Price Forecasting
+                        </h3>
+                        <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: -12px;">Predictive bid pricing trajectories computed via historical bid gradients and R-squared fit indicators.</p>
+                        
+                        <div class="table-responsive" style="margin-top: 14px; max-height: 220px; overflow-y:auto;">
+                            <table class="table" style="font-size: 0.8rem;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 10px 14px;">Tender Ref</th>
+                                        <th style="padding: 10px 14px;">Current L1</th>
+                                        <th style="padding: 10px 14px;">Projected L1</th>
+                                        <th style="padding: 10px 14px;">Gradient (Slope)</th>
+                                        <th style="padding: 10px 14px; text-align:center;">Trend</th>
+                                        <th style="padding: 10px 14px; text-align:center;">Fit (R²)</th>
+                                        <th style="padding: 10px 14px;">Sparkline</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="forecast-table-body">
+                                    <!-- Dynamic Forecast Tenders -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- What-If blacklisting Scenario Simulator -->
+                    <div class="card" style="min-height: 480px;">
+                        <h3 style="margin-bottom: 8px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="sliders" style="color:#f59e0b;"></i> What-If Vendor Blacklist Simulator
+                        </h3>
+                        <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 16px;">Toggle-off suspected or colluding vendors to calculate systemic pricing shift penalties and new L1 impacts.</p>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1.4fr; gap:20px;">
+                            <!-- Left: list of vendors -->
+                            <div>
+                                <h4 style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; font-weight:700;">Select Vendor to Exclude</h4>
+                                <div class="vendor-selection-list" id="vendor-list-container">
+                                    <!-- Dynamic Vendors -->
+                                </div>
+                            </div>
+                            
+                            <!-- Right: Simulation Display panel -->
+                            <div class="simulation-console" id="simulation-panel">
+                                <div style="text-align: center; color: var(--text-muted); padding: 40px; border: 1px dashed rgba(255,255,255,0.06); border-radius:16px; background: rgba(0,0,0,0.1);">
+                                    <i data-lucide="sliders" style="width: 44px; height: 44px; margin-bottom: 12px; opacity:0.3; margin-left:auto; margin-right:auto;"></i>
+                                    <h4 style="color:#fff; font-size: 0.9rem;">Simulation Deck Standby</h4>
+                                    <p style="font-size:0.75rem; margin-top:6px; max-width: 260px; margin-left:auto; margin-right:auto;">Select an active bidding vendor on the left to simulate the financial impacts of blacklisting/removal.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // 1. Manage Role-Based view access
+        const userNav = JSON.parse(localStorage.getItem('gem_user'));
+        if (userNav) {
+            const isStaff = userNav.role === 'Admin' || userNav.role === 'Evaluator';
+            ['nav-evaluation', 'nav-cartel', 'nav-plagiarism', 'nav-pqc', 'nav-tender-rules', 'nav-forensics', 'nav-analysis'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = isStaff ? 'block' : 'none';
+            });
+        } else {
+            // Guard page
+            window.location.href = 'index.html';
+        }
+
+        let cmdData = null;
+
+        // Fetch command center data
+        async function fetchCommandCenterData() {
+            try {
+                const data = await ApiClient.getCommandCenter();
+                cmdData = data;
+                renderDashboard(data);
+            } catch (err) {
+                console.error("Failed to load Executive Command Center statistics:", err);
+                showToast("Failed to connect to Executive Intelligence API", "error");
+            }
+        }
+
+        // Render Dashboard
+        function renderDashboard(data) {
+            // A. Update Circular Health Gauge
+            const score = data.health.score;
+            const grade = data.health.grade;
+            document.getElementById('health-score').innerText = score;
+            document.getElementById('health-grade').innerText = `Grade ${grade}`;
+
+            const fillCircle = document.getElementById('health-gauge');
+            const circumference = 440; // 2 * pi * r (r=70)
+            const offset = circumference - (score / 100) * circumference;
+            fillCircle.style.strokeDashoffset = offset;
+
+            // Set color based on score
+            let color = 'var(--primary)'; // Blue
+            if(score >= 80) color = '#10b981'; // Green
+            else if(score >= 60) color = '#f59e0b'; // Gold
+            else color = '#ef4444'; // Red
+            fillCircle.style.stroke = color;
+            fillCircle.style.filter = `drop-shadow(0 0 8px ${color})`;
+
+            // B. Render Diagnosis Factors
+            const factors = data.health.factors || {};
+            const factorContainer = document.getElementById('factor-list');
+            factorContainer.innerHTML = '';
+            Object.entries(factors).forEach(([lbl, val]) => {
+                const name = lbl.replace('_', ' ').replace('score', '').trim();
+                factorContainer.innerHTML += `
+                    <div class="factor-box">
+                        <div style="font-size:0.62rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; white-space:nowrap;">${name}</div>
+                        <div class="factor-val">${val}</div>
+                    </div>
+                `;
+            });
+
+            // C. Render Anomaly correlation matrix
+            const signals = data.anomaly_matrix.signals || {};
+            const anomalyContainer = document.getElementById('anomaly-matrix-container');
+            anomalyContainer.innerHTML = '';
+            
+            const anomalyMetadata = {
+                'bid_clustering': { title: 'Bid Clustering', desc: 'Price fixing clusters' },
+                'price_dumping': { title: 'Price Dumping', desc: 'Bids <50% estimated' },
+                'co_bidding': { title: 'Co-Bidding Links', desc: 'Shared IP or director' },
+                'blacklisted_active': { title: 'Active Blacklists', desc: 'Flagged active bidders' },
+                'overpriced_bids': { title: 'Overpriced Margin', desc: 'Bids >110% estimated' },
+                'low_competition': { title: 'Low Competition', desc: '<3 bids submitted' }
+            };
+
+            Object.entries(signals).forEach(([key, val]) => {
+                const meta = anomalyMetadata[key] || { title: key, desc: 'Anomalous telemetry' };
+                const isThreat = val > 0;
+                anomalyContainer.innerHTML += `
+                    <div class="anomaly-box">
+                        <div>
+                            <div class="anomaly-lbl">${meta.desc}</div>
+                            <div class="anomaly-title">${meta.title}</div>
+                        </div>
+                        <div class="anomaly-count ${isThreat ? 'active-threat' : 'clean'}">
+                            ${val}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // D. Render Executive Brief
+            const summary = data.executive_summary || '';
+            const briefTextEl = document.getElementById('brief-text');
+            // Animate brief output like a console stream
+            let lines = summary.split('\n');
+            briefTextEl.innerHTML = '';
+            let lineIdx = 0;
+            function printNextLine() {
+                if(lineIdx < lines.length) {
+                    const line = lines[lineIdx];
+                    const pre = document.createElement('div');
+                    pre.style.marginBottom = '6px';
+                    
+                    // Style highlights
+                    if(line.includes('ALERT:')) pre.style.color = '#f87171';
+                    else if(line.includes('RED FLAG:')) pre.style.color = '#f87171';
+                    else if(line.includes('CAUTION:')) pre.style.color = '#fbbf24';
+                    else if(line.includes('ASSESSMENT:')) pre.style.color = '#38bdf8';
+                    
+                    pre.textContent = line;
+                    briefTextEl.appendChild(pre);
+                    briefTextEl.scrollTop = briefTextEl.scrollHeight;
+                    lineIdx++;
+                    setTimeout(printNextLine, 120);
+                }
+            }
+            printNextLine();
+
+            // E. Render Linear Regression Forecasts
+            const forecasts = data.forecasts || [];
+            const forecastTable = document.getElementById('forecast-table-body');
+            forecastTable.innerHTML = '';
+
+            if (forecasts.length === 0) {
+                forecastTable.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">No regression forecasts available (requires tenders with >= 2 bids).</td></tr>`;
+            } else {
+                forecasts.forEach(f => {
+                    let trendColor = '#34d399';
+                    if (f.trend === 'RISING') trendColor = '#38bdf8';
+                    else if (f.trend === 'DECLINING') trendColor = '#ef4444';
+
+                    const sparkline = drawSparkline(f.data_points);
+
+                    forecastTable.innerHTML += `
+                        <tr>
+                            <td style="padding: 10px 14px;"><strong>${f.tender}</strong><br><span style="font-size:0.65rem; color:var(--text-muted);">${f.title.substring(0, 20)}...</span></td>
+                            <td style="padding: 10px 14px;">₹${(f.current_l1/1e5).toFixed(2)}L</td>
+                            <td style="padding: 10px 14px; color:#c084fc;"><strong>₹${(f.predicted_next_bid/1e5).toFixed(2)}L</strong></td>
+                            <td style="padding: 10px 14px;">${f.slope > 0 ? '+' : ''}${(f.slope/1e3).toFixed(1)}k/bid</td>
+                            <td style="padding: 10px 14px; text-align:center;"><span class="badge" style="background:${trendColor}15; color:${trendColor}; border:1px solid ${trendColor}30; padding:2px 8px; font-size:0.65rem;">${f.trend}</span></td>
+                            <td style="padding: 10px 14px; text-align:center; font-family:monospace;">${f.r_squared.toFixed(3)}</td>
+                            <td style="padding: 10px 14px; vertical-align:middle;">${sparkline}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // F. Render What-If vendor list
+            const whatIfs = data.what_if || [];
+            const vendorListEl = document.getElementById('vendor-list-container');
+            vendorListEl.innerHTML = '';
+
+            if (whatIfs.length === 0) {
+                vendorListEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.75rem;">No active bidding vendors to simulate.</div>`;
+            } else {
+                whatIfs.forEach((wi, idx) => {
+                    let costText = "No L1 Impact";
+                    let costColor = '#10b981';
+                    if (wi.total_cost_increase > 0) {
+                        costText = `+₹${(wi.total_cost_increase/1e3).toFixed(0)}k`;
+                        costColor = wi.criticality === 'CRITICAL' ? '#ef4444' : '#f59e0b';
+                    }
+
+                    vendorListEl.innerHTML += `
+                        <div class="vendor-item" id="vendor-wi-${idx}" onclick="selectWhatIfVendor(${idx})">
+                            <div>
+                                <strong style="color:white; font-size:0.82rem;">${wi.vendor.substring(0, 20)}</strong>
+                                <div style="font-size:0.68rem; color:var(--text-muted); margin-top:2px;">Bids: ${wi.total_bids} | Affected: ${wi.tenders_affected}</div>
+                            </div>
+                            <span class="badge" style="background:${costColor}10; color:${costColor}; border:1px solid ${costColor}20; font-size:0.7rem; padding: 2px 8px;">
+                                ${costText}
+                            </span>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Draw Sparklines for forecast trends
+        function drawSparkline(points) {
+            if (!points || points.length < 2) return '';
+            const max = Math.max(...points);
+            const min = Math.min(...points);
+            const range = max - min || 1;
+            const width = 80;
+            const height = 20;
+            const coords = points.map((p, i) => {
+                const x = (i / (points.length - 1)) * width;
+                const y = height - ((p - min) / range) * height;
+                return `${x},${y}`;
+            }).join(' ');
+            return `
+                <svg width="${width}" height="${height}" class="sparkline-container">
+                    <polyline class="sparkline-svg" points="${coords}"></polyline>
+                </svg>
+            `;
+        }
+
+        // Simulate Blacklisting detail click
+        function selectWhatIfVendor(idx) {
+            // Set active class styling
+            document.querySelectorAll('.vendor-item').forEach(el => el.classList.remove('active'));
+            const activeEl = document.getElementById(`vendor-wi-${idx}`);
+            if(activeEl) activeEl.classList.add('active');
+
+            const wi = cmdData.what_if[idx];
+            const simPanel = document.getElementById('simulation-panel');
+
+            let cColor = '#10b981';
+            let bgGlow = 'rgba(16, 185, 129, 0.05)';
+            if(wi.criticality === 'CRITICAL') {
+                cColor = '#ef4444';
+                bgGlow = 'rgba(239, 68, 68, 0.05)';
+            } else if(wi.criticality === 'HIGH') {
+                cColor = '#f59e0b';
+                bgGlow = 'rgba(245, 158, 11, 0.05)';
+            }
+
+            // Build detailed impact tables
+            let tendersHtml = "";
+            let maxOldL1 = 0;
+            let maxNewL1 = 0;
+
+            if (wi.impact_details.length === 0) {
+                tendersHtml = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:16px;">This vendor is not currently L1 on any active tenders. Blacklisting will result in ₹0.00 procurement cost increase.</td></tr>`;
+            } else {
+                wi.impact_details.forEach(det => {
+                    if (det.old_l1 > maxOldL1) maxOldL1 = det.old_l1;
+                    if (det.new_l1 > maxNewL1) maxNewL1 = det.new_l1;
+                    
+                    tendersHtml += `
+                        <tr>
+                            <td style="padding: 8px 10px;">${det.tender}</td>
+                            <td style="padding: 8px 10px;">₹${(det.old_l1/1e5).toFixed(2)}L</td>
+                            <td style="padding: 8px 10px; color:#ef4444;">₹${(det.new_l1/1e5).toFixed(2)}L</td>
+                            <td style="padding: 8px 10px; font-weight:700; color:#ef4444;">+₹${(det.cost_increase/1e3).toFixed(1)}k (${det.pct_increase}%)</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Generate CSS chart comparing prices before vs after blacklisting
+            let chartHtml = "";
+            if (wi.total_cost_increase > 0 && maxOldL1 > 0) {
+                const oldTotalL1 = wi.impact_details.reduce((sum, det) => sum + det.old_l1, 0);
+                const newTotalL1 = wi.impact_details.reduce((sum, det) => sum + det.new_l1, 0);
+                const pctIncrease = ((newTotalL1 - oldTotalL1) / oldTotalL1) * 100;
+                
+                chartHtml = `
+                    <div class="bar-chart-container">
+                        <div style="font-size:0.75rem; font-weight:700; color:white; margin-bottom:8px;">Aggregate Bid Price Shift Comparison</div>
+                        <div class="bar-item">
+                            <div class="bar-label">Before Exclude</div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: 80%; background: linear-gradient(90deg, #38bdf8, #0284c7);">
+                                    ₹${(oldTotalL1/1e5).toFixed(2)}L
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">After Exclude</div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: ${Math.min(80 + (pctIncrease * 3), 100)}%; background: linear-gradient(90deg, #f43f5e, #be123c);">
+                                    ₹${(newTotalL1/1e5).toFixed(2)}L (+${pctIncrease.toFixed(1)}%)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            simPanel.innerHTML = `
+                <div style="display:flex; flex-direction:column; text-align:left; animation: fadeInUp 0.4s ease forwards;">
+                    <!-- Simulation Header Warning -->
+                    <div class="impact-card ${wi.criticality.toLowerCase()}">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="badge" style="background:${cColor}20; color:${cColor}; border: 1px solid ${cColor}40; font-size:0.75rem; font-weight:700;">
+                                SIMULATED REMOVAL: ${wi.criticality} CRITICALITY
+                            </span>
+                            <i data-lucide="alert-triangle" style="color:${cColor}; width:18px; height:18px;"></i>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color:white; font-size:1.15rem; margin-top:2px;">${wi.vendor}</h3>
+                            <p style="color:var(--text-muted); font-size:0.78rem; margin-top:3px;">Excluding this vendor changes the L1 award status on <strong>${wi.tenders_affected}</strong> tenders.</p>
+                        </div>
+                        
+                        <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.06); padding-top:14px; margin-top:4px;">
+                            <div>
+                                <span style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Simulated System Penalty</span>
+                                <h2 style="color:${wi.total_cost_increase > 0 ? '#ef4444' : '#10b981'}; font-size:1.6rem; font-weight:800; margin-top:2px;">
+                                    +₹${(wi.total_cost_increase).toLocaleString()}
+                                </h2>
+                            </div>
+                            <div style="text-align:right;">
+                                <span style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Total Active Bids Removed</span>
+                                <h2 style="color:#fff; font-size:1.6rem; font-weight:800; margin-top:2px;">${wi.total_bids}</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tender Shift Details -->
+                    <h4 style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; font-weight:700; display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="git-compare" style="width:14px; height:14px; color:#a78bfa;"></i> Impacted Tender Re-scoring
+                    </h4>
+                    <div class="table-responsive" style="max-height: 160px; overflow-y:auto; background: rgba(0,0,0,0.15);">
+                        <table class="table" style="font-size: 0.75rem;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 8px 10px;">Tender Ref</th>
+                                    <th style="padding: 8px 10px;">Original L1</th>
+                                    <th style="padding: 8px 10px;">Simulated L1</th>
+                                    <th style="padding: 8px 10px;">Delta Penalty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tendersHtml}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Bar Chart Shift -->
+                    ${chartHtml}
+                </div>
+            `;
+            
+            lucide.createIcons();
+        }
+
+        // Initialize Page
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchCommandCenterData();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Reverse Auction | GEM Intelligence</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#020617;color:#f8fafc;min-height:100vh;display:flex;flex-direction:column}
+        .mono{font-family:'JetBrains Mono',monospace}
+        .topbar{padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(2,6,23,0.8);backdrop-filter:blur(10px);z-index:100;position:sticky;top:0}
+        .topbar h1{font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px}
+        .live-indicator{display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:50%;box-shadow:0 0 10px #ef4444;animation:pulse 1s infinite}
+        @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.7)} 70%{box-shadow:0 0 0 10px rgba(239,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+        .layout{display:grid;grid-template-columns:3fr 1fr;gap:24px;padding:24px 40px;flex:1;max-width:1800px;margin:0 auto;width:100%}
+        .panel{background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:24px;display:flex;flex-direction:column}
+        .chart-container{flex:1;min-height:400px;position:relative}
+        .panel-title{font-size:0.8rem;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+        
+        .bid-stream{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:8px}
+        .bid-stream::-webkit-scrollbar{width:4px}
+        .bid-stream::-webkit-scrollbar-track{background:rgba(0,0,0,0.1)}
+        .bid-stream::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+        
+        .bid-card{background:rgba(255,255,255,0.03);border-left:3px solid #3b82f6;padding:12px 16px;border-radius:6px;animation:slideIn 0.3s ease-out}
+        @keyframes slideIn{from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1}}
+        .bid-amt{font-size:1.2rem;font-weight:700;color:#10b981}
+        .bid-ven{font-size:0.85rem;color:#e2e8f0;margin-top:4px}
+        .bid-time{font-size:0.7rem;color:#64748b;margin-top:4px}
+        
+        .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+        .stat-box{background:rgba(0,0,0,0.2);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+        .stat-label{font-size:0.75rem;color:#94a3b8;margin-bottom:8px}
+        .stat-val{font-size:1.5rem;font-weight:700}
+        .stat-val.grn{color:#10b981}
+        .stat-val.red{color:#ef4444}
+        
+        #overlay{position:absolute;inset:0;background:rgba(2,6,23,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;border-radius:16px;backdrop-filter:blur(4px)}
+        .connect-btn{background:#3b82f6;color:white;border:none;padding:12px 32px;font-size:1rem;font-weight:600;border-radius:8px;cursor:pointer;transition:all 0.2s}
+        .connect-btn:hover{background:#2563eb;transform:translateY(-2px)}
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1><div class="live-indicator"></div> Live Reverse Auction Room</h1>
+    <div style="display:flex;gap:16px;align-items:center">
+        <span class="mono" style="color:#94a3b8" id="conn-status">Disconnected</span>
+        <a href="command_center.html" style="color:#3b82f6;text-decoration:none;font-weight:600;font-size:0.9rem">Exit Room</a>
+    </div>
+</div>
+
+<div class="layout">
+    <!-- Main Chart Panel -->
+    <div class="panel" style="position:relative">
+        <div id="overlay">
+            <h2 style="margin-bottom:8px;color:#f8fafc">Tender Auction Room</h2>
+            <p style="color:#94a3b8;margin-bottom:24px">Connect to the WebSocket to watch real-time automated vendor bidding.</p>
+            <div style="display:flex;gap:12px">
+                <input type="number" id="tenderIdInput" value="1" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:white;padding:12px;border-radius:8px;width:100px;text-align:center" title="Tender ID">
+                <button class="connect-btn" onclick="connectToAuction()">Join Auction</button>
+            </div>
+        </div>
+        
+        <div class="ct panel-title"><i data-lucide="trending-down"></i> Live Price Discovery Curve</div>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Current Lowest Bid</div>
+                <div class="stat-val grn mono" id="lowest-bid">₹ --</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Estimated Value</div>
+                <div class="stat-val mono" id="est-value">₹ --</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="auctionChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Feed Panel -->
+    <div class="panel">
+        <div class="ct panel-title"><i data-lucide="activity"></i> Real-Time Bid Stream</div>
+        <div class="bid-stream" id="bid-stream">
+            <!-- Bids will appear here -->
+            <div style="text-align:center;color:#64748b;margin-top:40px;font-size:0.85rem">Waiting for bids...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+    let ws = null;
+    let chart = null;
+    let bidCount = 0;
+    
+    // Initialize Chart
+    const ctx = document.getElementById('auctionChart').getContext('2d');
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Bid Amount (₹)',
+                data: [],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: '#020617',
+                pointBorderColor: '#10b981',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                stepped: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: (ctx) => '₹ ' + ctx.parsed.y.toLocaleString() }
+                }
+            },
+            scales: {
+                y: { 
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+                },
+                x: { 
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', maxTicksLimit: 10 }
+                }
+            },
+            animation: { duration: 400 }
+        }
+    });
+
+    function connectToAuction() {
+        const tenderId = document.getElementById('tenderIdInput').value;
+        if(!tenderId) return;
+        
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('conn-status').textContent = 'Connecting...';
+        document.getElementById('conn-status').style.color = '#fbbf24';
+        
+        // Reset state
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.update();
+        document.getElementById('bid-stream').innerHTML = '';
+        bidCount = 0;
+        
+        // Setup WebSocket
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        // Note: In development assume backend is on port 8000
+        const wsUrl = `${protocol}//${window.location.hostname}:8000/bids/ws/auction/${tenderId}`;
+        
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+            document.getElementById('conn-status').textContent = 'Live Connected';
+            document.getElementById('conn-status').style.color = '#10b981';
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'auction_start') {
+                document.getElementById('est-value').textContent = '₹ ' + data.starting_price.toLocaleString();
+                document.getElementById('lowest-bid').textContent = '₹ ' + data.starting_price.toLocaleString();
+                chart.data.labels.push('Start');
+                chart.data.datasets[0].data.push(data.starting_price);
+                chart.update();
+            } 
+            else if (data.type === 'new_bid') {
+                bidCount++;
+                document.getElementById('lowest-bid').textContent = '₹ ' + data.amount.toLocaleString();
+                
+                // Add to chart
+                const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                chart.data.labels.push(timeStr);
+                chart.data.datasets[0].data.push(data.amount);
+                
+                // Keep only last 15 points
+                if(chart.data.labels.length > 15) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                }
+                chart.update();
+                
+                // Add to feed
+                const feed = document.getElementById('bid-stream');
+                const card = document.createElement('div');
+                card.className = 'bid-card';
+                card.innerHTML = `
+                    <div class="bid-amt mono">₹ ${data.amount.toLocaleString()}</div>
+                    <div class="bid-ven">${data.vendor_name}</div>
+                    <div class="bid-time mono">${timeStr}</div>
+                `;
+                feed.insertBefore(card, feed.firstChild);
+            }
+            else if (data.type === 'auction_end') {
+                const feed = document.getElementById('bid-stream');
+                const card = document.createElement('div');
+                card.className = 'bid-card';
+                card.style.borderLeftColor = '#f59e0b';
+                card.style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+                card.innerHTML = `
+                    <div style="color:#f59e0b;font-weight:700;margin-bottom:4px">AUCTION CLOSED</div>
+                    <div class="bid-amt mono">Winner: ${data.winner}</div>
+                    <div class="bid-time mono">Final: ₹ ${data.final_amount.toLocaleString()}</div>
+                `;
+                feed.insertBefore(card, feed.firstChild);
+                ws.close();
+            }
+        };
+        
+        ws.onclose = () => {
+            document.getElementById('conn-status').textContent = 'Disconnected';
+            document.getElementById('conn-status').style.color = '#ef4444';
+        };
+        
+        ws.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+            document.getElementById('conn-status').textContent = 'Error';
+        };
+    }
+</script>
+
+</body>
+</html>

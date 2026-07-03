@@ -1,0 +1,15 @@
+{
+    "llm_provider": "ollama",
+    "gemini_api_key": "",
+    "openai_api_key": "",
+    "ollama_url": "http://localhost:11434/api/generate",
+    "ollama_model": "llama3.1:8b",
+    "strict_open_source": false,
+    "gemini_model": "gemini-1.5-pro",
+    "openai_model": "gpt-4o-mini",
+    "strict_accuracy": true,
+    "rag_min_relevance": 35.0,
+    "ollama_model_fast": "llama3.1:8b",
+    "ollama_model_reasoning": "llama3.1:8b",
+    "rag_semantic_weight": 0.7
+}

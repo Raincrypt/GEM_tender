@@ -1,0 +1,90 @@
+# ============================================================
+#  GEM Tender Procurement Ecosystem — .gitignore
+# ============================================================
+
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ── Virtual Environments ────────────────────────────────────
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ── SQLite Databases (never commit production data) ─────────
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ── Test & Debug Outputs ────────────────────────────────────
+pqc_test_output.json
+email_logs.txt
+*.log
+logs/
+
+# ── Uploads & Generated Files ───────────────────────────────
+backend/uploads/
+uploads/
+backend/contracts/
+contracts/
+
+# ── RAG Vector Index ────────────────────────────────────────
+rag_index/
+backend/rag_index/
+
+# ── IDE / Editor ────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*.orig
+.DS_Store
+Thumbs.db
+
+# ── Docker ──────────────────────────────────────────────────
+# Don't ignore docker-compose.yml — it's needed
+# But ignore generated compose artifacts
+.docker/
+
+# ── Testing ─────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.coveragerc
+
+# ── Secrets ─────────────────────────────────────────────────
+.env
+*.pem
+*.key
+*.cert
+*.pfx
+secrets/
+
+# ── Scratch / Temp ──────────────────────────────────────────
+backend/scratch/
+scratch/
+*.tmp
+*.bak

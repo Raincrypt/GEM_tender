@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Lifecycle Dossier - GEM Evaluation</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background: #0f172a; color: #e2e8f0; }
+        .dossier-header { padding: 40px; background: linear-gradient(135deg, rgba(15,23,42,1), rgba(30,41,59,1)); border-bottom: 1px solid #3b82f6; text-align: center; }
+        .dossier-title { font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 10px; background: -webkit-linear-gradient(#60a5fa, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 40px; max-width: 1400px; margin: 0 auto; }
+        .card-dark { background: rgba(30,41,59,0.5); border: 1px solid rgba(148,163,184,0.1); border-radius: 16px; padding: 25px; backdrop-filter: blur(10px); }
+        .radar-container { height: 400px; width: 100%; display: flex; justify-content: center; }
+        .timeline { border-left: 2px solid #3b82f6; padding-left: 20px; margin-top: 20px; }
+        .timeline-item { margin-bottom: 20px; position: relative; }
+        .timeline-item::before { content: ''; position: absolute; left: -26px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: #8b5cf6; border: 2px solid #0f172a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { color: #94a3b8; font-weight: 500; }
+        .winner-row { background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; }
+    </style>
+</head>
+<body>
+    <div class="dossier-header">
+        <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
+            <i data-lucide="shield-check" style="width: 48px; height: 48px; color: #3b82f6; margin-bottom: 15px;"></i>
+            <button class="btn btn-warning" onclick="trackIoTLogistics()" style="background: #f59e0b; border: none; color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; animation: pulse 2s infinite;">
+                <i data-lucide="satellite"></i> Track Post-Award IoT Logistics
+            </button>
+        </div>
+        <h1 class="dossier-title">Advanced AI Cycle Dossier</h1>
+        <p id="d-subtitle" style="font-size: 1.2rem; color: #94a3b8;">Loading Comprehensive Analysis...</p>
+        <div style="display:flex; align-items:center; gap:15px; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="downloadPdfDossier()" style="background: #3b82f6; border: none; padding: 10px 20px; color: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="download"></i> Download Automated PDF Dossier
+            </button>
+            <a href="evaluation.html" class="btn btn-outline" style="padding: 10px 20px; color: white; text-decoration: none; border: 1px solid #3b82f6; border-radius: 6px;"><i data-lucide="arrow-left"></i> Back to Evaluation</a>
+            <a href="plagiarism_report.html" class="btn btn-outline" style="padding: 10px 20px; color: #fbbf24; text-decoration: none; border: 1px solid #fbbf24; border-radius: 6px;"><i data-lucide="file-search"></i> Plagiarism Intel</a>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <!-- AI Summary -->
+        <div class="card-dark" style="grid-column: span 2; border-left: 4px solid #8b5cf6;">
+            <h3 style="color: white; display: flex; align-items: center; gap: 10px;"><i data-lucide="brain"></i> Executive AI Summary</h3>
+            <p id="d-summary" style="margin-top: 15px; line-height: 1.6; color: #cbd5e1;"></p>
+        </div>
+
+        <!-- Savings & Market Intelligence -->
+        <div class="card-dark" style="border-left: 4px solid #10b981;">
+            <h3 style="color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;"><i data-lucide="trending-down"></i> Market & Savings Analytics</h3>
+            <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                <div style="flex:1; background: rgba(16,185,129,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                    <p style="font-size: 0.8rem; color: #94a3b8;">Taxpayer Savings</p>
+                    <h3 id="d-savings-amt" style="font-size: 1.8rem; color: #10b981;">₹0</h3>
+                    <p id="d-savings-pct" style="font-size: 0.9rem; color: #6ee7b7; margin-top: 5px;">0% below estimate</p>
+                </div>
+            </div>
+            <div class="radar-container" style="height: 200px;">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- AI Anomaly Alerts -->
+        <div class="card-dark" style="border-left: 4px solid #ef4444;">
+            <h3 style="color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;"><i data-lucide="alert-triangle" style="color: #ef4444;"></i> AI Anomaly Detection Engine</h3>
+            <div id="d-anomalies" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Anomalies injected here -->
+            </div>
+        </div>
+
+        <!-- Radar Chart -->
+        <div class="card-dark">
+            <h3 style="color: white; margin-bottom: 20px;">Multi-Dimensional Vendor Comparison</h3>
+            <div class="radar-container">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Detailed QCBS Matrix Table -->
+        <div class="card-dark" style="grid-column: span 2; border-left: 4px solid #f59e0b;">
+            <h3 style="color: white; margin-bottom: 20px; display:flex; align-items:center; gap:10px;"><i data-lucide="microscope" style="color: #f59e0b;"></i> Deep-Dive QCBS (Quality-Cost) Analytics Matrix</h3>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px;">Advanced algorithmic breakdown of weighted score distributions, ESG compliance, and supply chain resilience metrics.</p>
+            <div style="overflow-x: auto;">
+                <table id="qcbs-table" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: rgba(0,0,0,0.3);">
+                            <th>Vendor</th>
+                            <th>Tech Weighted</th>
+                            <th>Fin Score (Raw)</th>
+                            <th>Fin Weighted</th>
+                            <th>ESG Score</th>
+                            <th>Supply Resilience</th>
+                            <th>Geo-Risk %</th>
+                            <th>Final QCBS</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Matrix Table -->
+        <div class="card-dark">
+            <h3 style="color: white; margin-bottom: 20px;">Detailed Evaluation Matrix</h3>
+            <div style="overflow-x: auto;">
+                <table id="matrix-table">
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th>Tech Score</th>
+                            <th>Financial Bid</th>
+                            <th>Trust Score</th>
+                            <th>Final Status</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Blockchain Timeline -->
+        <div class="card-dark" style="grid-column: span 1;">
+            <h3 style="color: white; display: flex; align-items: center; gap: 10px;"><i data-lucide="link"></i> Immutable Lifecycle Audit Trail</h3>
+            <div class="timeline" id="d-timeline">
+            </div>
+        </div>
+
+        <!-- IoT Logistics Tracker -->
+        <div class="card-dark" style="grid-column: span 1; border-left: 4px solid #3b82f6;">
+            <h3 style="color: white; display: flex; align-items: center; gap: 10px; margin-bottom: 20px;"><i data-lucide="truck"></i> IoT Logistics & Fulfillment Tracker</h3>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 20px; text-align: center; position: relative;">
+                <div style="position: absolute; top: 20px; right: 20px; display:flex; align-items:center; gap:5px; color:#10b981; font-size:0.8rem; font-weight:bold;">
+                    <span style="width:8px; height:8px; background:#10b981; border-radius:50%; box-shadow:0 0 10px #10b981; animation: pulse 1.5s infinite;"></span> GPS ACTIVE
+                </div>
+                <i data-lucide="package-check" style="width: 48px; height: 48px; color: #8b5cf6; margin-bottom: 15px;"></i>
+                <h4 style="color: white; font-size: 1.2rem; margin-bottom: 5px;">Awaiting Vendor Dispatch</h4>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">The Smart Contract has been minted. The vendor has 48 hours to securely sign the delivery manifest.</p>
+                
+                <div style="display:flex; justify-content:space-between; margin-top:20px; position:relative;">
+                    <div style="position:absolute; top:50%; left:10%; right:10%; height:2px; background:rgba(255,255,255,0.1); z-index:0;"></div>
+                    <div style="z-index:1; background:#1e293b; padding:5px; border-radius:50%; border:2px solid #10b981;"><i data-lucide="file-signature" style="color:#10b981; width:20px; height:20px;"></i></div>
+                    <div style="z-index:1; background:#1e293b; padding:5px; border-radius:50%; border:2px solid #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.5);"><i data-lucide="box" style="color:#3b82f6; width:20px; height:20px;"></i></div>
+                    <div style="z-index:1; background:#1e293b; padding:5px; border-radius:50%; border:2px solid rgba(255,255,255,0.1);"><i data-lucide="truck" style="color:#64748b; width:20px; height:20px;"></i></div>
+                    <div style="z-index:1; background:#1e293b; padding:5px; border-radius:50%; border:2px solid rgba(255,255,255,0.1);"><i data-lucide="flag" style="color:#64748b; width:20px; height:20px;"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0.4; } }
+        
+        /* Executive PDF Print Styles */
+        @media print {
+            body { background: white; color: black; font-family: 'Inter', sans-serif; }
+            .sidebar, .btn, .top-header { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; }
+            .card-dark, .card { background: white !important; color: black !important; border: 1px solid #ccc !important; box-shadow: none !important; margin-bottom: 20px; page-break-inside: avoid; }
+            h2, h3, h4, p, span, strong, td, th { color: black !important; }
+            i { color: black !important; }
+            .badge { border: 1px solid black !important; background: transparent !important; color: black !important; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ccc; padding: 8px; }
+            .timeline::before { background: black !important; }
+            .timeline-item::before { border-color: black !important; background: white !important; }
+            .timeline-content { background: transparent !important; border: none !important; }
+            
+            /* Custom PDF Header */
+            .content::before {
+                content: "GEM Executive Intelligence Briefing";
+                display: block;
+                font-size: 24pt;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 2px solid black;
+                padding-bottom: 10px;
+            }
+        }
+    </style>
+
+    <script src="js/api.js"></script>
+    <script>
+        lucide.createIcons();
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+
+        async function loadDossier() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tenderId = urlParams.get('tender_id');
+            if(!tenderId) return alert("No tender ID provided");
+
+            try {
+                const data = await ApiClient.request(`/reports/cycle-dossier/${tenderId}`);
+                
+                // Header
+                document.getElementById('d-subtitle').textContent = `Tender: ${data.tender.bid_number} - ${data.tender.title} | Est Value: ₹${data.tender.estimated_value.toLocaleString('en-IN')}`;
+                document.getElementById('d-summary').textContent = data.ai_summary;
+
+                // Savings Analytics
+                if(data.savings) {
+                    document.getElementById('d-savings-amt').textContent = `₹${data.savings.amount.toLocaleString('en-IN')}`;
+                    document.getElementById('d-savings-pct').textContent = `${data.savings.percentage}% below estimated cost`;
+                }
+
+                // Anomalies
+                const anDiv = document.getElementById('d-anomalies');
+                anDiv.innerHTML = '';
+                if(data.anomalies) {
+                    data.anomalies.forEach(a => {
+                        let color = '#3b82f6';
+                        let bg = 'rgba(59,130,246,0.1)';
+                        if(a.severity === 'Critical') { color = '#ef4444'; bg = 'rgba(239,68,68,0.1)'; }
+                        if(a.severity === 'High') { color = '#f59e0b'; bg = 'rgba(245,158,11,0.1)'; }
+                        
+                        anDiv.innerHTML += `
+                            <div style="background: ${bg}; border-left: 3px solid ${color}; padding: 12px; border-radius: 4px;">
+                                <strong style="color: ${color}; font-size: 0.8rem; text-transform: uppercase;">${a.severity} RISK</strong>
+                                <p style="margin-top: 4px; font-size: 0.9rem;">${a.issue}</p>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Price Chart (Bar)
+                const priceLabels = ["Estimated Value", ...data.comparisons.map(c => c.vendor_name.substring(0,10))];
+                const priceData = [data.tender.estimated_value, ...data.comparisons.map(c => c.financial_amount)];
+                const priceColors = ['#64748b', ...data.comparisons.map(c => c.status === 'Awarded' ? '#10b981' : '#3b82f6')];
+                
+                new Chart(document.getElementById('priceChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: priceLabels,
+                        datasets: [{
+                            label: 'Amount (₹)',
+                            data: priceData,
+                            backgroundColor: priceColors,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } }
+                    }
+                });
+
+                // Deep Dive QCBS Matrix
+                const qcbsTbody = document.querySelector('#qcbs-table tbody');
+                data.qcbs_matrix.forEach((q, index) => {
+                    const isWinner = index === 0; // Highest QCBS is usually L1/Winner
+                    const tr = document.createElement('tr');
+                    if(isWinner) tr.style.background = 'rgba(16, 185, 129, 0.05)';
+                    
+                    // Micro-bars for visuals
+                    const geoRiskColor = q.geo_risk > 50 ? '#ef4444' : (q.geo_risk > 20 ? '#f59e0b' : '#10b981');
+                    
+                    tr.innerHTML = `
+                        <td><strong style="color: ${isWinner ? '#10b981' : '#e2e8f0'};">${q.vendor_name}</strong></td>
+                        <td>${q.tech_weighted}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <div style="width:50px; background:rgba(255,255,255,0.1); height:6px; border-radius:3px; overflow:hidden;"><div style="width:${q.fin_score_raw}%; background:#3b82f6; height:100%;"></div></div>
+                                ${q.fin_score_raw}
+                            </div>
+                        </td>
+                        <td>${q.fin_weighted}</td>
+                        <td><span class="badge" style="background: rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981;">${q.esg_score}</span></td>
+                        <td>${q.supply_resilience}%</td>
+                        <td><span style="color:${geoRiskColor}; font-weight:bold;">${q.geo_risk}%</span></td>
+                        <td><strong style="font-size:1.1rem; color:${isWinner ? '#10b981' : '#8b5cf6'};">${q.qcbs_composite}</strong></td>
+                    `;
+                    qcbsTbody.appendChild(tr);
+                });
+
+                // General Matrix Table
+                const tbody = document.querySelector('#matrix-table tbody');
+                data.comparisons.forEach(c => {
+                    const tr = document.createElement('tr');
+                    if(c.status === 'Awarded') tr.className = 'winner-row';
+                    tr.innerHTML = `
+                        <td><strong>${c.vendor_name}</strong><br><small style="color:#64748b;">${c.gem_reg_no}</small></td>
+                        <td>${c.tech_score}/100</td>
+                        <td>₹${c.financial_amount.toLocaleString('en-IN')}</td>
+                        <td>${c.trust_score.toFixed(1)}</td>
+                        <td><span class="badge ${c.status === 'Awarded' ? 'badge-success' : 'badge-primary'}">${c.status}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Radar Chart Data Prep
+                const labels = ["Technical", "Price Competitiveness", "Trust & Reliability", "Speed (Delivery)"];
+                const colors = ['rgba(59, 130, 246, 0.5)', 'rgba(16, 185, 129, 0.5)', 'rgba(245, 158, 11, 0.5)'];
+                const borderColors = ['#3b82f6', '#10b981', '#f59e0b'];
+                
+                const datasets = data.comparisons.slice(0, 3).map((c, i) => {
+                    return {
+                        label: c.vendor_name,
+                        data: [
+                            c.radar_metrics["Technical"],
+                            c.radar_metrics["Price Competitiveness"],
+                            c.radar_metrics["Trust & Reliability"],
+                            c.radar_metrics["Speed (Delivery)"]
+                        ],
+                        backgroundColor: colors[i % colors.length],
+                        borderColor: borderColors[i % borderColors.length],
+                        pointBackgroundColor: borderColors[i % borderColors.length],
+                        borderWidth: 2,
+                    };
+                });
+
+                new Chart(document.getElementById('radarChart'), {
+                    type: 'radar',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                angleLines: { color: 'rgba(255,255,255,0.1)' },
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                pointLabels: { color: '#e2e8f0', font: { size: 12 } },
+                                ticks: { display: false, min: 0, max: 100 }
+                            }
+                        },
+                        plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } }
+                    }
+                });
+
+                // Timeline
+                const tDiv = document.getElementById('d-timeline');
+                data.timeline.forEach(t => {
+                    tDiv.innerHTML += `
+                        <div class="timeline-item">
+                            <div style="font-weight: bold; color: #e2e8f0;">${t.action}</div>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">${new Date(t.time).toLocaleString()} | Hash: <span style="font-family:monospace; color:#8b5cf6;">${t.hash}</span></div>
+                        </div>
+                    `;
+                });
+
+            } catch(e) {
+                console.error(e);
+                alert("Failed to load dossier data");
+            }
+        }
+
+        function downloadPdfDossier() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tenderId = urlParams.get('tender_id');
+            if(!tenderId) return alert("No tender ID provided");
+            window.location.href = `/reports/download-dossier/${tenderId}`;
+        }
+        
+        loadDossier();
+    </script>
+</body>
+</html>

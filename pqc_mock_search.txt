@@ -1,0 +1,4 @@
+1077:         # Fallback to current mock logic if PyMuPDF or other deps are missing
+1312:     present in the bidder's folder, completely free of any hardcoded vendor names or fallbacks.
+1608:     # No static fallbacks. Evaluations are fully determined dynamically above.
+1610:     # ── Fully Document-Driven Compliance Evaluations (Zero Hardcoded Overrides) ──

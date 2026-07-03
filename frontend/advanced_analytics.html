@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Analytics Hub — GEM Tender Intelligence</title>
+    <meta name="description" content="Advanced procurement analytics with quantile regression, Shapley attribution, price entropy, ESG scoring, vendor lifecycle, and GFR/CVC/GeM rule compliance engine.">
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --aa-purple: #8b5cf6;
+            --aa-blue: #3b82f6;
+            --aa-green: #10b981;
+            --aa-red: #ef4444;
+            --aa-amber: #f59e0b;
+            --aa-cyan: #06b6d4;
+            --aa-pink: #ec4899;
+        }
+
+        /* ── Tab Bar ─────────────────────────────── */
+        .tab-bar {
+            display: flex;
+            gap: 6px;
+            background: rgba(0,0,0,0.25);
+            padding: 6px;
+            border-radius: 14px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            background: transparent;
+            color: var(--text-muted, #94a3b8);
+            transition: all 0.22s;
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.2));
+            color: #fff;
+            box-shadow: 0 0 0 1px rgba(139,92,246,0.5);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ── Hero Banner ─────────────────────────── */
+        .hub-hero {
+            background: linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(59,130,246,0.08) 50%, rgba(6,182,212,0.06) 100%);
+            border: 1px solid rgba(139,92,246,0.25);
+            border-radius: 18px;
+            padding: 28px 32px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hub-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #8b5cf6, #3b82f6, #06b6d4, #10b981);
+        }
+        .hub-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(139,92,246,0.15);
+            border: 1px solid rgba(139,92,246,0.4);
+            color: #a78bfa;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* ── Metric Pill ─────────────────────────── */
+        .metric-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-size: 0.82rem;
+        }
+        .metric-pill .val {
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        /* ── Box Plot Visual ─────────────────────── */
+        .box-plot-wrap {
+            position: relative;
+            height: 80px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        .box-plot-track {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            width: 100%;
+        }
+        .box-plot-iqr {
+            position: absolute;
+            top: 25%;
+            height: 50%;
+            background: rgba(59,130,246,0.25);
+            border: 2px solid rgba(59,130,246,0.7);
+            border-radius: 4px;
+        }
+        .box-plot-median {
+            position: absolute;
+            top: 15%;
+            width: 3px;
+            height: 70%;
+            background: #10b981;
+            border-radius: 2px;
+        }
+        .box-plot-whisker {
+            position: absolute;
+            top: 48%;
+            height: 4px;
+            background: rgba(255,255,255,0.35);
+        }
+        .box-plot-outlier {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
+        /* ── Shapley Bar ─────────────────────────── */
+        .shapley-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .shapley-label { width: 190px; font-size: 0.8rem; color: var(--text-muted,#94a3b8); flex-shrink:0; }
+        .shapley-bar-wrap { flex: 1; height: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; }
+        .shapley-bar-fill { height: 100%; border-radius: 10px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+        .shapley-pct { width: 44px; text-align: right; font-size: 0.8rem; font-weight: 600; }
+
+        /* ── Rule Badge ──────────────────────────── */
+        .rule-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        .rule-badge.VIOLATION  { background: rgba(239,68,68,0.15);  color: #f87171; }
+        .rule-badge.WARNING    { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .rule-badge.COMPLIANT  { background: rgba(16,185,129,0.15); color: #34d399; }
+        .rule-badge.ADVISORY   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .rule-badge.NOT_EVALUATED { background: rgba(100,116,139,0.15); color: #94a3b8; }
+
+        /* ── Timeline ────────────────────────────── */
+        .timeline { position: relative; padding-left: 28px; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px; top: 0; bottom: 0;
+            width: 2px;
+            background: rgba(255,255,255,0.08);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: border-color 0.2s;
+        }
+        .timeline-item:hover { border-color: rgba(139,92,246,0.3); }
+        .timeline-dot {
+            position: absolute;
+            left: -23px;
+            top: 18px;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--bg, #0f172a);
+        }
+
+        /* ── ESG Radar ───────────────────────────── */
+        .esg-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .esg-bar-label { width: 120px; font-size: 0.78rem; }
+        .esg-bar-track { flex: 1; height: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; }
+        .esg-bar-fill { height: 100%; border-radius: 10px; }
+        .esg-bar-val { width: 38px; text-align: right; font-size: 0.78rem; font-weight: 600; }
+
+        /* ── Status Pill ─────────────────────────── */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .status-pill::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+        /* ── Quick Queries ───────────────────────── */
+        .quick-query-btn {
+            background: rgba(59,130,246,0.08);
+            border: 1px solid rgba(59,130,246,0.25);
+            color: #93c5fd;
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+        .quick-query-btn:hover {
+            background: rgba(59,130,246,0.18);
+            border-color: rgba(59,130,246,0.5);
+        }
+
+        /* ── Entropy Heatmap Cell ────────────────── */
+        .entropy-cell {
+            width: 40px; height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: default;
+            transition: transform 0.15s;
+        }
+        .entropy-cell:hover { transform: scale(1.15); }
+
+        /* ── Gini Gauge ──────────────────────────── */
+        .gini-gauge-track {
+            height: 12px;
+            background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+            border-radius: 10px;
+            position: relative;
+            margin: 12px 0;
+        }
+        .gini-gauge-marker {
+            position: absolute;
+            top: -4px;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            border: 3px solid #0f172a;
+            background: #fff;
+            transform: translateX(-50%);
+            transition: left 0.8s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* ── Spinning loader ─────────────────────── */
+        @keyframes spin-anim { to { transform: rotate(360deg); } }
+        .spin-icon { animation: spin-anim 1s linear infinite; display: inline-block; }
+
+        /* ── Micro animations ────────────────────── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeInUp 0.45s ease forwards; }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
+            50%       { box-shadow: 0 0 24px 6px rgba(139,92,246,0.25); }
+        }
+        .pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+
+        /* ── Card enhancements ───────────────────── */
+        .aa-card {
+            background: rgba(15,23,42,0.85);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 22px;
+            transition: border-color 0.25s;
+        }
+        .aa-card:hover { border-color: rgba(139,92,246,0.25); }
+        .aa-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        /* ── Select / Input override ─────────────── */
+        .aa-select {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e2e8f0;
+            padding: 9px 14px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .aa-select option { background: #1e293b; }
+        .aa-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.84rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .aa-btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: #fff;
+        }
+        .aa-btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+        .aa-btn-green {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+        }
+        .aa-btn-green:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        /* responsive */
+        @media (max-width: 900px) {
+            .two-col { grid-template-columns: 1fr !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <!-- ── Sidebar ──────────────────────────────────── -->
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+    <!-- ── Main Content ─────────────────────────────── -->
+    <main class="main-content">
+        <header class="top-header">
+            <div>
+                <h1 style="display:flex;align-items:center;gap:10px">
+                    <i data-lucide="atom" style="color:#8b5cf6;width:28px;height:28px"></i>
+                    Advanced Analytics Hub
+                </h1>
+                <p style="color:var(--text-muted);font-size:0.85rem">Quantile Regression · Shapley Attribution · Price Entropy · ESG · Rule Compliance Engine</p>
+            </div>
+            <div class="user-profile">
+                <div style="text-align:right">
+                    <div id="user-name" style="font-weight:500">User</div>
+                    <div id="user-role" style="font-size:0.8rem;color:var(--text-muted)">Role</div>
+                </div>
+                <div class="avatar" id="user-avatar">U</div>
+                <button class="btn btn-outline" onclick="logout()" style="padding:8px;margin-left:12px">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Hero Banner ─── -->
+        <div class="hub-hero fade-in">
+            <div class="hub-badge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#a78bfa;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em">
+                <i data-lucide="zap" style="width:12px;height:12px"></i> ENGINE v5.0 — RESEARCH GRADE
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center">
+                <div>
+                    <h2 style="margin:0 0 8px;font-size:1.4rem">Statistical Precision Analysis Suite</h2>
+                    <p style="margin:0;color:var(--text-muted);font-size:0.88rem;line-height:1.6">
+                        Beyond basic Z-scores — featuring <strong style="color:#a78bfa">Tukey Fences</strong>, <strong style="color:#60a5fa">Grubbs Test</strong>, <strong style="color:#34d399">Shapley Attribution</strong>, <strong style="color:#fbbf24">Shannon Price Entropy</strong>, and a <strong style="color:#f87171">GFR/CVC/GeM/IOCL Rule Engine</strong> with proper citation references.
+                    </p>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <div class="metric-pill">
+                        <i data-lucide="layers" style="width:16px;height:16px;color:#8b5cf6"></i>
+                        <div><div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase">Methods</div><div class="val" style="color:#a78bfa">15+</div></div>
+                    </div>
+                    <div class="metric-pill">
+                        <i data-lucide="book-open" style="width:16px;height:16px;color:#3b82f6"></i>
+                        <div><div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase">Rules DB</div><div class="val" style="color:#60a5fa" id="rule-count">15</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tender Selector ─── -->
+        <div class="aa-card" style="padding:18px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <i data-lucide="filter" style="color:#8b5cf6;width:18px;height:18px"></i>
+            <span style="font-weight:500;font-size:0.9rem">Select Tender for Analysis:</span>
+            <select id="tender-select" class="aa-select" style="min-width:280px" onchange="onTenderChange()">
+                <option value="">-- Loading tenders... --</option>
+            </select>
+            <button class="aa-btn aa-btn-primary pulse-glow" onclick="runAllAnalysis()">
+                <i data-lucide="play-circle" style="width:16px;height:16px"></i> Run All Analysis
+            </button>
+            <div id="loading-indicator" style="display:none;color:var(--text-muted);font-size:0.82rem">
+                <span class="spin-icon"><i data-lucide="loader" style="width:14px;height:14px"></i></span> Analysing…
+            </div>
+        </div>
+
+        <!-- ── Tab Bar ─── -->
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tab-btn-quantile" onclick="switchTab('quantile')">
+                <i data-lucide="box" style="width:14px;height:14px"></i> Quantile & IQR
+            </button>
+            <button class="tab-btn" id="tab-btn-shapley" onclick="switchTab('shapley')">
+                <i data-lucide="pie-chart" style="width:14px;height:14px"></i> Shapley Attribution
+            </button>
+            <button class="tab-btn" id="tab-btn-entropy" onclick="switchTab('entropy')">
+                <i data-lucide="activity" style="width:14px;height:14px"></i> Price Entropy
+            </button>
+            <button class="tab-btn" id="tab-btn-esg" onclick="switchTab('esg')">
+                <i data-lucide="leaf" style="width:14px;height:14px"></i> ESG Scorecard
+            </button>
+            <button class="tab-btn" id="tab-btn-lifecycle" onclick="switchTab('lifecycle')">
+                <i data-lucide="git-branch" style="width:14px;height:14px"></i> Vendor Lifecycle
+            </button>
+            <button class="tab-btn" id="tab-btn-rules" onclick="switchTab('rules')">
+                <i data-lucide="scale" style="width:14px;height:14px"></i> Rule Query Engine
+            </button>
+        </div>
+
+        <!-- ════════════════════════════════════════ -->
+        <!--  TAB 1 — QUANTILE & IQR ANALYSIS        -->
+        <!-- ════════════════════════════════════════ -->
+        <div class="tab-panel active" id="tab-quantile">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px" class="two-col">
+                <!-- Tukey Box Plot -->
+                <div class="aa-card">
+                    <div class="aa-card-title">
+                        <i data-lucide="box" style="color:#3b82f6;width:18px;height:18px"></i>
+                        Tukey IQR Box-Plot Analysis
+                        <span style="margin-left:auto;font-size:0.72rem;background:rgba(59,130,246,0.1);color:#60a5fa;padding:3px 8px;border-radius:6px">Per Tender</span>
+                    </div>
+                    <div id="quantile-content">
+                        <div style="color:var(--text-muted);text-align:center;padding:40px 0;font-size:0.85rem">
+                            <i data-lucide="box" style="width:32px;height:32px;margin-bottom:10px;display:block;margin-inline:auto;opacity:0.4"></i>
+                            Select a tender and run analysis
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grubbs Test + Skewness -->
+                <div class="aa-card">
+                    <div class="aa-card-title">
+                        <i data-lucide="crosshair" style="color:#ef4444;width:18px;height:18px"></i>
+                        Grubbs Test &amp; Distribution Shape
+                        <span style="margin-left:auto;font-size:0.72rem;background:rgba(239,68,68,0.1);color:#f87171;padding:3px 8px;border-radius:6px">Outlier Detection</span>
+                    </div>
+                    <div id="grubbs-content">
+                        <div style="color:var(--text-muted);text-align:center;padding:40px 0;font-size:0.85rem">
+                            <i data-lucide="crosshair" style="width:32px;height:32px;margin-bottom:10px;display:block;margin-inline:auto;opacity:0.4"></i>
+                            Awaiting data
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gini Coefficient -->
+            <div class="aa-card">
+                <div class="aa-card-title">
+                    <i data-lucide="bar-chart-2" style="color:#10b981;width:18px;height:18px"></i>
+                    Gini Coefficient — Bid Price Inequality Index
+                </div>
+                <div id="gini-content">
+                    <div style="color:var(--text-muted);text-align:center;padding:30px 0;font-size:0.85rem">Run analysis to compute Gini coefficient</div>
+                </div>
+            </div>
+
+            <!-- Bid Outlier Table -->
+            <div class="aa-card">
+                <div class="aa-card-title">
+                    <i data-lucide="table" style="color:#f59e0b;width:18px;height:18px"></i>
+                    Bid Outlier Classification Table
+                </div>
+                <div id="outlier-table-content">
+                    <div style="color:var(--text-muted);text-align:center;padding:30px 0;font-size:0.85rem">Run analysis to view outlier classifications</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════ -->
+        <!--  TAB 2 — SHAPLEY ATTRIBUTION             -->
+        <!-- ════════════════════════════════════════ -->
+        <div class="tab-panel" id="tab-shapley">
+            <div class="aa-card">
+                <div class="aa-card-title">
+                    <i data-lucide="pie-chart" style="color:#8b5cf6;width:18px;height:18px"></i>
+                    Shapley Value Attribution — Composite Score Decomposition
+                    <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted)">What drives each bid's score?</span>
+                </div>
+                <div id="shapley-content">
+                    <div style="color:var(--text-muted);text-align:center;padding:50px 0;font-size:0.85rem">
+                        <i data-lucide="pie-chart" style="width:32px;height:32px;margin-bottom:10px;display:block;margin-inline:auto;opacity:0.4"></i>
+                        Select a tender and run analysis
+                    </div>
+                </div>
+            </div>
+
+            <!-- System-wide decisive factor -->
+            <div class="aa-card">
+                <div class="aa-card-title">
+                    <i data-lucide="target" style="color:#f59e0b;width:18px;height:18px"></i>
+                    Aggregate Factor Analysis — Most Decisive Dimension
+                </div>
+                <div id="shapley-aggregate" style="color:var(--text-muted);text-align:center;padding:30px 0;font-size:0.85rem">Run analysis to see aggregate Shapley data</div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════ -->
+        <!--  TAB 3 — PRICE ENTROPY HEATMAP           -->
+        <!-- ════════════════════════════════════════ -->
+        <div class="tab-panel" id="tab-entropy">
+            <div class="aa-card">
+                <div class="aa-card-title">
+                    <i data-lucide="activity" style="color:#06b6d4;width:18px;height:18px"></i>
+                    Shannon Price Entropy — Cartel &amp; Clustering Signal
+                    <span style="margin-left:auto;font-size:0.72rem;background:rgba(6,182,212,0.1);color:#22d3ee;padding:3px 8px;border-radius:6px">All Tenders</span>
+                </div>
+                <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:18px">Low entropy = bids are highly clustered (collusion signal). High entropy = healthy price competition.</p>
+                <div id="entropy-content">
+                    <div style="color:var(--text-muted);text-align:center;padding:50px 0;font-size:0.85rem">
+                        <i data-lucide="activity" style="width:32px;height:32px;margin-bottom:10px;display:block;margin-inline:auto;opacity:0.4"></i>
+                        Run analysis to generate entropy heatmap
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════ -->
+        <!--  TAB 4 — ESG SCORECARD                   -->
+        <!-- ════════════════════════════════════════ -->
+        <div class="tab-panel" id="tab-esg">
+            <div class="aa-card">
+                <div class="aa-card-title">
+                    <i data-lucide="leaf" style="color:#10b981;width:18px;height:18px"></i>
+                    ESG Scorecard — Environmental, Social &amp; Governance Rankings
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px" id="esg-summary-cards">
+                    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:16px;text-align:center">
+                        <div style="color:#10b981;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Environmental</div>
+                        <div style="font-size:1.8rem;font-weight:700" id="esg-env-avg">—</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted)">Avg Score / 40</div>
+                    </div>
+                    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:16px;text-align:center">
+                        <div style="color:#3b82f6;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Social</div>
+                        <div style="font-size:1.8rem;font-weight:700" id="esg-soc-avg">—</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted)">Avg Score / 30</div>
+                    </div>
+                    <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:12px;padding:16px;text-align:center">
+                        <div style="color:#8b5cf6;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Governance</div>
+                        <div style="font-size:1.8rem;font-weight:700" id="esg-gov-avg">—</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted)">Avg Score / 30</div>
+                    </div>
+                </div>
+                <div id="esg-content">
+                    <div style="color:var(--text-muted);text-align:center;padding:40px 0;font-size:0.85rem">
+                        <i data-lucide="leaf" style="width:32px;height:32px;margin-bottom:10px;display:block;margin-inline:auto;opacity:0.4"></i>
+                        Run analysis to load ESG scorecard
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════ -->
+        <!--  TAB 5 — VENDOR LIFECYCLE TIMELINE       -->
+        <!-- ════════════════════════════════════════ -->
+        <div class="tab-panel" id="tab-lifecycle">
+            <div class="aa-card" style="padding:18px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                <i data-lucide="git-branch" style="color:#ec4899;width:18px;height:18px"></i>
+                <span style="font-weight:500;font-size:0.9rem">Select Vendor:</span>
+                <select id="vendor-select" class="aa-select" style="min-width:260px">
+                    <option value="">-- Loading vendors... --</option>
+                </select>
+                <button class="aa-btn aa-btn-primary" onclick="loadVendorLifecycle()">
+                    <i data-lucide="git-branch" style="width:16px;height:16px"></i> Load Lifecycle
+                </button>
+            </div>
+            <div id="lifecycle-content">
+                <div style="color:var(--text-muted);text-align:center;padding:60px 0;font-size:0.85rem">
+                    <i data-lucide="git-branch" style="width:40px;height:40px;margin-bottom:12px;display:block;margin-inline:auto;opacity:0.4"></i>
+                    Select a vendor to view their full procurement lifecycle
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════ -->
+        <!--  TAB 6 — RULE QUERY ENGINE               -->
+        <!-- ════════════════════════════════════════ -->
+        <div class="tab-panel" id="tab-rules">
+            <!-- Query Input Panel -->
+            <div class="aa-card" style="background:linear-gradient(135deg,rgba(239,68,68,0.07),rgba(245,158,11,0.05));border-color:rgba(239,68,68,0.2)">
+                <div class="aa-card-title">
+                    <i data-lucide="scale" style="color:#ef4444;width:18px;height:18px"></i>
+                    Procurement Rule Compliance Engine
+                    <span style="margin-left:auto;font-size:0.7rem;background:rgba(239,68,68,0.1);color:#f87171;padding:3px 10px;border-radius:6px;font-weight:700">GFR 2017 · CVC · GeM · IOCL</span>
+                </div>
+                <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px">
+                    Query the master rule database in plain English. The engine evaluates your query against all applicable procurement regulations with source citations.
+                </p>
+
+                <!-- Quick queries -->
+                <div style="margin-bottom:16px">
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em">Quick Queries:</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px">
+                        <button class="quick-query-btn" onclick="setQuery('Check MSME compliance and mandate status')">MSME Mandate</button>
+                        <button class="quick-query-btn" onclick="setQuery('Are there any blacklisted or debarred vendors?')">Blacklisted Vendor</button>
+                        <button class="quick-query-btn" onclick="setQuery('Check for identical bids and cartel collusion')">Collusion Check</button>
+                        <button class="quick-query-btn" onclick="setQuery('Is the L1 bid an abnormally low bid?')">Abnormally Low Bid</button>
+                        <button class="quick-query-btn" onclick="setQuery('Verify minimum competition and bid count requirements')">Competition Rule</button>
+                        <button class="quick-query-btn" onclick="setQuery('Check price reasonableness against estimate')">Price Reasonableness</button>
+                        <button class="quick-query-btn" onclick="setQuery('Is EMD earnest money deposit collected?')">EMD Check</button>
+                        <button class="quick-query-btn" onclick="setQuery('Performance bank guarantee PBG requirement')">PBG Requirement</button>
+                        <button class="quick-query-btn" onclick="setQuery('Make in India local content requirements')">Make in India</button>
+                        <button class="quick-query-btn" onclick="setQuery('OISD petroleum safety certification')">OISD Safety</button>
+                        <button class="quick-query-btn" onclick="setQuery('Post tender negotiation CVC prohibition')">Post-Tender Negotiation</button>
+                        <button class="quick-query-btn" onclick="setQuery('Bid validity period 90 days requirement')">Bid Validity</button>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+                    <div style="flex:1;min-width:260px">
+                        <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:6px">Your Compliance Query:</label>
+                        <input type="text" id="rule-query-input" class="form-control" placeholder="e.g. 'Is the minimum competition requirement met?'" style="background:rgba(0,0,0,0.3);font-family:Inter,sans-serif">
+                    </div>
+                    <button class="aa-btn" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;padding:10px 22px" onclick="runRuleQuery()">
+                        <i data-lucide="search" style="width:15px;height:15px"></i> Evaluate Rules
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rule Results -->
+            <div id="rule-results">
+                <div style="color:var(--text-muted);text-align:center;padding:60px 0;font-size:0.85rem">
+                    <i data-lucide="scale" style="width:40px;height:40px;margin-bottom:12px;display:block;margin-inline:auto;opacity:0.35"></i>
+                    Enter a query above or click a quick-query button to evaluate procurement rules
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+'use strict';
+
+requireAuth();
+lucide.createIcons();
+loadUserProfile();
+
+const user = ApiClient.getStoredUser();
+if (user && (user.role === 'Admin' || user.role === 'Evaluator')) {
+    ['nav-evaluation','nav-cartel','nav-pqc','nav-tender-rules','nav-forensics','nav-analysis'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'block';
+    });
+}
+
+// ── State ─────────────────────────────────────────
+let currentTenderId = null;
+let quantileData = null;
+let shapleyData  = null;
+let esgData      = null;
+
+// ── Tab Switching ─────────────────────────────────
+function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-btn-' + name).classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ── Load Tenders ──────────────────────────────────
+async function loadTenders() {
+    try {
+        const tenders = await ApiClient.getTenders();
+        const sel = document.getElementById('tender-select');
+        sel.innerHTML = '<option value="">-- Select Tender --</option>';
+        (tenders || []).forEach(t => {
+            const o = document.createElement('option');
+            o.value = t.id;
+            o.textContent = `${t.bid_number} — ${t.title}`;
+            sel.appendChild(o);
+        });
+    } catch(e) { console.warn('Tender load error:', e); }
+}
+
+async function loadVendors() {
+    try {
+        const vendors = await ApiClient.request('/vendors/');
+        const sel = document.getElementById('vendor-select');
+        sel.innerHTML = '<option value="">-- Select Vendor --</option>';
+        (vendors || []).forEach(v => {
+            const o = document.createElement('option');
+            o.value = v.id;
+            o.textContent = `${v.company_name} (${v.gem_reg_no || 'No GEM#'})`;
+            sel.appendChild(o);
+        });
+    } catch(e) { console.warn('Vendor load error:', e); }
+}
+
+function onTenderChange() {
+    currentTenderId = document.getElementById('tender-select').value || null;
+}
+
+// ── Run All Analysis ──────────────────────────────
+async function runAllAnalysis() {
+    if (!currentTenderId) { showToast('Please select a tender first', 'warning'); return; }
+
+    document.getElementById('loading-indicator').style.display = 'flex';
+    try {
+        const [qData, sData, eData] = await Promise.all([
+            ApiClient.request(`/reports/quantile-analysis?tender_id=${currentTenderId}`),
+            ApiClient.request(`/reports/shapley-scores?tender_id=${currentTenderId}`),
+            ApiClient.request('/reports/esg-scorecard'),
+        ]);
+        quantileData = qData;
+        shapleyData  = sData;
+        esgData      = eData;
+
+        renderQuantile(qData);
+        renderShapley(sData);
+        renderEntropy(qData);
+        renderESG(eData);
+
+        showToast('All analysis complete!', 'success');
+    } catch(e) {
+        showToast('Analysis error: ' + e.message, 'error');
+    } finally {
+        document.getElementById('loading-indicator').style.display = 'none';
+    }
+}
+
+// ══════════════════════════════════════════════════
+//  RENDER: QUANTILE / IQR
+// ══════════════════════════════════════════════════
+function renderQuantile(data) {
+    const results = data.results || [];
+    if (!results.length) {
+        document.getElementById('quantile-content').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:30px">No bid data found for this tender.</p>';
+        return;
+    }
+    const r = results[0];
+    const t = r.tukey;
+    const amounts = r.bid_details.map(b => b.amount).filter(Boolean);
+    const minA = Math.min(...amounts);
+    const maxA = Math.max(...amounts);
+    const range = maxA - minA || 1;
+
+    const pct = v => Math.max(0, Math.min(100, ((v - minA) / range) * 100));
+
+    // Box plot HTML
+    const q1Pct = pct(t.q1);
+    const q3Pct = pct(t.q3);
+    const medPct = pct(t.q2_median);
+    const liPct  = pct(Math.max(t.lower_inner, minA));
+    const uiPct  = pct(Math.min(t.upper_inner, maxA));
+
+    const outlierDots = r.bid_details
+        .filter(b => b.outlier_type !== 'NORMAL')
+        .map(b => `<div class="box-plot-outlier" style="left:${pct(b.amount)}%;background:${b.outlier_type==='EXTREME_OUTLIER'?'#ef4444':'#f59e0b'}" title="${b.vendor_name}: ₹${(b.amount/1e5).toFixed(1)}L (${b.outlier_type})"></div>`).join('');
+
+    document.getElementById('quantile-content').innerHTML = `
+        <div style="margin-bottom:18px">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+                <div style="background:rgba(59,130,246,0.1);border-radius:10px;padding:12px;text-align:center">
+                    <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase">Q1</div>
+                    <div style="font-weight:700;color:#60a5fa">₹${(t.q1/1e5).toFixed(2)}L</div>
+                </div>
+                <div style="background:rgba(16,185,129,0.1);border-radius:10px;padding:12px;text-align:center">
+                    <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase">Median</div>
+                    <div style="font-weight:700;color:#10b981">₹${(t.q2_median/1e5).toFixed(2)}L</div>
+                </div>
+                <div style="background:rgba(59,130,246,0.1);border-radius:10px;padding:12px;text-align:center">
+                    <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase">Q3</div>
+                    <div style="font-weight:700;color:#60a5fa">₹${(t.q3/1e5).toFixed(2)}L</div>
+                </div>
+                <div style="background:rgba(139,92,246,0.1);border-radius:10px;padding:12px;text-align:center">
+                    <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase">IQR</div>
+                    <div style="font-weight:700;color:#a78bfa">₹${(t.iqr/1e5).toFixed(2)}L</div>
+                </div>
+            </div>
+
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px">
+                Tukey Inner Fence: [₹${(t.lower_inner/1e5).toFixed(2)}L, ₹${(t.upper_inner/1e5).toFixed(2)}L] &nbsp;|&nbsp;
+                Outer Fence: [₹${(t.lower_outer/1e5).toFixed(2)}L, ₹${(t.upper_outer/1e5).toFixed(2)}L]
+            </div>
+
+            <div class="box-plot-wrap">
+                <div class="box-plot-track"></div>
+                <div class="box-plot-whisker" style="left:${liPct}%;width:${uiPct-liPct}%"></div>
+                <div class="box-plot-iqr" style="left:${q1Pct}%;width:${q3Pct-q1Pct}%"></div>
+                <div class="box-plot-median" style="left:${medPct}%"></div>
+                ${outlierDots}
+            </div>
+
+            <div style="display:flex;gap:16px;font-size:0.72rem;color:var(--text-muted);margin-top:8px">
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block"></span> Extreme Outlier (beyond outer fence)</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span> Mild Outlier</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:rgba(59,130,246,0.4);display:inline-block"></span> IQR Box (Q1–Q3)</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:3px;height:10px;border-radius:2px;background:#10b981;display:inline-block"></span> Median</span>
+            </div>
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-muted)">
+            <strong style="color:#f87171">${t.extreme_outliers.length}</strong> extreme outlier(s) &nbsp;|&nbsp;
+            <strong style="color:#fbbf24">${t.mild_outliers.length}</strong> mild outlier(s) &nbsp;|&nbsp;
+            <strong style="color:#34d399">${t.clean_values.length}</strong> clean bids within fences
+        </div>`;
+
+    // Grubbs + shape
+    const g = r.grubbs;
+    const sh = r.distribution_shape;
+    document.getElementById('grubbs-content').innerHTML = `
+        <div style="background:${g.significant?'rgba(239,68,68,0.08)':'rgba(16,185,129,0.08)'};border:1px solid ${g.significant?'rgba(239,68,68,0.25)':'rgba(16,185,129,0.25)'};border-radius:12px;padding:16px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <strong>Grubbs Single-Outlier Test</strong>
+                <span class="rule-badge ${g.significant?'VIOLATION':'COMPLIANT'}">${g.significant?'⚠ OUTLIER DETECTED':'✓ NO EXTREME OUTLIER'}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:0.82rem">
+                <div><span style="color:var(--text-muted)">Suspected Value:</span><br><strong style="color:${g.significant?'#ef4444':'#94a3b8'}">₹${g.outlier?(g.outlier/1e5).toFixed(2)+'L':'N/A'}</strong></div>
+                <div><span style="color:var(--text-muted)">G-Statistic:</span><br><strong>${g.g_stat}</strong></div>
+                <div><span style="color:var(--text-muted)">Critical G (α=0.05):</span><br><strong>${g.critical_g}</strong></div>
+            </div>
+            ${g.significant?`<div style="margin-top:10px;padding:8px;background:rgba(239,68,68,0.1);border-radius:8px;font-size:0.78rem;color:#f87171">G-stat (${g.g_stat}) &gt; Critical G (${g.critical_g}) — Significant at α=0.05. Investigate this bid.</div>`:''}
+        </div>
+
+        <div>
+            <div style="font-weight:600;margin-bottom:12px;font-size:0.88rem">Distribution Shape Analysis</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px">
+                    <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Skewness</div>
+                    <div style="font-size:1.4rem;font-weight:700;color:${Math.abs(sh.skewness)<0.5?'#10b981':'#f59e0b'}">${sh.skewness}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">${sh.skewness_label}</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px">
+                    <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Excess Kurtosis</div>
+                    <div style="font-size:1.4rem;font-weight:700;color:${Math.abs(sh.kurtosis_excess)<1?'#10b981':'#ef4444'}">${sh.kurtosis_excess}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">${sh.kurtosis_label}</div>
+                </div>
+            </div>
+        </div>`;
+
+    // Gini
+    const gini = r.gini_coefficient;
+    const giniPct = Math.round(gini * 100);
+    document.getElementById('gini-content').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:24px;align-items:center">
+            <div style="text-align:center">
+                <div style="font-size:3.5rem;font-weight:800;color:${gini<0.2?'#10b981':gini<0.4?'#f59e0b':'#ef4444'}">${gini}</div>
+                <div style="font-size:0.82rem;color:var(--text-muted)">${r.gini_assessment}</div>
+            </div>
+            <div>
+                <div class="gini-gauge-track">
+                    <div class="gini-gauge-marker" style="left:${giniPct}%"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text-muted)">
+                    <span>0 — Perfect Equality</span><span>0.4 — Moderate</span><span>1 — Max Inequality</span>
+                </div>
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-top:14px;line-height:1.6">
+                    A Gini coefficient of <strong style="color:#e2e8f0">${gini}</strong> indicates <strong style="color:${gini<0.2?'#10b981':gini<0.4?'#f59e0b':'#ef4444'}">${r.gini_assessment.toLowerCase()}</strong> in bid prices.
+                    ${gini>0.4?'High inequality may indicate an aggressive L1 outlier or cartel pricing on the high end.':'Price distribution appears competitive.'}
+                </p>
+            </div>
+        </div>`;
+
+    // Outlier table
+    const rows = r.bid_details.map(b => {
+        const color = b.outlier_type==='EXTREME_OUTLIER'?'#ef4444':b.outlier_type==='GRUBBS_OUTLIER'?'#f97316':b.outlier_type==='MILD_OUTLIER'?'#f59e0b':'#10b981';
+        return `<tr>
+            <td>${b.bid_id}</td>
+            <td><strong>${b.vendor_name}</strong></td>
+            <td>₹${(b.amount/1e5).toFixed(2)}L</td>
+            <td><span style="color:${color};font-weight:600">${b.outlier_type.replace(/_/g,' ')}</span></td>
+            <td><span class="badge ${b.is_disqualified?'badge-danger':'badge-success'}">${b.is_disqualified?'Disqualified':'Qualified'}</span></td>
+        </tr>`;
+    }).join('');
+    document.getElementById('outlier-table-content').innerHTML = `
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Bid ID</th><th>Vendor</th><th>Amount</th><th>Outlier Classification</th><th>Status</th></tr></thead>
+                <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No bids found</td></tr>'}</tbody>
+            </table>
+        </div>`;
+    lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════
+//  RENDER: SHAPLEY
+// ══════════════════════════════════════════════════
+const SHAPLEY_COLORS = {
+    price_deviation: '#3b82f6',
+    vendor_trust: '#10b981',
+    technical_competence: '#8b5cf6',
+    delivery_feasibility: '#f59e0b',
+    price_estimate_sanity: '#06b6d4',
+    msme_policy_bonus: '#ec4899',
+};
+const SHAPLEY_LABELS = {
+    price_deviation: 'Price Deviation from Mean',
+    vendor_trust: 'Vendor Trust Score',
+    technical_competence: 'Technical Competence',
+    delivery_feasibility: 'Delivery Feasibility',
+    price_estimate_sanity: 'Price-to-Estimate Sanity',
+    msme_policy_bonus: 'MSME Policy Bonus',
+};
+
+function renderShapley(data) {
+    const bids = data.shapley_results || [];
+    if (!bids.length) {
+        document.getElementById('shapley-content').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px">No bid data.</p>';
+        return;
+    }
+
+    const html = bids.map((b,i) => {
+        const sv = b.shapley_values || {};
+        const bars = Object.entries(sv).map(([k,v]) => `
+            <div class="shapley-row">
+                <div class="shapley-label">${SHAPLEY_LABELS[k]||k}</div>
+                <div class="shapley-bar-wrap">
+                    <div class="shapley-bar-fill" style="width:${v.contribution_pct}%;background:${SHAPLEY_COLORS[k]||'#94a3b8'}"></div>
+                </div>
+                <div class="shapley-pct" style="color:${SHAPLEY_COLORS[k]||'#94a3b8'}">${v.contribution_pct}%</div>
+            </div>`).join('');
+
+        const statusBg = b.is_disqualified ? 'rgba(239,68,68,0.08)' : b.rank===1 ? 'rgba(16,185,129,0.08)' : 'rgba(0,0,0,0.2)';
+        const statusBorder = b.is_disqualified ? 'rgba(239,68,68,0.25)' : b.rank===1 ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.07)';
+
+        return `
+        <div style="background:${statusBg};border:1px solid ${statusBorder};border-radius:14px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+                <div style="width:40px;height:40px;border-radius:10px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;color:#a78bfa">${b.rank||'—'}</div>
+                <div>
+                    <div style="font-weight:600">${b.vendor_name}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted)">${b.gem_reg_no}</div>
+                </div>
+                <div style="margin-left:auto;text-align:right">
+                    <div style="font-size:1.3rem;font-weight:700;color:#a78bfa">${b.composite_score}</div>
+                    <div style="font-size:0.7rem;color:var(--text-muted)">Composite Score</div>
+                </div>
+                ${b.is_msme?'<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 8px;border-radius:6px;font-size:0.7rem;font-weight:700">MSME</span>':''}
+                ${b.is_disqualified?'<span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:3px 8px;border-radius:6px;font-size:0.7rem;font-weight:700">DQ</span>':''}
+            </div>
+            <div style="margin-bottom:8px;font-size:0.78rem;color:var(--text-muted)">
+                Dominant factor: <strong style="color:#a78bfa">${SHAPLEY_LABELS[b.dominant_factor]||b.dominant_factor}</strong> (${b.dominant_contribution_pct}%)
+            </div>
+            ${bars}
+        </div>`;
+    }).join('');
+
+    document.getElementById('shapley-content').innerHTML = html;
+
+    // Aggregate panel
+    const fa = data.factor_aggregate_contributions || {};
+    const maxFa = Math.max(...Object.values(fa)) || 1;
+    const aggHtml = Object.entries(fa).map(([k,v]) => `
+        <div class="shapley-row">
+            <div class="shapley-label">${SHAPLEY_LABELS[k]||k}</div>
+            <div class="shapley-bar-wrap">
+                <div class="shapley-bar-fill" style="width:${(v/maxFa)*100}%;background:${SHAPLEY_COLORS[k]||'#94a3b8'}"></div>
+            </div>
+            <div class="shapley-pct" style="color:${SHAPLEY_COLORS[k]||'#94a3b8'}">₹${v.toFixed(1)}</div>
+        </div>`).join('');
+
+    document.getElementById('shapley-aggregate').innerHTML = `
+        <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:20px;margin-bottom:14px">
+            <div style="margin-bottom:14px;font-size:0.85rem">
+                Most decisive scoring factor across all bids:
+                <strong style="color:#f59e0b;font-size:1rem"> ${SHAPLEY_LABELS[data.system_decisive_factor]||data.system_decisive_factor}</strong>
+            </div>
+            ${aggHtml}
+        </div>`;
+    lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════
+//  RENDER: ENTROPY HEATMAP
+// ══════════════════════════════════════════════════
+function renderEntropy(data) {
+    const results = data.results || [];
+    if (!results.length) {
+        document.getElementById('entropy-content').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px">No data available.</p>';
+        return;
+    }
+
+    const sorted = [...results].sort((a,b) => (b.price_entropy.entropy||0) - (a.price_entropy.entropy||0));
+
+    const cells = sorted.map(r => {
+        const e = r.price_entropy;
+        const n = e.normalized_entropy || 0;
+        const pct = Math.round(n * 100);
+        const bg = n < 0.25 ? '#7f1d1d' : n < 0.50 ? '#78350f' : n < 0.75 ? '#14532d' : '#1e3a5f';
+        const color = n < 0.25 ? '#fca5a5' : n < 0.50 ? '#fcd34d' : n < 0.75 ? '#4ade80' : '#93c5fd';
+        return `<div class="entropy-cell" style="background:${bg};color:${color}" title="${r.bid_number}: entropy ${pct}% — ${e.risk}">${pct}%</div>`;
+    }).join('');
+
+    const bars = sorted.map(r => {
+        const e = r.price_entropy;
+        const n = Math.round((e.normalized_entropy||0) * 100);
+        const color = n < 25 ? '#ef4444' : n < 50 ? '#f59e0b' : n < 75 ? '#10b981' : '#3b82f6';
+        return `
+        <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.78rem">
+                <span style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.bid_number}</span>
+                <span style="color:${color};font-weight:600">${e.risk.split(' ')[0]}</span>
+                <span style="color:var(--text-muted)">${n}% entropy</span>
+            </div>
+            <div style="height:8px;background:rgba(0,0,0,0.3);border-radius:10px;overflow:hidden">
+                <div style="width:${n}%;height:100%;background:${color};border-radius:10px;transition:width 0.8s"></div>
+            </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('entropy-content').innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;padding:16px;background:rgba(0,0,0,0.2);border-radius:12px">
+            ${cells}
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:0.72rem">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#7f1d1d;display:inline-block"></span> CRITICAL — &lt;25% (Severe Clustering)</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#78350f;display:inline-block"></span> HIGH — 25–50%</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#14532d;display:inline-block"></span> MODERATE — 50–75%</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#1e3a5f;display:inline-block"></span> LOW — &gt;75% (Healthy Competition)</span>
+        </div>
+        <div style="padding:16px;background:rgba(0,0,0,0.15);border-radius:12px">${bars}</div>`;
+}
+
+// ══════════════════════════════════════════════════
+//  RENDER: ESG SCORECARD
+// ══════════════════════════════════════════════════
+function renderESG(data) {
+    const sc = data.full_scorecard || [];
+    if (!sc.length) {
+        document.getElementById('esg-content').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px">No vendor data.</p>';
+        return;
+    }
+
+    // Summary averages
+    const avgEnv = sc.reduce((s,v) => s + v.breakdown.environmental, 0) / sc.length;
+    const avgSoc = sc.reduce((s,v) => s + v.breakdown.social, 0) / sc.length;
+    const avgGov = sc.reduce((s,v) => s + v.breakdown.governance, 0) / sc.length;
+    document.getElementById('esg-env-avg').textContent = avgEnv.toFixed(1);
+    document.getElementById('esg-soc-avg').textContent = avgSoc.toFixed(1);
+    document.getElementById('esg-gov-avg').textContent = avgGov.toFixed(1);
+
+    const rows = sc.map((v,i) => {
+        const bk = v.breakdown;
+        return `
+        <div style="background:rgba(0,0,0,0.2);border:1px solid ${v.is_blacklisted?'rgba(239,68,68,0.3)':'rgba(255,255,255,0.06)'};border-radius:12px;padding:16px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+                <div style="width:36px;height:36px;border-radius:50%;background:${v.rating_color}22;border:2px solid ${v.rating_color};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;color:${v.rating_color}">${i+1}</div>
+                <div>
+                    <div style="font-weight:600">${v.vendor_name}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted)">${v.gem_reg_no}</div>
+                </div>
+                <div style="margin-left:auto;text-align:right">
+                    <div style="font-size:1.5rem;font-weight:700;color:${v.rating_color}">${v.esg_composite}</div>
+                    <div style="font-size:0.72rem;color:${v.rating_color}">${v.esg_rating}</div>
+                </div>
+                ${v.is_blacklisted?'<span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:3px 8px;border-radius:6px;font-size:0.7rem;font-weight:700">BLACKLISTED</span>':''}
+            </div>
+            <div class="esg-bar">
+                <div class="esg-bar-label">🌿 Environmental</div>
+                <div class="esg-bar-track"><div class="esg-bar-fill" style="width:${(bk.environmental/40)*100}%;background:#10b981"></div></div>
+                <div class="esg-bar-val" style="color:#10b981">${bk.environmental}/40</div>
+            </div>
+            <div class="esg-bar">
+                <div class="esg-bar-label">🤝 Social</div>
+                <div class="esg-bar-track"><div class="esg-bar-fill" style="width:${(bk.social/30)*100}%;background:#3b82f6"></div></div>
+                <div class="esg-bar-val" style="color:#3b82f6">${bk.social}/30</div>
+            </div>
+            <div class="esg-bar">
+                <div class="esg-bar-label">🏛 Governance</div>
+                <div class="esg-bar-track"><div class="esg-bar-fill" style="width:${(bk.governance/30)*100}%;background:#8b5cf6"></div></div>
+                <div class="esg-bar-val" style="color:#8b5cf6">${bk.governance.toFixed(1)}/30</div>
+            </div>
+            <div style="margin-top:10px;font-size:0.75rem;color:var(--text-muted)">${v.highlights.join(' · ')}</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('esg-content').innerHTML = rows;
+}
+
+// ══════════════════════════════════════════════════
+//  VENDOR LIFECYCLE
+// ══════════════════════════════════════════════════
+async function loadVendorLifecycle() {
+    const vendorId = document.getElementById('vendor-select').value;
+    if (!vendorId) { showToast('Please select a vendor', 'warning'); return; }
+
+    document.getElementById('lifecycle-content').innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spin-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></span> Loading lifecycle…</div>`;
+    lucide.createIcons();
+
+    try {
+        const data = await ApiClient.request(`/reports/vendor-lifecycle?vendor_id=${vendorId}`);
+        renderLifecycle(data);
+    } catch(e) {
+        document.getElementById('lifecycle-content').innerHTML = `<div style="color:#ef4444;text-align:center;padding:40px">Error: ${e.message}</div>`;
+    }
+}
+
+function renderLifecycle(data) {
+    const m = data.metrics || {};
+    const tl = data.timeline || [];
+
+    const trendColor = m.recent_performance_trend === 'IMPROVING' ? '#10b981' : m.recent_performance_trend === 'DECLINING' ? '#ef4444' : '#f59e0b';
+    const trendIcon  = m.recent_performance_trend === 'IMPROVING' ? 'trending-up' : m.recent_performance_trend === 'DECLINING' ? 'trending-down' : 'minus';
+
+    const kpis = `
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px" class="two-col" style="grid-template-columns:repeat(3,1fr)">
+        ${[
+          ['Total Bids', m.total_bids, '#3b82f6'],
+          ['Contracts Won', m.contracts_won, '#10b981'],
+          ['Win Rate', (m.win_rate_pct||0)+'%', '#8b5cf6'],
+          ['Avg Technical', (m.avg_technical_score||0).toFixed(1), '#f59e0b'],
+          ['Trend', m.recent_performance_trend||'—', trendColor],
+        ].map(([l,v,c]) => `<div style="background:rgba(0,0,0,0.25);border-radius:12px;padding:14px;text-align:center;border:1px solid rgba(255,255,255,0.07)">
+            <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">${l}</div>
+            <div style="font-size:1.4rem;font-weight:700;color:${c}">${v}</div>
+        </div>`).join('')}
+    </div>`;
+
+    const evtIcon = {
+        CONTRACT_AWARDED: { icon:'award', color:'#10b981' },
+        BID_DISQUALIFIED: { icon:'x-circle', color:'#ef4444' },
+        BID_SUBMITTED:    { icon:'send', color:'#3b82f6' },
+        DELIVERY_COMPLETED: { icon:'package-check', color:'#10b981' },
+        DELIVERY_FAILED:  { icon:'package-x', color:'#ef4444' },
+        PAYMENT_RELEASED: { icon:'banknote', color:'#10b981' },
+        PAYMENT_HELD:     { icon:'alert-circle', color:'#f59e0b' },
+    };
+
+    const timelineHtml = tl.length ? tl.map(e => {
+        const cfg = evtIcon[e.event_type] || { icon:'circle', color:'#94a3b8' };
+        const date = e.date ? new Date(e.date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : 'Unknown Date';
+        const detail = e.tender_title || e.po_number || e.inspection_status || e.status || '';
+        return `
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background:${cfg.color}"></div>
+            <div style="display:flex;align-items:flex-start;gap:12px">
+                <div style="width:34px;height:34px;border-radius:8px;background:${cfg.color}22;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i data-lucide="${cfg.icon}" style="width:16px;height:16px;color:${cfg.color}"></i>
+                </div>
+                <div style="flex:1">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+                        <strong style="color:${cfg.color};font-size:0.82rem">${e.event_type.replace(/_/g,' ')}</strong>
+                        <span style="font-size:0.72rem;color:var(--text-muted)">${date}</span>
+                    </div>
+                    ${e.tender?`<div style="font-size:0.78rem;margin-top:4px">${e.tender}${detail?' — '+detail:''}</div>`:''}
+                    ${e.amount?`<div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px">₹${(e.amount/1e5).toFixed(2)} Lakhs</div>`:''}
+                </div>
+            </div>
+        </div>`;
+    }).join('') : `<div style="color:var(--text-muted);text-align:center;padding:30px">No timeline events found.</div>`;
+
+    document.getElementById('lifecycle-content').innerHTML = `
+        <div class="aa-card">
+            <div class="aa-card-title">
+                <i data-lucide="building-2" style="color:#ec4899;width:18px;height:18px"></i>
+                ${data.vendor_name}
+                <span style="font-size:0.75rem;color:var(--text-muted)">${data.gem_reg_no}</span>
+                ${data.msme?'<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 8px;border-radius:6px;font-size:0.7rem;font-weight:700">MSME</span>':''}
+                ${data.is_blacklisted?'<span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:3px 8px;border-radius:6px;font-size:0.7rem;font-weight:700">BLACKLISTED</span>':''}
+            </div>
+            ${kpis}
+            <div style="font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+                <i data-lucide="clock" style="width:16px;height:16px;color:#8b5cf6"></i>
+                Procurement Timeline
+            </div>
+            <div class="timeline">${timelineHtml}</div>
+        </div>`;
+    lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════
+//  RULE QUERY ENGINE
+// ══════════════════════════════════════════════════
+function setQuery(q) {
+    document.getElementById('rule-query-input').value = q;
+    switchTab('rules');
+    document.getElementById('rule-query-input').focus();
+}
+
+async function runRuleQuery() {
+    const query = document.getElementById('rule-query-input').value.trim();
+    if (!query) { showToast('Please enter a compliance query', 'warning'); return; }
+
+    document.getElementById('rule-results').innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spin-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></span> Evaluating rules…</div>`;
+    lucide.createIcons();
+
+    try {
+        const body = { query };
+        if (currentTenderId) body.tender_id = parseInt(currentTenderId);
+        const data = await ApiClient.request('/reports/rule-query', {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+        renderRuleResults(data);
+    } catch(e) {
+        document.getElementById('rule-results').innerHTML = `<div style="color:#ef4444;text-align:center;padding:40px">Error: ${e.message}</div>`;
+    }
+}
+
+function renderRuleResults(data) {
+    const results = data.compliance_results || [];
+    const statusColor = data.overall_color || '#94a3b8';
+
+    const overallHtml = `
+    <div class="aa-card" style="background:${data.overall_status==='COMPLIANT'?'rgba(16,185,129,0.07)':data.overall_status==='PARTIAL COMPLIANCE'?'rgba(245,158,11,0.07)':'rgba(239,68,68,0.07)'};border-color:${statusColor}40">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="width:64px;height:64px;border-radius:16px;background:${statusColor}22;border:2px solid ${statusColor};display:flex;align-items:center;justify-content:center">
+                <i data-lucide="${data.overall_status==='COMPLIANT'?'check-circle':data.overall_status==='PARTIAL COMPLIANCE'?'alert-triangle':'x-circle'}" style="width:28px;height:28px;color:${statusColor}"></i>
+            </div>
+            <div style="flex:1">
+                <div style="font-size:1.2rem;font-weight:700;color:${statusColor}">${data.overall_status}</div>
+                <div style="font-size:0.82rem;color:var(--text-muted)">Query: "${data.query}" — ${data.rules_matched} rules matched from database of ${data.total_rules_in_database}</div>
+            </div>
+            <div style="display:flex;gap:12px">
+                <div style="text-align:center">
+                    <div style="font-size:1.6rem;font-weight:700;color:#ef4444">${data.violations_count}</div>
+                    <div style="font-size:0.7rem;color:var(--text-muted)">Violations</div>
+                </div>
+                <div style="text-align:center">
+                    <div style="font-size:1.6rem;font-weight:700;color:#f59e0b">${data.warnings_count}</div>
+                    <div style="font-size:0.7rem;color:var(--text-muted)">Warnings</div>
+                </div>
+            </div>
+        </div>
+        ${data.recommendations && data.recommendations.length ? `
+        <div style="margin-top:16px;padding:14px;background:rgba(0,0,0,0.2);border-radius:10px">
+            <div style="font-weight:600;margin-bottom:8px;font-size:0.82rem;display:flex;align-items:center;gap:6px"><i data-lucide="clipboard-list" style="width:14px;height:14px;color:#f59e0b"></i> Required Actions:</div>
+            ${data.recommendations.map(r=>`<div style="font-size:0.8rem;color:#e2e8f0;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:#f87171;flex-shrink:0">→</span>${r}</div>`).join('')}
+        </div>` : ''}
+    </div>`;
+
+    const rulesHtml = results.map(r => {
+        const sc = {VIOLATION:'#ef4444',WARNING:'#f59e0b',COMPLIANT:'#10b981',ADVISORY:'#3b82f6',NOT_EVALUATED:'#64748b'}[r.status] || '#94a3b8';
+        const sevColor = {CRITICAL:'#ef4444',HIGH:'#f97316',MODERATE:'#f59e0b',COMPLIANCE:'#3b82f6',ADVISORY:'#06b6d4'}[r.severity] || '#64748b';
+        return `
+        <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-left:3px solid ${sc};border-radius:12px;padding:16px;margin-bottom:12px">
+            <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+                <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+                        <span class="rule-badge ${r.status}">${r.status}</span>
+                        <span style="background:${sevColor}22;color:${sevColor};padding:2px 8px;border-radius:4px;font-size:0.68rem;font-weight:700">${r.severity}</span>
+                        <span style="font-size:0.7rem;color:var(--text-muted);margin-left:auto">${r.rule_id}</span>
+                    </div>
+                    <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px">${r.title}</div>
+                    <div style="font-size:0.75rem;color:#60a5fa;margin-bottom:8px">📚 ${r.source} &nbsp;|&nbsp; 🏷 ${r.category}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6">${r.description}</div>
+                    ${r.finding ? `<div style="font-size:0.8rem;padding:8px 12px;background:rgba(0,0,0,0.25);border-radius:8px;border-left:3px solid ${sc};color:#e2e8f0">
+                        <strong style="color:${sc}">Finding:</strong> ${r.finding}
+                    </div>` : ''}
+                    ${r.action_required ? `<div style="font-size:0.78rem;color:#fbbf24;margin-top:8px;display:flex;gap:6px;align-items:flex-start"><i data-lucide="alert-triangle" style="width:13px;height:13px;flex-shrink:0;margin-top:2px"></i>${r.action_required}</div>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('rule-results').innerHTML = overallHtml + `
+    <div class="aa-card">
+        <div class="aa-card-title">
+            <i data-lucide="list-checks" style="color:#8b5cf6;width:18px;height:18px"></i>
+            Rule-by-Rule Compliance Assessment (${results.length} rules evaluated)
+        </div>
+        ${rulesHtml}
+    </div>`;
+
+    lucide.createIcons();
+}
+
+// ── Keyboard support for rule query ──────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('rule-query-input');
+    if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') runRuleQuery(); });
+});
+
+// ── Init ──────────────────────────────────────────
+async function init() {
+    await Promise.all([loadTenders(), loadVendors()]);
+    // Auto-load ESG on page load (no tender needed)
+    try {
+        esgData = await ApiClient.request('/reports/esg-scorecard');
+        renderESG(esgData);
+    } catch(e) { console.warn('ESG pre-load:', e.message); }
+}
+init();
+</script>
+</body>
+</html>

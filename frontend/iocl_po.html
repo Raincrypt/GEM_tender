@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOCL Purchase Order - Procurement Ecosystem</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .iocl-header {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.15), rgba(249, 115, 22, 0.05));
+            border: 1px solid rgba(234, 88, 12, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .iocl-logo {
+            width: 64px; height: 64px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ea580c, #f59e0b);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.1rem; color: white;
+            letter-spacing: 1px;
+        }
+        .iocl-header h2 { color: #fb923c; margin: 0 0 4px 0; }
+        .iocl-header p { color: var(--text-muted); margin: 0; font-size: 0.85rem; }
+
+        .pipeline {
+            display: flex; align-items: center; gap: 0;
+            margin-bottom: 32px; overflow-x: auto; padding: 10px 0;
+        }
+        .pipeline-step {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600;
+            white-space: nowrap; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02); color: var(--text-muted);
+        }
+        .pipeline-step.active {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.2), rgba(249, 115, 22, 0.1));
+            border-color: #ea580c; color: #fb923c;
+            box-shadow: 0 0 15px rgba(234, 88, 12, 0.15);
+        }
+        .pipeline-step.done {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3); color: #10b981;
+        }
+        .pipeline-arrow { color: var(--text-muted); font-size: 1.2rem; padding: 0 4px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-grid .full-width { grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Purchase Order Management</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Stage 7 — PO Generation & SAP Sync</p>
+                </div>
+            </header>
+
+            <div class="iocl-header">
+                <div class="iocl-logo">IOCL</div>
+                <div>
+                    <h2>Indian Oil Corporation Limited</h2>
+                    <p>SAP MM Module Sync | Liquidated Damages & Tax Terms</p>
+                </div>
+            </div>
+
+            <div class="pipeline" id="pipeline-tracker">
+                <div class="pipeline-step done" data-stage="1"><i data-lucide="clipboard-list" style="width:14px;height:14px;"></i> 1. Indent</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="2"><i data-lucide="megaphone" style="width:14px;height:14px;"></i> 2. NIT</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="3"><i data-lucide="inbox" style="width:14px;height:14px;"></i> 3. Bid Submission</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="4"><i data-lucide="scan-search" style="width:14px;height:14px;"></i> 4. TCE</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="5"><i data-lucide="indian-rupee" style="width:14px;height:14px;"></i> 5. Price Bid</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="6"><i data-lucide="handshake" style="width:14px;height:14px;"></i> 6. PAC</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step active" data-stage="7"><i data-lucide="file-check" style="width:14px;height:14px;"></i> 7. PO</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="8"><i data-lucide="truck" style="width:14px;height:14px;"></i> 8. Delivery</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="9"><i data-lucide="banknote" style="width:14px;height:14px;"></i> 9. Payment</div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="d-flex justify-between align-center">
+                    <h3 style="margin:0;">Pending Purchase Orders</h3>
+                    <button class="btn btn-primary" onclick="openCreatePOModal()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;">
+                        <i data-lucide="plus"></i> Generate SAP PO
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>PO Number</th>
+                                <th>SAP PO</th>
+                                <th>Tender / NIT</th>
+                                <th>Vendor</th>
+                                <th>Total Value (₹)</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="po-tbody">
+                            <tr><td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">Loading Purchase Orders...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create PO Modal -->
+    <div class="modal-overlay" id="createPOModal">
+        <div class="card modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 style="display:flex; align-items:center; gap:10px;">
+                    <i data-lucide="file-plus" style="color: #3b82f6;"></i> Generate Purchase Order
+                </h2>
+                <button class="btn btn-outline" style="padding: 4px; border: none;" onclick="closeCreatePOModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form id="po-form" onsubmit="submitCreatePO(event)">
+                <div class="form-group">
+                    <label class="form-label">Awarded Tender / NIT</label>
+                    <select class="form-control" id="f-tender" onchange="loadTenderDetailsForPO()" required>
+                        <option value="">Select an Awarded Tender...</option>
+                    </select>
+                </div>
+
+                <div class="form-grid" id="po-details" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
+                    <div class="form-group">
+                        <label class="form-label">Vendor Name</label>
+                        <input type="text" class="form-control" id="f-vendor-name" readonly style="background:rgba(0,0,0,0.2);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Basic Value (₹)</label>
+                        <input type="number" class="form-control" id="f-value" readonly style="background:rgba(0,0,0,0.2);">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Taxes (GST 18%)</label>
+                        <input type="number" class="form-control" id="f-taxes" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment Terms</label>
+                        <select class="form-control" id="f-payment">
+                            <option value="30 Days from Invoice">30 Days from Invoice</option>
+                            <option value="45 Days from Invoice (MSME)">45 Days from Invoice (MSME)</option>
+                            <option value="100% against Delivery">100% against Delivery</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label class="form-label">Delivery Address</label>
+                        <textarea class="form-control" id="f-address" rows="2" placeholder="IOCL Central Stores..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label class="form-label">Liquidated Damages (LD) Clause</label>
+                        <input type="text" class="form-control" id="f-ld" value="0.5% per week of delay, subject to maximum of 5% of total PO value.">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Inspection Clause</label>
+                        <select class="form-control" id="f-inspection">
+                            <option value="IOCL Standard Site Inspection">IOCL Standard Site Inspection</option>
+                            <option value="Third Party Inspection (TPI)">Third Party Inspection (TPI)</option>
+                            <option value="Self Certification by OEM">Self Certification by OEM</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Warranty Period (Months)</label>
+                        <input type="number" class="form-control" id="f-warranty" value="12" required>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; justify-content:flex-end; margin-top: 24px;">
+                    <button type="button" class="btn btn-outline" onclick="closeCreatePOModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-generate" style="display:none; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;">
+                        <i data-lucide="check-circle"></i> Generate & Sync to SAP
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+        
+        let loadedTenders = [];
+        let selectedTenderData = null;
+
+        async function loadData() {
+            try {
+                // Load Awarded Tenders for dropdown
+                const tenders = await ApiClient.getTenders('Awarded');
+                loadedTenders = tenders;
+                const sel = document.getElementById('f-tender');
+                tenders.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = `${t.bid_number} - ${t.title}`;
+                    sel.appendChild(opt);
+                });
+
+                // Load existing POs
+                const pos = await ApiClient.getPurchaseOrders();
+                const tbody = document.getElementById('po-tbody');
+                if(pos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">No Purchase Orders generated yet.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = pos.map(po => {
+                    const dt = new Date(po.created_at).toLocaleDateString();
+                    return `<tr>
+                        <td style="font-weight:600; color:#3b82f6;">${po.po_number}</td>
+                        <td style="font-family:monospace; color:var(--text-muted);">${po.sap_po_number}</td>
+                        <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${po.tender_title}</td>
+                        <td>${po.vendor_name}</td>
+                        <td style="font-weight:600;">₹${po.total_po_value.toLocaleString('en-IN')}</td>
+                        <td>${dt}</td>
+                        <td><span class="badge badge-success">${po.status}</span></td>
+                    </tr>`;
+                }).join('');
+                
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadTenderDetailsForPO() {
+            const id = document.getElementById('f-tender').value;
+            if(!id) {
+                document.getElementById('po-details').style.display = 'none';
+                document.getElementById('btn-generate').style.display = 'none';
+                return;
+            }
+            
+            try {
+                const data = await ApiClient.request(`/tenders/${id}`);
+                selectedTenderData = data;
+                
+                // Find winning bid
+                const winner = data.bids.find(b => b.status === 'Winner');
+                if(winner) {
+                    document.getElementById('po-details').style.display = 'grid';
+                    document.getElementById('btn-generate').style.display = 'flex';
+                    
+                    document.getElementById('f-vendor-name').value = winner.vendor_name;
+                    document.getElementById('f-value').value = winner.bid_amount;
+                    document.getElementById('f-taxes').value = (winner.bid_amount * 0.18).toFixed(2); // Auto 18% GST estimate
+                } else {
+                    showToast("No winning bid found for this tender.", "error");
+                }
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        function openCreatePOModal() { document.getElementById('createPOModal').classList.add('active'); }
+        function closeCreatePOModal() { 
+            document.getElementById('createPOModal').classList.remove('active'); 
+            document.getElementById('po-form').reset();
+            document.getElementById('po-details').style.display = 'none';
+            document.getElementById('btn-generate').style.display = 'none';
+        }
+
+        async function submitCreatePO(e) {
+            e.preventDefault();
+            const winner = selectedTenderData.bids.find(b => b.status === 'Winner');
+            
+            const payload = {
+                tender_id: selectedTenderData.id,
+                vendor_id: winner.vendor_id,
+                bid_id: winner.id,
+                po_value: parseFloat(document.getElementById('f-value').value),
+                taxes_amount: parseFloat(document.getElementById('f-taxes').value),
+                delivery_address: document.getElementById('f-address').value,
+                inspection_clause: document.getElementById('f-inspection').value,
+                payment_terms: document.getElementById('f-payment').value,
+                ld_clause: document.getElementById('f-ld').value,
+                warranty_period: parseInt(document.getElementById('f-warranty').value)
+            };
+            
+            try {
+                const res = await ApiClient.createPurchaseOrder(payload);
+                showToast(`PO ${res.po_number} generated and synced with SAP: ${res.sap_po_number}`, 'success');
+                closeCreatePOModal();
+                loadData();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        loadData();
+
+    </script>
+</body>
+</html>

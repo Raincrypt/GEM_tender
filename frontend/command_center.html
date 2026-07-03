@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Center v7.0 | AI Operations</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <script type="text/javascript" src="vendor/js/vis-network.min.js"></script>
+    <style>
+        :root {
+            --bg-base: #030712;
+            --bg-panel: rgba(15, 23, 42, 0.6);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Particle Background */
+        #particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        /* Top Navigation */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(3, 7, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple), var(--accent-cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .brand p {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .nav-links { display: flex; gap: 8px; }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Main Grid Layout */
+        .dashboard-container {
+            position: relative;
+            z-index: 10;
+            padding: 24px 32px;
+            max-width: 1920px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 24px;
+        }
+
+        /* Panel Glassmorphism */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .panel:hover {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        /* Typography & Utilities */
+        .mono { font-family: var(--font-mono); }
+        .text-muted { color: var(--text-muted); }
+        .text-sm { font-size: 0.8rem; }
+        .text-xs { font-size: 0.7rem; }
+        .font-bold { font-weight: 700; }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .bg-danger { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+        .bg-warning { background: rgba(245, 158, 11, 0.15); color: var(--accent-orange); }
+        .bg-success { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .bg-info { background: rgba(59, 130, 246, 0.15); color: var(--accent-primary); }
+
+        /* Cognitive Map Visualization */
+        #cognitive-map {
+            width: 100%;
+            height: 400px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px inset rgba(255, 255, 255, 0.05);
+        }
+
+        /* Swarm Agents List */
+        .agent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .agent-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-left: 4px solid transparent;
+        }
+
+        .agent-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .agent-details { flex: 1; }
+        .agent-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+        .agent-role { font-size: 0.75rem; color: var(--text-muted); line-height: 1.3; }
+
+        .pulse-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Threat Intel Feed */
+        .threat-feed {
+            display: flex; flex-direction: column; gap: 8px;
+            max-height: 300px; overflow-y: auto;
+        }
+        .threat-item {
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .threat-item.critical { border-left: 3px solid var(--accent-red); background: linear-gradient(90deg, rgba(239, 68, 68, 0.05) 0%, transparent 100%); }
+        .threat-item.high { border-left: 3px solid var(--accent-orange); }
+
+        .threat-header { display: flex; justify-content: space-between; align-items: center; }
+        .threat-type { font-weight: 600; font-size: 0.8rem; }
+        .threat-time { font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); }
+        .threat-desc { font-size: 0.8rem; color: #cbd5e1; }
+
+        /* Live Negotiation Stream */
+        .neg-stream {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .msg-row { display: flex; gap: 12px; }
+        .msg-time { color: var(--text-muted); min-width: 60px; }
+        .msg-sender { font-weight: 700; min-width: 120px; }
+        .msg-content { color: #e2e8f0; line-height: 1.5; }
+
+        /* Loader */
+        #loader {
+            position: fixed; inset: 0; background: var(--bg-base);
+            z-index: 9999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+        
+        /* Layout Grid specific */
+        .grid-span-2 { grid-column: span 2; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="particles"></canvas>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="mono text-muted" style="letter-spacing: 2px;">INITIALIZING AI SWARM V7.0...</div>
+    </div>
+
+    <div class="topbar">
+        <div class="brand">
+            <h1>Command Center v7.0</h1>
+            <p>AUTONOMOUS AI OPERATIONS • SWARM INTELLIGENCE • THREAT FORENSICS</p>
+        </div>
+        <div class="nav-links">
+        <a href="command_center.html" style="border-color:#06b6d4; color:#06b6d4;"><i data-lucide="home" style="width:14px;height:14px;"></i> Command Center</a>
+        <a href="dashboard.html"><i data-lucide="layout-dashboard" style="width:14px;height:14px;"></i> Eval Dashboard</a>
+            <a href="test_everything.html"><i data-lucide="layout-dashboard"></i> Hub</a>
+            <a href="deep_forensics.html"><i data-lucide="microscope"></i> Forensics</a>
+            <a href="analytics_dashboard.html"><i data-lucide="bar-chart-2"></i> Analytics</a>
+            <a href="swarm_playground.html"><i data-lucide="cpu"></i> Swarm Playground</a>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Main Column -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            
+            <!-- Cognitive Map & Swarm Status -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                <!-- Cognitive Map -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title"><i data-lucide="network" style="color: var(--accent-purple);"></i> Swarm Cognitive Map</div>
+                        <div class="badge bg-info mono">LIVE GRAPH</div>
+                    </div>
+                    <div id="cognitive-map"></div>
+                </div>
+
+                <!-- Active Agents -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title"><i data-lucide="cpu" style="color: var(--accent-green);"></i> Swarm Nodes</div>
+                        <div class="flex-between gap-2 text-xs text-muted mono">
+                            <span class="pulse-dot"></span> <span id="agent-count">0</span> ACTIVE
+                        </div>
+                    </div>
+                    <div class="agent-list" id="agents-container">
+                        <!-- Agents populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Negotiation Stream -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i data-lucide="message-square-dashed" style="color: var(--accent-primary);"></i> Autonomous Swarm Operations</div>
+                    <button id="run-swarm-btn" style="background: var(--accent-primary); color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
+                        <i data-lucide="play" style="width: 14px; height: 14px;"></i> EXECUTE SWARM
+                    </button>
+                </div>
+                <div class="neg-stream" id="swarm-stream">
+                    <div class="text-muted text-center" style="margin-top: 100px;">Awaiting swarm execution command...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side Column -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            
+            <!-- Threat Intelligence -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i data-lucide="shield-alert" style="color: var(--accent-red);"></i> Threat Sentinel</div>
+                    <div class="badge" id="threat-level-badge">SCANNING</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                        <div class="text-xs text-muted mb-1 mono">ACTIVE THREATS</div>
+                        <div class="font-bold" style="font-size: 1.5rem;" id="total-threats">0</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                        <div class="text-xs text-muted mb-1 mono">CRITICAL</div>
+                        <div class="font-bold" style="font-size: 1.5rem; color: var(--accent-red);" id="critical-threats">0</div>
+                    </div>
+                </div>
+                <div class="threat-feed" id="threat-container">
+                    <!-- Threats populated via JS -->
+                </div>
+            </div>
+
+            <!-- Market Intelligence Radar -->
+            <div class="panel" style="flex: 1;">
+                <div class="panel-header">
+                    <div class="panel-title"><i data-lucide="pie-chart" style="color: var(--accent-cyan);"></i> Market Intelligence</div>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="marketChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Background Particles Script -->
+    <script>
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.color = `rgba(${Math.random()>0.5?'59,130,246':'139,92,246'}, ${Math.random()*0.3+0.1})`;
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if(this.x > canvas.width) this.x = 0;
+                else if(this.x < 0) this.x = canvas.width;
+                if(this.y > canvas.height) this.y = 0;
+                else if(this.y < 0) this.y = canvas.height;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        for(let i=0; i<100; i++) particles.push(new Particle());
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for(let p of particles) { p.update(); p.draw(); }
+            requestAnimationFrame(animate);
+        }
+        animate();
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    </script>
+
+    <!-- Main Logic -->
+    <script src="js/api.js"></script>
+    <script>
+        let networkMap = null;
+
+        // Auto-login: ensure a valid token is always present before any API calls
+        async function ensureLoggedIn() {
+            const token = ApiClient.getToken();
+            if (token) return; // already have a token
+            try {
+                const resp = await fetch(`${API_BASE_URL}/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'username=admin&password=admin123'
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    ApiClient.setToken(data.access_token);
+                    localStorage.setItem('gem_user', JSON.stringify(data.user));
+                }
+            } catch(e) { console.warn('Auto-login failed', e); }
+        }
+
+        async function initCommandCenter() {
+            await ensureLoggedIn();
+            try {
+                // Fetch all initial data
+                const [heartbeat, threatIntel, marketData, tenders] = await Promise.all([
+                    ApiClient.getAgentHeartbeat(),
+                    ApiClient.getThreatIntel(),
+                    ApiClient.getMarketIntelligence(),
+                    ApiClient.getTenders('Under Evaluation')
+                ]);
+
+                // Render Agents
+                renderAgents(heartbeat.agents);
+                
+                // Render Threat Intel
+                renderThreats(threatIntel);
+
+                // Render Market Chart
+                renderMarketChart(marketData.categories);
+
+                // Setup Cognitive Map using the first 'Under Evaluation' tender as a demo
+                const targetTender = tenders.length > 0 ? tenders[0].id : 1;
+                setupCognitiveMap(targetTender);
+
+                // Setup Swarm Execution button
+                document.getElementById('run-swarm-btn').onclick = () => executeSwarmSequence(targetTender);
+
+                document.getElementById('loader').style.display = 'none';
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error("Initialization Error:", error);
+                document.getElementById('loader').innerHTML = `<div style="color:var(--accent-red);font-family:var(--font-mono);">Initialization Failed: ${error.message}</div>`;
+            }
+        }
+
+        function renderAgents(agents) {
+            document.getElementById('agent-count').textContent = agents.length;
+            const container = document.getElementById('agents-container');
+            container.innerHTML = agents.map(a => `
+                <div class="agent-card" style="border-left-color: ${a.color};">
+                    <div class="agent-icon" style="color: ${a.color}; border: 1px solid ${a.color}40;">
+                        <i data-lucide="${a.icon}"></i>
+                    </div>
+                    <div class="agent-details">
+                        <div class="flex-between">
+                            <div class="agent-name">${a.name}</div>
+                            <div class="badge ${a.status === 'ACTIVE' ? 'bg-success' : 'bg-warning'}">${a.status}</div>
+                        </div>
+                        <div class="agent-role">${a.role}</div>
+                        <div class="text-xs text-muted mono mt-2">CPU: ${a.metrics.cpu_load_pct}% | LAT: ${a.metrics.avg_latency_ms}ms</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderThreats(data) {
+            document.getElementById('total-threats').textContent = data.total_threats;
+            document.getElementById('critical-threats').textContent = data.critical_count;
+            
+            const badge = document.getElementById('threat-level-badge');
+            badge.textContent = data.system_threat_level;
+            badge.className = `badge ${data.system_threat_level === 'CRITICAL' ? 'bg-danger' : data.system_threat_level === 'HIGH' ? 'bg-warning' : 'bg-success'}`;
+
+            const container = document.getElementById('threat-container');
+            container.innerHTML = data.threats.map(t => `
+                <div class="threat-item ${t.severity.toLowerCase()}">
+                    <div class="threat-header">
+                        <span class="threat-type" style="color: ${t.severity === 'CRITICAL' ? 'var(--accent-red)' : 'var(--accent-orange)'}">${t.type.replace(/_/g, ' ')}</span>
+                        <span class="threat-time">${new Date(t.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <div class="threat-desc">${t.detail}</div>
+                    <div class="text-xs text-muted mono">TENDER: ${t.tender}</div>
+                </div>
+            `).join('');
+
+            if(data.threats.length === 0) {
+                container.innerHTML = `<div class="text-muted text-center text-sm" style="padding: 20px;">No active threats detected. System secure.</div>`;
+            }
+        }
+
+        function renderMarketChart(categories) {
+            if(!categories || categories.length === 0) return;
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories.map(c => c.category),
+                    datasets: [{
+                        data: categories.map(c => c.total_estimated_value),
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        async function setupCognitiveMap(tenderId) {
+            try {
+                const mapData = await ApiClient.getCognitiveMap(tenderId);
+                const container = document.getElementById('cognitive-map');
+                
+                // Format nodes for vis.js
+                const nodes = new vis.DataSet(mapData.nodes.map(n => ({
+                    id: n.id,
+                    label: n.label,
+                    shape: n.type === 'agent' ? 'hexagon' : n.type === 'tender' ? 'star' : 'dot',
+                    color: { background: n.color + '20', border: n.color, highlight: { border: n.color, background: n.color + '40' } },
+                    font: { color: '#e2e8f0', face: 'JetBrains Mono', size: 12 },
+                    borderWidth: 2,
+                    size: n.type === 'agent' ? 25 : n.type === 'tender' ? 30 : 15
+                })));
+
+                const edges = new vis.DataSet(mapData.edges.map(e => ({
+                    from: e.from, to: e.to, label: e.label,
+                    color: { color: 'rgba(255,255,255,0.1)', highlight: '#3b82f6' },
+                    font: { color: '#64748b', size: 10, align: 'middle' },
+                    arrows: 'to',
+                    dashes: e.label === 'analyzes' || e.label === 'validates'
+                })));
+
+                const options = {
+                    physics: { barnesHut: { gravitationalConstant: -2000, centralGravity: 0.3, springLength: 95 } },
+                    interaction: { hover: true, tooltipDelay: 200 }
+                };
+
+                networkMap = new vis.Network(container, { nodes, edges }, options);
+            } catch (e) {
+                console.error("Map rendering failed", e);
+                document.getElementById('cognitive-map').innerHTML = `<div style="padding: 20px; color: var(--text-muted);">Failed to load graph data.</div>`;
+            }
+        }
+
+        async function executeSwarmSequence(tenderId) {
+            const btn = document.getElementById('run-swarm-btn');
+            const stream = document.getElementById('swarm-stream');
+            
+            btn.innerHTML = `<i data-lucide="loader" class="spinner-icon" style="width: 14px; animation: spin 1s linear infinite;"></i> PROCESSING...`;
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            lucide.createIcons();
+
+            stream.innerHTML = `<div class="text-center text-muted" style="margin-top: 100px;">
+                <div class="spinner" style="width: 30px; height: 30px; border-width: 2px; margin: 0 auto 10px auto;"></div>
+                Streaming Live Autonomous Multi-Agent Swarm...
+            </div>`;
+
+            // Close existing source if any
+            if(window.currentStream) window.currentStream.close();
+
+            const token = localStorage.getItem('token');
+            // Normally EventSource doesn't support custom headers easily, so we might pass token in URL if needed
+            // For this demo/test, we just connect to the endpoint
+            const source = new EventSource(`${API_BASE_URL}/ai-ops/negotiate-stream/${tenderId}`);
+            window.currentStream = source;
+            
+            let firstMsg = true;
+
+            source.onmessage = function(event) {
+                if(firstMsg) { stream.innerHTML = ''; firstMsg = false; }
+                const msg = JSON.parse(event.data);
+                
+                const row = document.createElement('div');
+                row.className = 'msg-row';
+                const time = new Date(msg.timestamp).toISOString().split('T')[1].substring(0, 8);
+                
+                if(networkMap && msg.sender) {
+                    networkMap.selectNodes([msg.sender]);
+                }
+
+                row.innerHTML = `
+                    <div class="msg-time">[${time}]</div>
+                    <div class="msg-sender" style="color: ${msg.agent_info?.color || '#94a3b8'}">${msg.sender}</div>
+                    <div class="msg-content">${msg.content}</div>
+                `;
+                stream.appendChild(row);
+                stream.scrollTop = stream.scrollHeight;
+
+                if (msg.type === "consensus") {
+                    setTimeout(() => {
+                        if(networkMap) networkMap.unselectAll();
+                        const verdict = document.createElement('div');
+                        const isAppr = msg.metadata.approved;
+                        verdict.style.cssText = `margin-top: 16px; padding: 16px; border-radius: 8px; border: 1px solid ${isAppr ? 'var(--accent-green)' : 'var(--accent-orange)'}; background: rgba(${isAppr ? '16,185,129' : '245,158,11'}, 0.1);`;
+                        verdict.innerHTML = `
+                            <div style="font-weight:700; margin-bottom:8px; color:${isAppr ? 'var(--accent-green)' : 'var(--accent-orange)'}">SWARM VERDICT: ${isAppr ? 'APPROVED' : 'MANUAL REVIEW REQUIRED'}</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div><span class="text-muted text-xs">FINAL NEGOTIATED L1</span><br><span style="font-size:1.2rem; font-weight:700;">₹${msg.metadata.final_amount.toLocaleString()}</span></div>
+                                <div><span class="text-muted text-xs">AUTONOMOUS SAVINGS</span><br><span style="font-size:1.2rem; font-weight:700; color:var(--accent-green);">₹${msg.metadata.savings.toLocaleString()} (${msg.metadata.savings_pct || 0}%)</span></div>
+                            </div>
+                        `;
+                        stream.appendChild(verdict);
+                        stream.scrollTop = stream.scrollHeight;
+                    }, 1000);
+                }
+            };
+
+            source.addEventListener('end', function() {
+                source.close();
+                btn.innerHTML = `<i data-lucide="play" style="width: 14px; height: 14px;"></i> EXECUTE SWARM`;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                lucide.createIcons();
+            });
+
+            source.onerror = function(err) {
+                console.error("SSE Error", err);
+                source.close();
+                btn.innerHTML = `<i data-lucide="play" style="width: 14px; height: 14px;"></i> EXECUTE SWARM`;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                lucide.createIcons();
+                if(firstMsg) {
+                    stream.innerHTML = `<div style="color: var(--accent-red); padding: 16px;">Live Stream Connection Failed. Ensure FastAPI is running on port 8000.</div>`;
+                }
+            };
+        }
+
+        window.onload = initCommandCenter;
+    </script>
+</body>
+</html>

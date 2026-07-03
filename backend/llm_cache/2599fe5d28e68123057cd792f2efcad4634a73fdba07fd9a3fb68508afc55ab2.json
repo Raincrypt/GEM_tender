@@ -1,0 +1,4 @@
+{
+    "response": "Verified digital PDF content. Verified digital PDF content. Verified digital PDF content. Verified digital PDF content. Verified digital PDF content. Verified digital PDF content. Verified digital PDF content. Verified digital PDF content. Verified digital PDF content. Verified digital PDF content. Verified digital PDF content.",
+    "prompt_preview": "You are an expert document layout and OCR spelling correction tool. Correct transcription spelling errors, broken tables, structural noise, and split words (e.g., 'UDY AM' -> 'UDYAM', '1.5l\\111v1' -> '1.5mm') in the OCR text below. CRITICAL RULES:\n1. Do NOT summarize or shorten the text. Return the "
+}

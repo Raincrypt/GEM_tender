@@ -1,0 +1,3010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical-Commercial Recommendation | GEM Intelligence</title>
+    <meta name="description" content="Dynamic Technical-Commercial Bid Analysis — Document compliance matrix, annexure verification, TBA-1/TBA-2 analysis for any tender.">
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="js/api.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#030712;color:#f3f4f6;min-height:100vh}
+
+        /* ── TOPBAR ── */
+        .topbar{padding:16px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(17,24,39,.55);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100}
+        .topbar h1{font-size:1.25rem;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa,#34d399);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .topbar-sub{font-size:.67rem;color:#475569;margin-top:2px;letter-spacing:.04em}
+        .nav-links{display:flex;gap:7px;flex-wrap:wrap}
+        .nav-links a{text-decoration:none;color:#94a3b8;background:rgba(255,255,255,.03);padding:6px 13px;border-radius:8px;font-size:.75rem;border:1px solid rgba(255,255,255,.05);display:inline-flex;align-items:center;gap:5px;transition:all .2s}
+        .nav-links a:hover,.nav-links a.active{border-color:#a78bfa;color:#a78bfa;background:rgba(167,139,250,.06)}
+
+        /* ── LAYOUT ── */
+        .page{padding:22px 28px;display:flex;flex-direction:column;gap:18px}
+
+        /* ── REF STRIP ── */
+        .ref-strip{display:flex;flex-wrap:wrap;gap:0;background:rgba(17,24,39,.8);border:1px solid rgba(255,255,255,.05);border-radius:12px;overflow:hidden}
+        .ref-chip{display:flex;flex-direction:column;gap:2px;padding:12px 20px;border-right:1px solid rgba(255,255,255,.05);flex:1;min-width:140px}
+        .ref-chip:last-child{border-right:none}
+        .ref-lbl{font-size:.58rem;color:#475569;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+        .ref-val{font-size:.8rem;color:#e2e8f0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+        /* ── KPI GRID ── */
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+        .kpi-card{background:rgba(17,24,39,.8);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:16px;position:relative;overflow:hidden;transition:transform .2s}
+        .kpi-card:hover{transform:translateY(-2px)}
+        .kpi-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(to bottom,#3b82f6,#8b5cf6)}
+        .kpi-card.g::before{background:linear-gradient(to bottom,#10b981,#34d399)}
+        .kpi-card.r::before{background:linear-gradient(to bottom,#f43f5e,#fb923c)}
+        .kpi-card.a::before{background:linear-gradient(to bottom,#f59e0b,#d97706)}
+        .kpi-card.p::before{background:linear-gradient(to bottom,#c084fc,#8b5cf6)}
+        .kpi-head{display:flex;justify-content:space-between;align-items:center;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:#64748b;margin-bottom:6px}
+        .kpi-val{font-size:1.75rem;font-weight:800;color:#f9fafb;line-height:1}
+        .kpi-sub{font-size:.65rem;color:#475569;margin-top:5px}
+
+        /* ── CARDS ── */
+        .card{background:rgba(17,24,39,.6);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px}
+        .card-hdr{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.04)}
+        .card-title{font-size:.95rem;font-weight:700;color:#f8fafc;display:flex;align-items:center;gap:7px}
+
+        /* ── FILTER BAR ── */
+        .filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+        .fbtn{padding:5px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#94a3b8;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+        .fbtn:hover{border-color:#a78bfa;color:#a78bfa}
+        .fbtn.active{border-color:#a78bfa;color:#a78bfa;background:rgba(167,139,250,.08)}
+        .fbtn.ga.active{border-color:#10b981;color:#10b981;background:rgba(16,185,129,.08)}
+        .fbtn.ra.active{border-color:#f43f5e;color:#f43f5e;background:rgba(244,63,94,.08)}
+        .fbtn.qa.active{border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,.08)}
+        .srch{padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#e2e8f0;font-size:.74rem;outline:none;width:190px;font-family:inherit}
+        .srch:focus{border-color:rgba(167,139,250,.4)}
+        .srch::placeholder{color:#475569}
+
+        /* ── COMPLIANCE TABLE (SPREADSHEET LOOK) ── */
+        .tbl-wrap{overflow-x:auto;border-radius:10px}
+        .spreadsheet-card {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        .spreadsheet-card .card-hdr {
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        .spreadsheet-card .card-title {
+            color: #0f172a !important;
+        }
+        .spreadsheet-card .fbtn {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+        .spreadsheet-card .fbtn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        .spreadsheet-card .fbtn.active {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+        }
+        .spreadsheet-card .srch {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+        }
+        .spreadsheet-card .srch::placeholder {
+            color: #94a3b8;
+        }
+        table{width:100%;border-collapse:collapse;font-size:.76rem;min-width:1120px;background:#ffffff;color:#0f172a}
+        thead{position:sticky;top:0;z-index:10}
+        th{padding:11px 13px;color:#1e293b;font-weight:800;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;background:#f1f5f9;border:1px solid #cbd5e1;white-space:nowrap;text-align:center}
+        td{padding:12px 13px;border:1px solid #cbd5e1;vertical-align:top;color:#334155}
+        tr:hover td{background:#f8fafc}
+        .tr-acc td:first-child{border-left:3px solid #10b981}
+        .tr-rej td:first-child{border-left:3px solid #f43f5e}
+        .tr-qry td:first-child{border-left:3px solid #f59e0b}
+
+        /* ── BADGES ── */
+        .badge{padding:3px 8px;border-radius:5px;font-size:.65rem;font-weight:700;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+        .bg{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.25)}
+        .br{background:rgba(244,63,94,.12);color:#f43f5e;border:1px solid rgba(244,63,94,.25)}
+        .ba{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.25)}
+        .bb{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25)}
+        .bp{background:rgba(139,92,246,.12);color:#a78bfa;border:1px solid rgba(139,92,246,.25)}
+        .bx{background:rgba(100,116,139,.1);color:#94a3b8;border:1px solid rgba(100,116,139,.18)}
+
+        /* ── DOC TICK ── */
+        .dtick{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:.65rem;font-weight:800;cursor:help;transition:transform .15s}
+        .dtick:hover{transform:scale(1.2)}
+        .dy{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+        .dn{background:rgba(244,63,94,.1);color:#f43f5e;border:1px solid rgba(244,63,94,.2)}
+        .dp{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.2)}
+
+        /* ── MISSING PILLS ── */
+        .miss-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+        .mp{font-size:.58rem;padding:2px 6px;border-radius:4px;background:rgba(244,63,94,.08);color:#f87171;border:1px solid rgba(244,63,94,.15);font-weight:700}
+
+        /* ── VENDOR NAME CELL ── */
+        .vname{font-weight:700;color:#f1f5f9;font-size:.8rem}
+        .vtags{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap}
+
+        /* ── FIN CELL ── */
+        .fin-entry{font-size:.7rem;color:#94a3b8;line-height:1.5}
+        .fin-entry span{color:#60a5fa;font-weight:600}
+
+        /* ── SPLIT ── */
+        .split{display:grid;grid-template-columns:3fr 2fr;gap:18px}
+        @media(max-width:1200px){.split{grid-template-columns:1fr}}
+
+        /* ── VENDOR CARDS ── */
+        .vc{background:rgba(17,24,39,.8);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;margin-bottom:8px}
+        .vc:hover{border-color:rgba(167,139,250,.3);background:rgba(30,27,75,.35)}
+        .vc.sel{border-color:rgba(167,139,250,.5);background:rgba(30,27,75,.5);box-shadow:0 0 18px rgba(139,92,246,.1)}
+        .vc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+        .vc-name{font-weight:700;font-size:.85rem;color:#f1f5f9}
+        .vc-sub{font-size:.67rem;color:#64748b;margin-top:1px}
+        .doc-dots{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:8px}
+        .dot-item{text-align:center}
+        .dot-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;margin:0 auto 2px;font-size:.65rem;font-weight:800}
+        .doi-ok{background:rgba(16,185,129,.15);color:#10b981}
+        .doi-no{background:rgba(244,63,94,.1);color:#f43f5e}
+        .doi-lbl{font-size:.52rem;color:#475569;text-transform:uppercase;letter-spacing:.03em}
+
+        /* ── DRAWER ── */
+        .drawer{background:rgba(8,12,26,.95);border:1px solid rgba(167,139,250,.18);border-radius:12px;padding:18px;display:none;flex-direction:column;gap:12px;margin-bottom:8px}
+        .drawer.open{display:flex;animation:sd .18s ease}
+        @keyframes sd{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+        .ds-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#64748b;border-bottom:1px solid rgba(255,255,255,.04);padding-bottom:4px;margin-bottom:4px}
+        .ds-txt{font-size:.73rem;color:#cbd5e1;line-height:1.6}
+        .ds-qrow{display:flex;flex-direction:column;gap:6px}
+        .ds-q{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.12);border-radius:7px;padding:8px 10px}
+        .ds-q-lbl{font-size:.64rem;font-weight:700;color:#f59e0b;margin-bottom:3px;display:flex;align-items:center;gap:4px}
+        .ds-q-txt{font-size:.7rem;color:#94a3b8;line-height:1.5}
+        .ds-chip-row{display:flex;gap:5px;flex-wrap:wrap}
+
+        /* ── CRITERIA MATRIX ── */
+        .crit-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+        .crit-name{font-size:.7rem;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .crit-bar-bg{flex:2;height:8px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden}
+        .crit-bar-fill{height:100%;border-radius:4px;transition:width .8s}
+        .crit-pct{font-size:.68rem;font-weight:700;min-width:36px;text-align:right}
+
+        /* ── PRICE BARS ── */
+        .pb-row{display:grid;grid-template-columns:90px 1fr 70px;align-items:center;gap:6px;font-size:.66rem;margin-bottom:4px;padding:2px 0}
+        .pb-name{color:#e2e8f0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.62rem}
+        .pb-bg{height:10px;background:rgba(255,255,255,.03);border-radius:3px;overflow:hidden}
+        .pb-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+        .pb-val{text-align:right;font-weight:700;font-size:.62rem}
+
+        /* ── QUERY PANEL ── */
+        .qpanel{background:rgba(10,15,30,.8);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:16px}
+        .qp-title{font-size:.76rem;font-weight:700;color:#fbbf24;display:flex;align-items:center;gap:6px;margin-bottom:10px}
+        .qp-item{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.1);border-radius:8px;padding:9px 11px;margin-bottom:7px}
+        .qp-vendor{font-size:.65rem;font-weight:700;color:#f59e0b;margin-bottom:3px;display:flex;align-items:center;gap:4px}
+        .qp-q{font-size:.68rem;color:#94a3b8;line-height:1.5;padding-left:8px;border-left:2px solid rgba(245,158,11,.25);margin-top:3px}
+
+        /* ── FINANCIAL THRESHOLD BOX ── */
+        .thresh-box{background:rgba(139,92,246,.05);border:1px solid rgba(139,92,246,.15);border-radius:10px;padding:12px 16px;font-size:.72rem;color:#a78bfa}
+        .thresh-box strong{color:#c084fc}
+
+        /* ── CRITERIA LEGEND ── */
+        .crit-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+        .cl-item{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:7px;padding:5px 10px;font-size:.65rem;color:#60a5fa;font-weight:600}
+
+        /* ── SWARM CARD ── */
+        .swarm-card{background:linear-gradient(135deg,rgba(139,92,246,.07),rgba(59,130,246,.04));border:1px solid rgba(139,92,246,.2);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+        .btn-swarm{background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;border:none;padding:10px 18px;border-radius:9px;font-weight:700;font-size:.76rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;transition:all .25s;font-family:inherit;letter-spacing:.04em}
+        .btn-swarm:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(139,92,246,.4)}
+        .terminal-box{background:#020617;border:1px solid rgba(255,255,255,.06);border-radius:9px;padding:12px;font-family:'Courier New',monospace;font-size:.71rem;color:#38bdf8;min-height:160px;max-height:280px;overflow-y:auto;display:none;line-height:1.5}
+        .tl{margin-bottom:5px}
+        .consensus-box{background:rgba(16,185,129,.06);border:1px dashed rgba(16,185,129,.35);border-radius:9px;padding:12px;display:none;flex-direction:column;gap:7px}
+        .consensus-box.show{display:flex;animation:pulse 2s infinite alternate}
+        @keyframes pulse{0%{box-shadow:0 0 6px rgba(16,185,129,.1)}100%{box-shadow:0 0 20px rgba(16,185,129,.3)}}
+
+        /* ── SPINNER ── */
+        .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.07);border-left-color:#a78bfa;border-radius:50%;animation:spin .8s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .loading-row{display:flex;align-items:center;gap:10px;color:#475569;font-size:.76rem;padding:22px}
+
+        /* ── SOURCE BADGE ── */
+        .src-badge{display:inline-flex;align-items:center;gap:4px;font-size:.6rem;padding:2px 8px;border-radius:5px;background:rgba(16,185,129,.08);color:#34d399;border:1px solid rgba(16,185,129,.2);font-weight:700}
+
+        /* ── EMPTY STATE ── */
+        .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;gap:10px;color:#475569;text-align:center}
+        .empty-state i{opacity:.3}
+
+        /* ── SLIM SCROLLBAR (dark theme) ── */
+        #pb-box::-webkit-scrollbar, #chart-legend::-webkit-scrollbar,
+        #qcbs-prediction-box::-webkit-scrollbar, #qcbs-stats-box::-webkit-scrollbar,
+        #query-panel::-webkit-scrollbar, #query-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        #pb-box::-webkit-scrollbar-track, #chart-legend::-webkit-scrollbar-track,
+        #qcbs-prediction-box::-webkit-scrollbar-track, #qcbs-stats-box::-webkit-scrollbar-track,
+        #query-panel::-webkit-scrollbar-track, #query-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #pb-box::-webkit-scrollbar-thumb, #chart-legend::-webkit-scrollbar-thumb,
+        #qcbs-prediction-box::-webkit-scrollbar-thumb, #qcbs-stats-box::-webkit-scrollbar-thumb,
+        #query-panel::-webkit-scrollbar-thumb, #query-list::-webkit-scrollbar-thumb {
+            background: rgba(167,139,250,0.25);
+            border-radius: 4px;
+        }
+        #pb-box::-webkit-scrollbar-thumb:hover, #chart-legend::-webkit-scrollbar-thumb:hover,
+        #qcbs-prediction-box::-webkit-scrollbar-thumb:hover, #qcbs-stats-box::-webkit-scrollbar-thumb:hover,
+        #query-panel::-webkit-scrollbar-thumb:hover, #query-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(167,139,250,0.45);
+        }
+
+        /* ── SENSTIVITY PANEL / OVERRIDES / SVG CHART styles ── */
+        .sim-panel {
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.4), rgba(17, 24, 39, 0.7));
+            border: 1px solid rgba(167, 139, 250, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        .sim-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .sim-control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sim-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sim-val {
+            color: #a78bfa;
+            font-weight: 800;
+        }
+        .sim-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            transition: background 0.15s;
+        }
+        .sim-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #a78bfa;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+            border: 2px solid #030712;
+            transition: transform 0.1s;
+        }
+        .sim-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #c084fc;
+        }
+        .sim-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 14px;
+        }
+        .btn-act {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: #cbd5e1;
+        }
+        .btn-act:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+        .btn-act.primary {
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+            color: #030712;
+            border: none;
+        }
+        .btn-act.primary:hover {
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+        }
+        .btn-act.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.25);
+        }
+        .btn-act.success:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+        .btn-act.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.25);
+        }
+        .btn-act.warning:hover {
+            background: rgba(245, 158, 11, 0.18);
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        /* Toggle switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 32px;
+            height: 18px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 9px;
+            transition: background 0.2s;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #94a3b8;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toggle-checkbox {
+            display: none;
+        }
+        .toggle-checkbox:checked + .toggle-switch {
+            background: #10b981;
+        }
+        .toggle-checkbox:checked + .toggle-switch::after {
+            left: 16px;
+            background: #ffffff;
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+        }
+
+        /* SVG chart line animation */
+        .chart-line {
+            fill: none;
+            stroke-width: 2.5px;
+            transition: all 0.5s;
+        }
+        .chart-line.inactive {
+            stroke-dasharray: 4, 4;
+            stroke-width: 1.5px;
+            opacity: 0.4;
+        }
+        .chart-grid-line {
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 1px;
+        }
+        .chart-axis-line {
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 1px;
+        }
+        .chart-label {
+            font-size: 8px;
+            fill: #475569;
+            font-family: inherit;
+        }
+        .chart-legend-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.65rem;
+        }
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #94a3b8;
+        }
+        .chart-legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* L1 Glow effect */
+        @keyframes L1-glow {
+            0% { box-shadow: 0 0 5px rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(52, 211, 153, 0.45); border-color: rgba(52, 211, 153, 0.7); }
+            100% { box-shadow: 0 0 5px rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.2); }
+        }
+        .l1-glow-active {
+            animation: L1-glow 2s infinite ease-in-out;
+        }
+
+        /* Admin overrides section inside drawer */
+        .admin-override-box {
+            background: rgba(244, 63, 94, 0.03);
+            border: 1px dashed rgba(244, 63, 94, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .admin-override-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #f43f5e;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .admin-select {
+            padding: 5px 8px;
+            background: #090d16;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 5px;
+            color: #cbd5e1;
+            font-size: 0.7rem;
+            outline: none;
+            font-family: inherit;
+        }
+        .admin-textarea {
+            padding: 6px 8px;
+            background: #090d16;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 5px;
+            color: #cbd5e1;
+            font-size: 0.68rem;
+            resize: vertical;
+            min-height: 45px;
+            font-family: inherit;
+            outline: none;
+        }
+        .admin-btn {
+            background: rgba(244, 63, 94, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-family: inherit;
+        }
+        .admin-btn:hover {
+            background: rgba(244, 63, 94, 0.25);
+            border-color: rgba(244, 63, 94, 0.45);
+        }
+
+        .query-resolve-btn {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            cursor: pointer;
+            float: right;
+            transition: all 0.15s;
+        }
+        .query-resolve-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .query-resolved-badge {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            float: right;
+        }
+
+        .match-badge {
+            animation: pulse-green 2s infinite alternate;
+        }
+        @keyframes pulse-green {
+            from { box-shadow: 0 0 2px rgba(16,185,129,0.2); }
+            to { box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+        }
+
+        /* Excel-like color-coded cells matching paper image */
+        .cell-given {
+            background-color: #dcfce7 !important;
+            color: #15803d !important;
+            text-align: center;
+            font-weight: 700;
+            border: 1px solid #bbf7d0 !important;
+            vertical-align: middle !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .cell-not-given {
+            background-color: #fee2e2 !important;
+            color: #b91c1c !important;
+            text-align: center;
+            font-weight: 700;
+            border: 1px solid #fecaca !important;
+            vertical-align: middle !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .cell-tqr-warning {
+            background-color: #ff9800 !important;
+            color: #000000 !important;
+            font-weight: 800;
+            text-align: center;
+            vertical-align: middle !important;
+            border: 1px solid #f57c00 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* PRINT MEDIA STYLING */
+        @media print {
+            body { background: #ffffff !important; color: #000000 !important; font-size: 10pt; }
+            .topbar, .nav-links, .sim-panel, .btn-swarm, .terminal-box, .consensus-box, .filter-bar, .drawer, #src-badge, .nav-links a { display: none !important; }
+            .page { padding: 0 !important; }
+            .card { background: none !important; border: 1px solid #ddd !important; padding: 15px !important; box-shadow: none !important; margin-bottom: 20px !important; }
+            table { min-width: 100% !important; border: 1px solid #000 !important; font-size: 8pt !important; }
+            th { background: #eaeaea !important; color: #000 !important; border: 1px solid #000 !important; }
+            td { border-bottom: 1px solid #ddd !important; color: #000 !important; }
+            .badge { border: 1px solid #555 !important; color: #000 !important; background: none !important; }
+            .split { display: block !important; }
+            #pb-box, #query-panel, #crit-breakdown-card { page-break-inside: avoid; }
+            .cell-given {
+                background-color: #dcfce7 !important;
+                color: #15803d !important;
+                border: 1px solid #bbf7d0 !important;
+            }
+            .cell-not-given {
+                background-color: #fee2e2 !important;
+                color: #b91c1c !important;
+                border: 1px solid #fecaca !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div>
+        <div style="display:flex;align-items:center;gap:8px">
+            <h1>Technical-Commercial Recommendation</h1>
+            <span class="badge bp" style="font-size:.57rem;padding:2px 6px">Document Intelligence</span>
+            <span class="src-badge" id="src-badge" style="display:none"><i data-lucide="database" style="width:10px;height:10px"></i>Live Data</span>
+        </div>
+        <p class="topbar-sub" id="topbar-sub">Annexure Compliance · Document Verification · TBA Analysis · Financial Qualification</p>
+    </div>
+    <div class="nav-links">
+        <a href="command_center.html"><i data-lucide="home" style="width:13px;height:13px"></i>Command Center</a>
+        <a href="dashboard.html"><i data-lucide="layout-dashboard" style="width:13px;height:13px"></i>Dashboard</a>
+        <a href="technical_bid_analysis.html"><i data-lucide="cpu" style="width:13px;height:13px"></i>Tech Spec</a>
+        <a href="pqc_comparison.html"><i data-lucide="shield-alert" style="width:13px;height:13px"></i>Forensic</a>
+        <a href="plagiarism_report.html"><i data-lucide="scan-line" style="width:13px;height:13px"></i>Plagiarism</a>
+        <a href="technical_commercial_recommendations.html" class="active"><i data-lucide="file-check-2" style="width:13px;height:13px"></i>TCR</a>
+    </div>
+</div>
+
+<div class="page">
+
+    <!-- REF STRIP -->
+    <div class="ref-strip" id="ref-strip">
+        <div class="ref-chip"><span class="ref-lbl">Tender Ref / Bid No.</span><span class="ref-val" id="r-bid">—</span></div>
+        <div class="ref-chip"><span class="ref-lbl">Title</span><span class="ref-val" id="r-title" style="max-width:280px">—</span></div>
+        <div class="ref-chip"><span class="ref-lbl">Department</span><span class="ref-val" id="r-dept">—</span></div>
+        <div class="ref-chip"><span class="ref-lbl">Category</span><span class="ref-val" id="r-cat">—</span></div>
+        <div class="ref-chip"><span class="ref-lbl">Est. Value</span><span class="ref-val" id="r-val">—</span></div>
+        <div class="ref-chip"><span class="ref-lbl">Total Bidders</span><span class="ref-val" id="r-total">—</span></div>
+        <div class="ref-chip"><span class="ref-lbl">Evaluated</span><span class="ref-val" id="r-date">—</span></div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="kpi-grid">
+        <div class="kpi-card g">
+            <div class="kpi-head"><span>Technically Accepted</span><i data-lucide="check-circle-2" style="width:14px;height:14px;color:#10b981"></i></div>
+            <div class="kpi-val" id="kpi-acc">—</div>
+            <div class="kpi-sub">All documents submitted &amp; compliant</div>
+        </div>
+        <div class="kpi-card r">
+            <div class="kpi-head"><span>Technically Rejected</span><i data-lucide="x-circle" style="width:14px;height:14px;color:#f43f5e"></i></div>
+            <div class="kpi-val" id="kpi-rej">—</div>
+            <div class="kpi-sub">Missing mandatory documents</div>
+        </div>
+        <div class="kpi-card a">
+            <div class="kpi-head"><span>TBA-2 Queries Raised</span><i data-lucide="message-circle-warning" style="width:14px;height:14px;color:#f59e0b"></i></div>
+            <div class="kpi-val" id="kpi-qry">—</div>
+            <div class="kpi-sub">Awaiting clarification on ATC / OEM docs</div>
+        </div>
+        <div class="kpi-card p">
+            <div class="kpi-head"><span>Financially Qualified</span><i data-lucide="indian-rupee" style="width:14px;height:14px;color:#a78bfa"></i></div>
+            <div class="kpi-val" id="kpi-fin">—</div>
+            <div class="kpi-sub">Meets order value threshold</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-head"><span>Recommended Bidder (L1)</span><i data-lucide="trophy" style="width:14px;height:14px;color:#60a5fa"></i></div>
+            <div class="kpi-val" style="font-size:1rem;line-height:1.3;margin-top:4px" id="kpi-l1">—</div>
+            <div class="kpi-sub" id="kpi-l1-sub">Techno-commercially accepted</div>
+        </div>
+    </div>
+
+    <!-- FINANCIAL THRESHOLD -->
+    <div class="thresh-box" id="thresh-box">
+        <strong>Financial Eligibility Criteria: </strong><span id="thresh-text">Loading...</span>
+    </div>
+
+    <!-- EVALUATION CRITERIA LEGEND (dynamic) -->
+    <div id="crit-legend-wrap" style="display:none">
+        <div class="card" style="padding:14px 18px">
+            <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                <i data-lucide="list-checks" style="width:14px;height:14px;color:#60a5fa"></i>
+                Technical Evaluation Criteria for this Tender
+            </div>
+            <div class="crit-legend" id="crit-legend"></div>
+        </div>
+    </div>
+
+    <!-- SCENARIO SIMULATOR & PARAMETER TUNING CONSOLE -->
+    <div class="sim-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+                <i data-lucide="sliders-horizontal" style="color:#a78bfa;width:18px;height:18px"></i>
+                <div style="font-weight:800;font-size:0.9rem;background:linear-gradient(135deg,#a78bfa,#cbd5e1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">
+                    Interactive Scenario Simulator & Sensitivity Engine
+                </div>
+            </div>
+            <span class="badge bp" style="font-size:0.58rem">Dynamic Modeler</span>
+        </div>
+        
+        <div class="sim-grid">
+            <!-- Slider 1: Tech Weight -->
+            <div class="sim-control">
+                <div class="sim-label">
+                    <span>Technical Weightage</span>
+                    <span class="sim-val" id="lbl-tech-weight">70%</span>
+                </div>
+                <input type="range" class="sim-slider" id="sim-tech-weight" min="0" max="100" value="70" oninput="updateWeightsFromSlider(this.value)">
+                <div style="font-size:0.58rem;color:#475569;margin-top:2px;display:flex;justify-content:space-between">
+                    <span>Financial: <strong id="lbl-fin-weight">30%</strong></span>
+                    <span>Sum: 100%</span>
+                </div>
+            </div>
+
+            <!-- Slider 2: Tech Threshold -->
+            <div class="sim-control">
+                <div class="sim-label">
+                    <span>Technical Threshold</span>
+                    <span class="sim-val" id="lbl-tech-threshold">70%</span>
+                </div>
+                <input type="range" class="sim-slider" id="sim-tech-threshold" min="0" max="100" value="70" oninput="updateThresholdFromSlider(this.value)">
+                <div style="font-size:0.58rem;color:#475569;margin-top:2px">
+                    Bidders scoring below this are disqualified.
+                </div>
+            </div>
+
+            <!-- MSME Purchase Preference -->
+            <div class="sim-control" style="justify-content: space-between;">
+                <div class="sim-label">
+                    <span>MSME/Startup L1 Purchase Preference</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+                    <label class="toggle-container">
+                        <input type="checkbox" class="toggle-checkbox" id="sim-msme-pref" onchange="toggleMsmePreference(this.checked)">
+                        <div class="toggle-switch"></div>
+                        <span style="font-size:0.7rem;color:#e2e8f0;font-weight:600">Apply Preference</span>
+                    </label>
+                    <div style="display:flex;align-items:center;gap:4px">
+                        <input type="number" id="sim-msme-margin" value="15" min="0" max="30" style="width:40px;background:#090d16;border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;font-size:0.68rem;padding:2px;text-align:center;border-radius:4px;outline:none" oninput="updateMsmeMargin(this.value)">
+                        <span style="font-size:0.62rem;color:#475569">% Margin</span>
+                    </div>
+                </div>
+                <div style="font-size:0.58rem;color:#475569;margin-top:2px">
+                    Allows qualified MSME/Startups within margin to match L1.
+                </div>
+            </div>
+        </div>
+
+        <div class="sim-actions">
+            <button class="btn-act warning" onclick="autoEvaluateTenderLocal()">
+                <i data-lucide="cpu" style="width:13px;height:13px"></i> AI Auto-Evaluate
+            </button>
+            <button class="btn-act warning" onclick="openFinancialBidsLocal()">
+                <i data-lucide="unlock" style="width:13px;height:13px"></i> Open Financial Bids
+            </button>
+            <button class="btn-act success" onclick="exportComparativeCSV()">
+                <i data-lucide="file-spreadsheet" style="width:13px;height:13px"></i> Export TCR CSV
+            </button>
+            <button class="btn-act success" onclick="window.print()">
+                <i data-lucide="printer" style="width:13px;height:13px"></i> Print TCR Report (PDF)
+            </button>
+            <button class="btn-act" onclick="resetSimulation()" style="margin-left:auto;border-color:rgba(239,68,68,0.25);color:#f87171">
+                <i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Reset Console
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN COMPLIANCE TABLE -->
+    <div class="card spreadsheet-card">
+        <div class="card-hdr">
+            <div class="card-title" id="tcr-matrix-title">
+                <i data-lucide="file-spreadsheet" style="color:#3b82f6;width:17px;height:17px"></i>
+                Technical Bid Analysis of Procurement of 473 nos. Desktop PCs under CER
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <span style="font-size:.65rem;color:#475569" id="matrix-date">—</span>
+                <span class="badge bb" style="font-size:.58rem">Live System</span>
+            </div>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="filter-bar">
+            <button class="fbtn active" id="f-all"    onclick="setFilter('all')">All Bidders</button>
+            <button class="fbtn ga"    id="f-acc"    onclick="setFilter('acc')">✅ Accepted</button>
+            <button class="fbtn ra"    id="f-rej"    onclick="setFilter('rej')">❌ Rejected</button>
+            <button class="fbtn qa"    id="f-qry"    onclick="setFilter('qry')">⚠ Queries</button>
+            <input class="srch" id="srch" type="text" placeholder="🔍 Search vendor..." oninput="setSearch(this.value)">
+        </div>
+
+        <div class="tbl-wrap">
+            <table id="comp-table">
+                <thead>
+                    <tr>
+                        <th style="width: 5%; text-align: center;">Sl. No.</th>
+                        <th style="width: 15%;">Bidder</th>
+                        <th style="width: 8%; text-align: center;">MAF</th>
+                        <th style="width: 12%;">Make and model</th>
+                        <th style="width: 8%; text-align: center;">Enquiry/Specs Offer</th>
+                        <th style="width: 8%; text-align: center;">Technical Specifications<br>(Annexure - A)</th>
+                        <th style="width: 8%; text-align: center;">ATC<br>(Annexure - B)</th>
+                        <th style="width: 12%;">Technical Recommendation</th>
+                        <th style="width: 8%;">Commercial Experience PQC</th>
+                        <th style="width: 12%;">Commercial Recommendation</th>
+                        <th style="width: 12%;">Recommendation for TQR</th>
+                    </tr>
+                </thead>
+                <tbody id="comp-tbody">
+                    <tr><td colspan="11">
+                        <div class="loading-row"><div class="spinner"></div>Loading compliance matrix from backend...</div>
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SPLIT: Vendor deep-dive + Right panel -->
+    <div class="split">
+
+        <!-- LEFT: Vendor cards -->
+        <div class="card">
+            <div class="card-hdr">
+                <div class="card-title">
+                    <i data-lucide="users" style="color:#a78bfa;width:17px;height:17px"></i>
+                    Bidder Document Compliance — Click to Expand
+                </div>
+                <span class="badge bp" style="font-size:.58rem">Interactive</span>
+            </div>
+            <div id="vc-panel">
+                <div class="loading-row"><div class="spinner"></div>Loading bidder profiles...</div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Price bars + Queries + Swarm -->
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:0;overflow:hidden">
+
+            <!-- Financial Order Value Chart -->
+            <div class="card">
+                <div class="card-hdr">
+                    <div class="card-title">
+                        <i data-lucide="bar-chart-3" style="color:#10b981;width:17px;height:17px"></i>
+                        Bid Value Comparison
+                    </div>
+                    <span class="badge bg" style="font-size:.55rem" id="pb-count">—</span>
+                </div>
+                <p style="font-size:.62rem;color:#475569;margin-top:-6px">Bid values vs. estimated budget & financial threshold.</p>
+                <div id="pb-box" style="max-height:300px; overflow-y:auto; padding-right:2px;">
+                    <div class="loading-row" style="padding:12px"><div class="spinner"></div></div>
+                </div>
+            </div>
+
+            <!-- Sensitivity Analysis Chart -->
+            <div class="card" style="position:relative;">
+                <div class="card-hdr">
+                    <div class="card-title">
+                        <i data-lucide="line-chart" style="color:#a78bfa;width:17px;height:17px"></i>
+                        QCBS Sensitivity Analysis
+                    </div>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <span class="badge bp" style="font-size:.58rem">Real-Time Plot</span>
+                        <span class="badge bb" style="font-size:.55rem" id="chart-vendor-count">0 Vendors</span>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:-6px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                    <p style="font-size:.66rem;color:#475569;margin:0">
+                        Composite score trajectories across the full technical weight spectrum (0%–100%). Crossover points indicate weight thresholds where L1 winner changes.
+                    </p>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <label class="toggle-container" style="cursor:pointer; display:flex; align-items:center; gap:6px; user-select:none;">
+                            <input type="checkbox" id="chart-show-rejected" onchange="runSimulation()" style="width:12px; height:12px; accent-color:#8b5cf6;">
+                            <span style="font-size:0.62rem; color:#94a3b8; font-weight:600;">Show Disqualified</span>
+                        </label>
+                        <label class="toggle-container" style="cursor:pointer; display:flex; align-items:center; gap:6px; user-select:none;">
+                            <input type="checkbox" id="chart-show-crossover" checked onchange="runSimulation()" style="width:12px; height:12px; accent-color:#10b981;">
+                            <span style="font-size:0.62rem; color:#94a3b8; font-weight:600;">Crossover Points</span>
+                        </label>
+                    </div>
+                </div>
+                <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:8px;position:relative;border:1px solid rgba(255,255,255,0.04);">
+                    <svg id="sensitivity-svg" width="100%" height="240" viewBox="0 0 600 280" preserveAspectRatio="xMidYMid meet" style="display:block;overflow:visible">
+                        <!-- Chart rendered dynamically -->
+                    </svg>
+                    <div id="chart-tooltip" style="position:absolute;background:rgba(10,15,30,0.97);border:1px solid rgba(167,139,250,0.5);border-radius:8px;padding:8px 12px;font-size:0.62rem;color:#e2e8f0;pointer-events:none;display:none;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,0.6);backdrop-filter:blur(8px);max-width:200px;"></div>
+                </div>
+                <!-- Compact filtered legend -->
+                <div style="display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; padding:4px 6px; background:rgba(0,0,0,0.1); border-radius:6px; max-height:60px; overflow-y:auto;" id="chart-legend">
+                    <!-- Legend generated dynamically -->
+                </div>
+                <!-- Advanced Analytics Panel -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+                    <!-- Decision Frontier -->
+                    <div id="qcbs-prediction-box" style="padding:10px; background:linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.06)); border: 1px solid rgba(139,92,246,0.2); border-radius:8px; font-size:0.62rem; color:#e2e8f0; max-height:260px; overflow-y:auto;">
+                        <div style="font-weight:800; color:#c084fc; display:flex; align-items:center; gap:5px; margin-bottom:6px; font-size:0.72rem;">
+                            <i data-lucide="sparkles" style="width:14px; height:14px;"></i>
+                            Decision Frontier & Optimal Weight
+                        </div>
+                        <div id="qcbs-prediction-text" style="color:#cbd5e1; line-height:1.5;">Calculating decision frontier...</div>
+                    </div>
+                    <!-- Statistical Summary -->
+                    <div id="qcbs-stats-box" style="padding:10px; background:linear-gradient(135deg, rgba(16,185,129,0.06), rgba(34,211,238,0.04)); border: 1px solid rgba(16,185,129,0.2); border-radius:8px; font-size:0.62rem; color:#e2e8f0; max-height:260px; overflow-y:auto;">
+                        <div style="font-weight:800; color:#34d399; display:flex; align-items:center; gap:5px; margin-bottom:6px; font-size:0.72rem;">
+                            <i data-lucide="bar-chart-3" style="width:14px; height:14px;"></i>
+                            Statistical Intelligence Summary
+                        </div>
+                        <div id="qcbs-stats-text" style="color:#cbd5e1; line-height:1.5;">Computing analytics...</div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- TBA-2 Query Panel -->
+            <div class="qpanel" id="query-panel" style="max-height:350px; overflow-y:auto;">
+                <div class="qp-title">
+                    <i data-lucide="alert-triangle" style="width:14px;height:14px"></i>
+                    TBA-2 Pending Queries from Evaluation Committee
+                </div>
+                <div id="query-list" style="max-height:280px; overflow-y:auto;">
+                    <div class="loading-row" style="padding:8px"><div class="spinner"></div></div>
+                </div>
+            </div>
+
+            <!-- Criteria Score Breakdown (per-bid) -->
+            <div class="card" id="crit-breakdown-card" style="display:none">
+                <div class="card-hdr">
+                    <div class="card-title">
+                        <i data-lucide="bar-chart-2" style="color:#c084fc;width:17px;height:17px"></i>
+                        Criteria Score Breakdown
+                    </div>
+                    <span style="font-size:.65rem;color:#64748b" id="crit-vendor-name">—</span>
+                </div>
+                <div id="crit-breakdown-body"></div>
+            </div>
+
+            <!-- Swarm Negotiation Console -->
+            <div class="swarm-card">
+                <div class="card-hdr" style="border:none;padding:0;margin:0">
+                    <div class="card-title" style="font-size:.88rem">
+                        <i data-lucide="zap" style="color:#a78bfa;width:16px;height:16px;filter:drop-shadow(0 0 4px rgba(167,139,250,.6))"></i>
+                        ⚡ Swarm AI Negotiation Console
+                    </div>
+                </div>
+                <p style="font-size:.66rem;color:#475569">Deploy cognitive agents to negotiate the L1 qualified bid using real-time game-theory rounds.</p>
+                <button class="btn-swarm" id="btn-neg" onclick="startNegotiation()">
+                    <i data-lucide="play" style="width:13px;height:13px"></i>
+                    Deploy Negotiation Swarm
+                </button>
+                <div class="terminal-box" id="neg-terminal"></div>
+                <div class="consensus-box" id="consensus">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="color:#34d399;font-weight:700;font-size:.76rem;display:flex;align-items:center;gap:5px">
+                            <i data-lucide="check-circle" style="width:13px;height:13px"></i>
+                            CONSENSUS SECURED
+                        </span>
+                        <span class="badge bg" style="font-size:.58rem">SAVINGS REALIZED</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <div style="background:rgba(0,0,0,.2);padding:8px;border-radius:7px;text-align:center">
+                            <div style="font-size:.56rem;color:#64748b;text-transform:uppercase">Negotiated L1 Bid</div>
+                            <div style="font-size:1rem;font-weight:800;color:#34d399" id="res-price">₹—</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,.2);padding:8px;border-radius:7px;text-align:center">
+                            <div style="font-size:.56rem;color:#64748b;text-transform:uppercase">Additional Savings</div>
+                            <div style="font-size:1rem;font-weight:800;color:#60a5fa" id="res-savings">₹—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div><!-- /page -->
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════════════════════
+let _data    = null;   // full API response
+let _bids    = [];     // enriched bid list
+let _filter  = 'all';
+let _search  = '';
+let _sseSource = null;
+
+// Simulated weights and parameters
+let _originalBids = [];
+let _overrides = {};
+let _resolvedQueries = {};
+let _customQueries = {};
+let _activeDrawerIdx = null;
+let _currentL1Vendor = null;
+
+const VENDOR_COLORS = [
+    '#60a5fa','#34d399','#f59e0b','#a78bfa','#ec4899','#14b8a6','#22d3ee','#f43f5e',
+    '#fb923c','#818cf8','#2dd4bf','#e879f9','#fbbf24','#6ee7b7','#93c5fd','#fda4af',
+    '#86efac','#c4b5fd','#67e8f9','#fdba74','#a5b4fc','#5eead4','#f0abfc'
+];
+function getVendorColor(name, idx) {
+    // Use a hash of the vendor name to assign a stable, deterministic color
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) { hash = (hash << 5) - hash + name.charCodeAt(i); hash |= 0; }
+    return VENDOR_COLORS[Math.abs(hash) % VENDOR_COLORS.length];
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════════════════════════════
+async function boot() {
+    lucide.createIcons();
+    const tenderId = new URLSearchParams(window.location.search).get('tender_id') || '1';
+    const token    = localStorage.getItem('gem_token') || '';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/evaluation/tcr/${tenderId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401) { window.location.href = 'index.html'; return; }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        _data = await res.json();
+        _bids = _data.bids || [];
+        
+        // Enrich bids with real-time PQC comparison and metadata
+        try {
+            const pqcRes = await fetch(`${API_BASE_URL}/reports/pqc-comparison-data`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (pqcRes.ok) {
+                const pqcData = await pqcRes.json();
+                if (pqcData && pqcData.vendors && pqcData.vendors.length > 0) {
+                    _data.data_source = 'pqc_folders';
+                    const estValue = _data.tender?.estimated_value || 2250000;
+                    
+                    // Sort vendors alphabetically by name so that serial numbers match alphabetical order
+                    const sortedVendors = pqcData.vendors.sort((a, b) => a.name.localeCompare(b.name));
+                    
+                    _bids = sortedVendors.map((v, idx) => {
+                        // ── DYNAMIC DISQUALIFICATION from PQC evaluations ──
+                        const statusUpper = (v.status || '').toUpperCase();
+                        const is_disqualified = statusUpper.includes('REJECTED') || statusUpper.includes('NOT ACCEPTED') || statusUpper.includes('FAILED');
+                        
+                        // ── DYNAMIC BID AMOUNT from document OCR monetary values ──
+                        let total_amount = 0;
+                        if (v.advanced_metadata && v.advanced_metadata.monetary_values && v.advanced_metadata.monetary_values.length > 0) {
+                            // First monetary value is typically the primary bid amount (in Lakhs)
+                            total_amount = v.advanced_metadata.monetary_values[0];
+                            // Convert to absolute rupees if value is in Lakhs (< 1000)
+                            if (total_amount < 1000) {
+                                total_amount = total_amount * 100000;
+                            }
+                        }
+
+                        // ── DYNAMIC TAGS from OCR text intelligence ──
+                        // Scan all files' OCR text for MSME/MSE/Startup/MII indicators
+                        let isMsme = false, isStartup = false, isMii = false;
+                        const allOcrText = (v.files || []).map(f => (f.ocr_text || '')).join(' ').toUpperCase();
+                        
+                        // Check for MSE/MSME indicators in documents or evaluation remarks
+                        const evalRemarks = (v.evaluations || []).map(e => (e.remark || '')).join(' ').toUpperCase();
+                        const allText = allOcrText + ' ' + evalRemarks + ' ' + (v.verdict_reason || '').toUpperCase();
+                        
+                        if (allText.includes('MSME') || allText.includes('MSE BIDDER') || allText.includes('MICRO, SMALL') || allText.includes('UDYAM')) {
+                            isMsme = true;
+                        }
+                        if (allText.includes('STARTUP') || allText.includes('START-UP') || allText.includes('DPIIT')) {
+                            isStartup = true;
+                        }
+                        if (allText.includes('MAKE IN INDIA') || allText.includes('CLASS I LOCAL') || allText.includes('CLASS II LOCAL')) {
+                            isMii = true;
+                        }
+
+                        // ── DYNAMIC DOCUMENT DETECTION from file types ──
+                        const fileTypes = (v.files || []).map(f => (f.type || '').toUpperCase());
+                        const has_maf = v.has_maf || fileTypes.includes('MAF');
+                        const has_annexure = v.has_annexure || fileTypes.includes('ANNEXURE');
+                        const has_credentials = v.has_credentials || fileTypes.includes('CREDENTIALS');
+                        const has_financials = v.has_financials || fileTypes.includes('FINANCIALS');
+                        const has_certificate = v.has_certificate || fileTypes.includes('CERTIFICATE');
+
+                        // ── DYNAMIC DOCUMENT COMPLIANCE from file type analysis ──
+                        const mafVal = has_maf ? "Given" : "Not Given";
+                        // ECO (Enquiry-cum-Offer) — check for Annexure type files
+                        const ecoVal = has_annexure ? "Given" : "Not Given";
+                        // Annexure-A (Tech Specs) — check R6 evaluation
+                        const r6Eval = (v.evaluations || []).find(e => e.rule && e.rule.id === 'R6');
+                        const annAVal = (r6Eval && r6Eval.status === 'PASS') ? "Given" : has_annexure ? "Given" : "Not Given";
+                        // Annexure-B (ATC/Compliance) — check if Certificate type exists
+                        const annBVal = has_certificate ? "Given" : has_annexure ? "Given" : "Not Given";
+                        const annXVal = has_certificate ? "Given" : "Not Given";
+
+                        // ── DYNAMIC MISSING DOCS from evaluation FAIL items ──
+                        const failList = [];
+                        if (v.evaluations) {
+                            v.evaluations.forEach(ev => {
+                                if (ev.status === 'FAIL') {
+                                    const ruleName = ev.rule ? ev.rule.name.split('(')[0].trim() : 'Unknown Rule';
+                                    failList.push(`${ruleName} (${(ev.remark || 'Failed').substring(0, 80)})`);
+                                }
+                            });
+                        }
+
+                        // ── DYNAMIC GEM REG from OCR extraction ──
+                        let gemRegNo = '';
+                        const gemMatch = allOcrText.match(/GEM\s*\/?\s*REG\s*\/?\s*[A-Z0-9\/\-]+/i);
+                        if (gemMatch) {
+                            gemRegNo = gemMatch[0].replace(/\s+/g, '');
+                        } else {
+                            // Extract from GEMC order references if available
+                            const gemcMatch = allOcrText.match(/GEMC-\d+[A-Z0-9]*/i);
+                            gemRegNo = gemcMatch ? gemcMatch[0] : `PQC-${v.name.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase()}`;
+                        }
+
+                        // ── DYNAMIC TECHNICAL SCORE from confidence + weighted rule compliance ──
+                        const ruleWeights = { R1: 25, R2: 20, R3: 10, R4: 15, R5: 10, R6: 15, R7: 5, R8: 10 };
+                        let totalWeight = 0;
+                        let earnedWeight = 0;
+                        (v.evaluations || []).forEach(e => {
+                            const rid = e.rule ? e.rule.id : '';
+                            const w = ruleWeights[rid] || 0;
+                            totalWeight += w;
+                            if (e.status === 'PASS') {
+                                earnedWeight += w;
+                            } else if (e.status.includes('PARTIAL')) {
+                                earnedWeight += w * 0.5;
+                            }
+                        });
+                        if (totalWeight === 0) totalWeight = 100;
+                        let ruleComplianceScore = (earnedWeight / totalWeight) * 100;
+
+                        // Document coverage penalty
+                        let penalty = 0;
+                        if (!has_maf) penalty += 10;
+                        if (!has_financials) penalty += 10;
+                        ruleComplianceScore = Math.max(0, ruleComplianceScore - penalty);
+
+                        // PO Proximity Bonus
+                        let proximityBonus = 0;
+                        const r1ThresholdLakhs = (estValue * 0.8) / 100000;
+                        if (v.advanced_metadata && v.advanced_metadata.monetary_values) {
+                            const maxPO = Math.max(...v.advanced_metadata.monetary_values, 0);
+                            if (maxPO > r1ThresholdLakhs * 1.3) {
+                                proximityBonus = 5;
+                            }
+                        }
+
+                        // Blend confidence (document quality) with rule compliance + proximity bonus
+                        const techScore = v.confidence 
+                            ? Math.min(100, v.confidence * 0.6 + ruleComplianceScore * 0.4 + proximityBonus) 
+                            : Math.min(100, ruleComplianceScore + proximityBonus);
+
+                        // ── DYNAMIC TBA-2 QUERIES from gap_analysis ──
+                        const tba2Queries = [];
+                        if (v.gap_analysis && Array.isArray(v.gap_analysis)) {
+                            v.gap_analysis.forEach(g => {
+                                if (g.status === 'FAIL' || g.severity === 'error' || g.severity === 'warning') {
+                                    const cleanName = g.rule_name ? g.rule_name.split('(')[0].trim() : g.rule_id;
+                                    tba2Queries.push({
+                                        label: `${g.rule_id} Gap: ${cleanName}`,
+                                        text: `${g.gap || 'Document shortfall.'} ${g.evidence ? `(Evidence: ${g.evidence})` : ''}`
+                                    });
+                                }
+                            });
+                        }
+
+                        return {
+                            sl_no: idx + 1,
+                            vendor_name: v.name,
+                            gem_reg_no: gemRegNo,
+                            is_disqualified: is_disqualified,
+                            disqualification_reason: is_disqualified ? (v.verdict_reason || 'Failed PQC criteria.') : '',
+                            maf: mafVal,
+                            eco: ecoVal,
+                            ann_a: annAVal,
+                            ann_b: annBVal,
+                            ann_x: annXVal,
+                            technical_score: techScore,
+                            ocr_confidence: v.ocr_confidence,
+                            financial_score: 0,
+                            composite_score: 0,
+                            total_amount: total_amount,
+                            msme: isMsme,
+                            startup: isStartup,
+                            make_in_india: isMii,
+                            eligible_for_match: false,
+                            rank: null,
+                            pqc_data: v,
+                            tba2_queries: tba2Queries,
+                            missing_docs: failList
+                        };
+                    });
+                }
+            }
+        } catch (pqcErr) {
+            console.warn("[TCR] Could not load PQC comparison enrichment data:", pqcErr);
+        }
+
+        _originalBids = JSON.parse(JSON.stringify(_bids));
+
+        renderRefStrip();
+        renderThreshold();
+        renderCriteriaLegend();
+
+        // Setup sliders to initial tender values
+        const tw = _data.tender?.technical_weightage ?? 70;
+        const tt = _data.tender?.technical_threshold ?? 70;
+        document.getElementById('sim-tech-weight').value = tw;
+        document.getElementById('sim-tech-threshold').value = tt;
+
+        // Run simulation model
+        runSimulation();
+        renderVendorCards();
+
+        // Show data source badge
+        const srcBadge = document.getElementById('src-badge');
+        srcBadge.style.display = 'inline-flex';
+        srcBadge.textContent = _data.data_source === 'database' ? '📊 Live DB' : '📁 PQC Folders';
+
+        lucide.createIcons();
+
+    } catch (err) {
+        console.error('TCR boot error:', err);
+        document.getElementById('comp-tbody').innerHTML = `
+            <tr><td colspan="11">
+                <div class="empty-state">
+                    <i data-lucide="wifi-off" style="width:32px;height:32px"></i>
+                    <div style="font-size:.85rem;font-weight:600">Could not load TCR data</div>
+                    <div style="font-size:.72rem">Ensure the GEM backend is running and you are logged in.</div>
+                    <div style="font-size:.68rem;color:#f43f5e;font-family:monospace;margin-top:4px">${err.message}</div>
+                </div>
+            </td></tr>`;
+        lucide.createIcons();
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: Reference Strip
+// ══════════════════════════════════════════════════════════════════════════════
+function renderRefStrip() {
+    const t = _data.tender || {};
+    document.getElementById('r-bid').textContent   = t.bid_number || '—';
+    document.getElementById('r-title').textContent = t.title      || '—';
+    document.getElementById('r-dept').textContent  = t.department || '—';
+    document.getElementById('r-cat').textContent   = t.category   || '—';
+    document.getElementById('r-val').textContent   = t.estimated_value
+        ? `₹${(t.estimated_value / 100000).toFixed(2)}L` : '—';
+    document.getElementById('r-total').textContent = `${_bids.length} Bidders`;
+    document.getElementById('r-date').textContent  = new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+    document.getElementById('topbar-sub').textContent = `${t.title || 'Tender'} — Annexure Compliance · Document Verification · TBA Analysis`;
+    document.getElementById('matrix-date').textContent = `As of ${new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}`;
+    document.getElementById('tcr-matrix-title').innerHTML = `<i data-lucide="file-spreadsheet" style="color:#3b82f6;width:17px;height:17px"></i> Technical Bid Analysis of ` + (t.title || 'Procurement');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: KPI Cards
+// ══════════════════════════════════════════════════════════════════════════════
+function renderKPIs() {
+    const k = _data.kpi || {};
+    document.getElementById('kpi-acc').textContent = k.accepted  ?? '—';
+    document.getElementById('kpi-rej').textContent = k.rejected  ?? '—';
+    document.getElementById('kpi-qry').textContent = k.with_queries ?? '—';
+    document.getElementById('kpi-fin').textContent = k.fin_qualified ?? '—';
+
+    if (k.l1_vendor) {
+        document.getElementById('kpi-l1').textContent     = k.l1_vendor;
+        document.getElementById('kpi-l1-sub').textContent = `Score: ${k.l1_score}% | ₹${(k.l1_amount/100000).toFixed(2)}L`;
+    } else {
+        document.getElementById('kpi-l1').textContent     = 'None Eligible';
+        document.getElementById('kpi-l1-sub').textContent = 'No bidder met all requirements';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: Financial Threshold
+// ══════════════════════════════════════════════════════════════════════════════
+function renderThreshold() {
+    const ft = _data.financial_threshold || {};
+    document.getElementById('thresh-text').textContent = ft.label || 'Not defined';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: Criteria Legend (dynamic for every tender)
+// ══════════════════════════════════════════════════════════════════════════════
+function renderCriteriaLegend() {
+    const criteria = _data.criteria || [];
+    if (!criteria.length) return;
+
+    document.getElementById('crit-legend-wrap').style.display = 'block';
+    const el = document.getElementById('crit-legend');
+    el.innerHTML = criteria.map(c =>
+        `<div class="cl-item" title="Weight: ${c.weight}, Max: ${c.max_score}">
+            ${c.name} <span style="color:#334155;margin-left:3px">(W: ${c.weight})</span>
+        </div>`
+    ).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+function tick(val) {
+    const v = (val || '').trim().toLowerCase();
+    if (v === 'given')              return `<span class="dtick dy" title="Given">✓</span>`;
+    if (v.startsWith('given'))      return `<span class="dtick dp" title="${val}">~</span>`;
+    if (v === 'not given')          return `<span class="dtick dn" title="Not Given">✗</span>`;
+    return `<span class="dtick dp" title="${val}">?</span>`;
+}
+
+function fmtAmt(v) {
+    if (!v) return '—';
+    return `₹${(v/100000).toFixed(2)}L`;
+}
+
+function scoreColor(pct, threshold) {
+    if (pct >= threshold) return '#10b981';
+    if (pct >= threshold * 0.7) return '#f59e0b';
+    return '#f43f5e';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: Main Compliance Table
+// ══════════════════════════════════════════════════════════════════════════════
+// Helper functions for matching paper image layout
+function getMafDisplay(bid) {
+    // ── FULLY DYNAMIC: Derive MAF status from document OCR ──
+    if (bid.pqc_data && bid.pqc_data.files) {
+        const mafFiles = bid.pqc_data.files.filter(f => f.type === "MAF");
+        if (mafFiles.length > 0) {
+            const allText = mafFiles.map(f => f.ocr_text || "").join(" ").toUpperCase();
+            
+            const brands = [
+                { pattern: /HEWLETT[- ]PACKARD|HP/i, name: "HP" },
+                { pattern: /SAMSUNG/i, name: "Samsung" },
+                { pattern: /NEWLINE/i, name: "Newline" },
+                { pattern: /LG/i, name: "LG" },
+                { pattern: /DELTA/i, name: "Delta" },
+                { pattern: /BARCO/i, name: "Barco" },
+                { pattern: /PANASONIC/i, name: "Panasonic" },
+                { pattern: /SONY/i, name: "Sony" },
+                { pattern: /BENQ/i, name: "BenQ" },
+                { pattern: /VIEWSONIC/i, name: "ViewSonic" },
+                { pattern: /BASIL/i, name: "Basil" },
+                { pattern: /LENOVO/i, name: "Lenovo" },
+                { pattern: /DELL/i, name: "Dell" },
+                { pattern: /ACER/i, name: "Acer" },
+                { pattern: /CYNIX/i, name: "Cynix" },
+                { pattern: /JNP/i, name: "JNP" },
+                { pattern: /DUGONG/i, name: "Dugong" }
+            ];
+            
+            for (const b of brands) {
+                if (b.pattern.test(allText)) {
+                    return `Given (${b.name})`;
+                }
+            }
+            return "Given";
+        }
+    }
+    
+    return bid.maf || "Not Given";
+}
+
+function getMakeAndModel(bid) {
+    // ── FULLY DYNAMIC: Extract Make & Model from document OCR text ──
+    if (bid.pqc_data && bid.pqc_data.files) {
+        const searchFiles = bid.pqc_data.files.filter(f => f.type === "MAF" || f.type === "Annexure" || f.type === "Document");
+        const allText = searchFiles.map(f => f.ocr_text || "").join(" ");
+        
+        let make = "";
+        const makeMatch = allText.match(/(?:MAKE|BRAND|OEM|MANUFACTURER)\s*[:\-=]?\s*([A-Z0-9][A-Za-z0-9\s]{2,14})/i);
+        if (makeMatch) {
+            make = makeMatch[1].trim().split(/\s+/).slice(0, 2).join(' ');
+        } else {
+            const commonBrands = ["HP", "Lenovo", "Dell", "Acer", "Cynix", "JNP", "Dugong", "Samsung", "LG", "BenQ", "Canon", "Asus", "i-compx", "CNPL"];
+            for (const b of commonBrands) {
+                const rx = new RegExp(`\\b${b}\\b`, "i");
+                if (rx.test(allText)) {
+                    make = b;
+                    break;
+                }
+            }
+        }
+        
+        let model = "";
+        const modelMatch = allText.match(/(?:MODEL|PART NO|SYSTEM)\s*[:\-=]?\s*([A-Z0-9\-\/\s]{4,30})/i);
+        if (modelMatch) {
+            model = modelMatch[1].trim();
+        } else {
+            const modelRegexes = [
+                /ProDesk\s*[A-Z0-9\s]+/i, /ThinkCentre\s*[A-Z0-9\s]+/i,
+                /OptiPlex\s*[A-Z0-9\s]+/i, /Veriton\s*[A-Z0-9\s]+/i,
+                /GenX\s*[A-Z0-9\s]+/i, /EliteDesk\s*[A-Z0-9\s]+/i,
+                /Latitude\s*[A-Z0-9\s]+/i, /Inspiron\s*[A-Z0-9\s]+/i,
+                /ImageRunner\s*[A-Z0-9\s]+/i
+            ];
+            for (const rx of modelRegexes) {
+                const m = allText.match(rx);
+                if (m) { model = m[0].trim(); break; }
+            }
+        }
+        
+        if (make && model) {
+            model = model.split('\n')[0].replace(/\s+/g, ' ').trim();
+            if (model.length > 35) model = model.substring(0, 35) + "...";
+            return `${make} ${model}`;
+        } else if (make) {
+            return `Make: ${make}`;
+        }
+    }
+    
+    return "Not Given";
+}
+
+function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return hash;
+}
+
+function getEcoDisplay(bid) {
+    // ── DYNAMIC: Derive from PQC document detection ──
+    if (bid.pqc_data && bid.pqc_data.has_annexure) return "Given";
+    return bid.eco || "Not Given";
+}
+
+function getAnnADisplay(bid) {
+    // ── DYNAMIC: Derive from R6 (Technical Spec Compliance) rule evaluation ──
+    if (bid.pqc_data && bid.pqc_data.evaluations) {
+        const r6 = bid.pqc_data.evaluations.find(e => e.rule && e.rule.id === 'R6');
+        if (r6) return r6.status === 'PASS' ? "Given" : "Not Given";
+    }
+    if (bid.pqc_data && bid.pqc_data.has_annexure) return "Given";
+    return bid.ann_a || "Not Given";
+}
+
+function getAnnBDisplay(bid) {
+    // ── DYNAMIC: Derive from certificate + annexure presence ──
+    if (bid.pqc_data && bid.pqc_data.has_certificate) return "Given";
+    if (bid.pqc_data && bid.pqc_data.has_annexure) return "Given";
+    return bid.ann_b || "Not Given";
+}
+
+function getCommExpDisplay(bid) {
+    // ── FULLY DYNAMIC: Derive from R1 evaluation + credential file OCR ──
+    
+    // 1. Check R1 (Past Experience) evaluation from PQC
+    if (bid.pqc_data && bid.pqc_data.evaluations) {
+        const r1 = bid.pqc_data.evaluations.find(ev => ev.rule && ev.rule.id === 'R1');
+        if (r1) {
+            if (r1.status === 'PASS') {
+                // Extract details from remark
+                const remark = r1.remark || '';
+                const poCountMatch = remark.match(/(\d+)\s*PO/i);
+                const poCount = poCountMatch ? poCountMatch[1] : '—';
+                return `Past experience verified: ${poCount} PO(s) (${remark.substring(0, 60)})`;
+            } else {
+                return `Experience criteria: ${(r1.remark || 'Not meeting criteria').substring(0, 80)}`;
+            }
+        }
+    }
+
+    // 2. Dynamic extraction from credential file OCR
+    if (bid.pqc_data && bid.pqc_data.files) {
+        const credFiles = bid.pqc_data.files.filter(f => f.type === "Credentials");
+        if (credFiles.length > 0) {
+            let poCount = 0;
+            credFiles.forEach(f => {
+                const text = (f.ocr_text || "").toUpperCase();
+                const gemcMatches = text.match(/GEMC-\d+/g);
+                const poMatches = text.match(/PURCHASE\s+ORDER|WORK\s+ORDER|CONTRACT\s+NO/gi);
+                poCount += (gemcMatches ? gemcMatches.length : 0) + (poMatches ? poMatches.length : 0);
+            });
+            if (poCount > 0) {
+                return `${Math.min(poCount, 5)} order${poCount > 1 ? 's' : ''} for "Similar Item" where executed value`;
+            }
+        }
+    }
+
+    if (bid.is_disqualified) return `Not Meeting Criteria`;
+    return `—`;
+}
+
+function getCommercialRecommendation(bid) {
+    // ── FULLY DYNAMIC: Extract POs and commercial data from document OCR ──
+    if (!bid.pqc_data || !bid.pqc_data.files) {
+        return bid.is_disqualified ? `<strong>Not Meeting Criteria</strong>` : `—`;
+    }
+
+    const files = bid.pqc_data.files;
+    const credFiles = files.filter(f => f.type === "Credentials");
+    
+    // Check if any file mentions completion certificate
+    const hasCompletionCert = files.some(f => 
+        f.name.toUpperCase().includes("COMPLETION") || 
+        f.name.toUpperCase().includes("RECEIPT") || 
+        f.name.toUpperCase().includes("ACCEPTANCE") ||
+        (f.ocr_text && (
+            f.ocr_text.toUpperCase().includes("COMPLETION CERTIFICATE") ||
+            f.ocr_text.toUpperCase().includes("RECEIPT CERTIFICATE") ||
+            f.ocr_text.toUpperCase().includes("ACCEPTANCE CERTIFICATE") ||
+            f.ocr_text.toUpperCase().includes("CONSIGNEE RECEIPT")
+        ))
+    );
+
+    let pos = [];
+    let monetaryValues = [];
+    if (bid.pqc_data.advanced_metadata && bid.pqc_data.advanced_metadata.monetary_values) {
+        monetaryValues = bid.pqc_data.advanced_metadata.monetary_values;
+    }
+
+    credFiles.forEach((f, idx) => {
+        const text = f.ocr_text || "";
+        const textUpper = text.toUpperCase();
+
+        // Dynamic PO number extraction
+        let poNo = "";
+        const poMatch = textUpper.match(/(?:GEMC-\d+|GEM\s+CONTRACT\s*NO\.?\s*([A-Z0-9\-]+)|PURCHASE\s+ORDER\s*NO\.?\s*([A-Z0-9\-]+)|WORK\s+ORDER\s*NO\.?\s*([A-Z0-9\-]+)|CONTRACT\s*NO\.?\s*([A-Z0-9\-]+))/i);
+        if (poMatch) {
+            poNo = poMatch[0].replace(/CONTRACT\s*NO\.?\s*/i, "").replace(/PURCHASE\s+ORDER\s*NO\.?\s*/i, "").replace(/WORK\s+ORDER\s*NO\.?\s*/i, "").trim();
+        } else {
+            const fnMatch = f.name.match(/GEMC-\d+/i) || f.name.match(/(\d{8,})/);
+            poNo = fnMatch ? fnMatch[0] : `Doc-${idx + 1}`;
+        }
+
+        // Dynamic date extraction
+        let poDate = "";
+        const dateMatch = textUpper.match(/(?:\b\d{1,2}[-\/\.\s](?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*[-\/\.\s]\d{2,4}\b|\b\d{1,2}[-\/\.\s]\d{1,2}[-\/\.\s]\d{2,4}\b)/i);
+        if (dateMatch) {
+            poDate = dateMatch[0].trim();
+        } else {
+            // Extract from file time metadata
+            poDate = f.time ? f.time.split(' ')[0] : 'date N/A';
+        }
+
+        // Dynamic amount from monetary values
+        let valLakhs = monetaryValues[idx];
+        if (!valLakhs) {
+            const valMatch = textUpper.match(/(?:TOTAL\s+ORDER\s+VALUE|ORDER\s+VALUE|VALUE|AMOUNT|TOTAL|INR|RS\.?)\s*[:\-]?\s*(?:INR|RS\.?|₹)?\s*([\d,]+(?:\.\d+)?)/i);
+            if (valMatch) {
+                try {
+                    const parsedVal = parseFloat(valMatch[1].replace(/,/g, ""));
+                    valLakhs = parsedVal > 1000 ? parsedVal / 100000 : parsedVal;
+                } catch(e) {}
+            }
+        }
+
+        if (valLakhs) {
+            const valString = (valLakhs * 100000).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+            pos.push(`${idx + 1}. PO ${poNo} dtd ${poDate} of INR ${valString}`);
+        } else {
+            pos.push(`${idx + 1}. PO ${poNo} dtd ${poDate}`);
+        }
+    });
+
+    let recHtml = "";
+    if (bid.is_disqualified) {
+        recHtml += `<strong>Not Meeting Criteria</strong>`;
+        if (pos.length > 0) {
+            recHtml += `<br>` + pos.join("<br>");
+        }
+    } else {
+        if (pos.length > 0) {
+            recHtml += pos.join("<br>");
+        } else {
+            recHtml += `—`;
+        }
+    }
+
+    if (credFiles.length > 0) {
+        if (!hasCompletionCert) {
+            recHtml += `<br><span style="color:#f87171;font-weight:600;">No Completion Certificate</span>`;
+        } else {
+            recHtml += `<br><span style="color:#4ade80;font-weight:600;">Consignee Receipt & Acceptance Certificate submitted</span>`;
+        }
+    }
+
+    return recHtml;
+}
+
+function getTQRRecommendation(bid) {
+    // ── FULLY DYNAMIC: Derive TQR from PQC evaluation rule statuses ──
+    let dynamicMissing = [];
+    if (bid.pqc_data && bid.pqc_data.evaluations) {
+        bid.pqc_data.evaluations.forEach(ev => {
+            if (ev.status === 'FAIL') {
+                const rid = ev.rule.id;
+                if (rid === 'R1') dynamicMissing.push('Executed Past Experience POs and Completion Certificates');
+                else if (rid === 'R2') dynamicMissing.push('CA Audited Financial Turnover Statement');
+                else if (rid === 'R3') dynamicMissing.push('Chartered Accountant Net Worth Statement');
+                else if (rid === 'R4') dynamicMissing.push('Bid-Specific OEM Manufacturer Authorization Form (MAF)');
+                else if (rid === 'R5') dynamicMissing.push('Valid ISO 9001:2015 Quality Management Certificate');
+                else if (rid === 'R6') dynamicMissing.push('Technical specifications compliance sheet (Annexure-A/B)');
+                else if (rid === 'R8') dynamicMissing.push('Earnest Money Deposit (EMD) or valid Udyam waiver');
+                else dynamicMissing.push(`${ev.rule.name.split('(')[0].trim()}`);
+            }
+        });
+    }
+    
+    if (bid.is_disqualified) {
+        let subText = '';
+        if (dynamicMissing.length > 0) {
+            subText = 'Bidder to submit with Seal and Signature:<br>' + dynamicMissing.map((item, idx) => `${idx + 1}. ${item}`).join('<br>');
+        } else {
+            subText = bid.disqualification_reason || 'Check compliance details.';
+        }
+        return `<div style="color:#b91c1c; font-weight:700; margin-bottom:4px;">Techno-commercially NOT Accepted</div>
+        ${subText ? `<div style="font-size:0.68rem; color:#475569; margin-top:2px;">${subText}</div>` : ''}`;
+    } else {
+        // Check if there are non-critical issues (warnings)
+        if (dynamicMissing.length > 0) {
+            return `<div style="color:#d97706; font-weight:700; margin-bottom:4px;">Techno-commercially Accepted (with observations)</div>
+            <div style="font-size:0.68rem; color:#475569; margin-top:2px;">Note: ${dynamicMissing.join(', ')}</div>`;
+        }
+        return `<div style="color:#15803d; font-weight:700; margin-bottom:4px;">Techno-commercially Accepted</div>`;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: Main Compliance Table
+// ══════════════════════════════════════════════════════════════════════════════
+function renderTable() {
+    const tbody = document.getElementById('comp-tbody');
+    tbody.innerHTML = '';
+    const threshold = parseFloat(document.getElementById('sim-tech-threshold')?.value || _data.tender?.technical_threshold || 70);
+
+    let visible = _bids;
+    if (_filter === 'acc') visible = visible.filter(b => !b.is_disqualified);
+    if (_filter === 'rej') visible = visible.filter(b => b.is_disqualified);
+    if (_filter === 'qry') visible = visible.filter(b => (b.tba2_queries?.filter(q => !_resolvedQueries[`${b.vendor_name}::${q.label}`]).length || 0) > 0);
+    if (_search) {
+        const q = _search.toLowerCase();
+        visible = visible.filter(b => b.vendor_name.toLowerCase().includes(q));
+    }
+
+    if (!visible.length) {
+        tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><i data-lucide="search-x" style="width:28px;height:28px"></i><div>No bidders match the current filter.</div></div></td></tr>`;
+        lucide.createIcons();
+        return;
+    }
+
+    visible.forEach(bid => {
+        const activeQueries = bid.tba2_queries?.filter(q => !_resolvedQueries[`${bid.vendor_name}::${q.label}`]) || [];
+        const rowCls = bid.is_disqualified ? 'tr-rej' : activeQueries.length ? 'tr-qry' : 'tr-acc';
+        const tr = document.createElement('tr');
+        tr.className = rowCls;
+
+        // Document values
+        const mafDisplay = getMafDisplay(bid);
+        const modelDisplay = getMakeAndModel(bid);
+        const ecoDisplay = getEcoDisplay(bid);
+        const annADisplay = getAnnADisplay(bid);
+        const annBDisplay = getAnnBDisplay(bid);
+        const commExpDisplay = getCommExpDisplay(bid);
+        
+        // CSS cell coloring classes
+        const mafClass = mafDisplay.startsWith("Given") ? "cell-given" : "cell-not-given";
+        const modelClass = modelDisplay.startsWith("Not Given") ? "cell-not-given" : "";
+        const ecoClass = ecoDisplay === "Given" ? "cell-given" : "cell-not-given";
+        const annAClass = annADisplay === "Given" ? "cell-given" : "cell-not-given";
+        const annBClass = annBDisplay === "Given" ? "cell-given" : "cell-not-given";
+
+        // Technical Recommendation HTML formatting
+        const isTechAccepted = !bid.is_disqualified && !bid.missing_docs?.length;
+        const techRecClass = isTechAccepted ? "cell-given" : "";
+        let techRecHtml = '';
+        if (isTechAccepted) {
+            techRecHtml = `Technically Accepted`;
+        } else if (bid.missing_docs?.length) {
+            const listItems = bid.missing_docs.map((m, idx) => `${idx+1}. ${m.split('(')[0].trim()}`).join('<br>');
+            techRecHtml = `<div style="color:#334155;"><strong style="color:#b91c1c;">Bidder to submit:</strong><br>${listItems}</div>`;
+        } else {
+            const textRecClean = (bid.tech_rec || bid.disqualification_reason || '').replace(/\n/g, '<br>');
+            techRecHtml = `<span style="color:#b91c1c; font-weight:600;">${textRecClean}</span>`;
+        }
+
+        // Commercial and TQR Recommendation HTML
+        const commRecHtml = getCommercialRecommendation(bid);
+        const tqrHtml = getTQRRecommendation(bid);
+        
+        // ── FULLY DYNAMIC: Color cell orange if accepted with observations ──
+        const tqrClass = tqrHtml.includes("with observations") ? "cell-tqr-warning" : "";
+
+        // Vendor tags
+        const tags = [
+            bid.msme         ? `<span class="badge bb" style="font-size:.55rem;padding:1px 4px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1px solid rgba(59,130,246,0.2);">MSME</span>` : '',
+            bid.make_in_india? `<span class="badge bg" style="font-size:.55rem;padding:1px 4px;background:rgba(16,185,129,0.1);color:#15803d;border:1px solid rgba(16,185,129,0.2);">MII</span>` : '',
+            bid.startup      ? `<span class="badge bp" style="font-size:.55rem;padding:1px 4px;background:rgba(139,92,246,0.1);color:#6d28d9;border:1px solid rgba(139,92,246,0.2);">Startup</span>` : '',
+            bid.eligible_for_match ? `<span class="badge bg match-badge" style="font-size:.55rem;padding:1px 5px;margin-top:2px;background:rgba(16,185,129,0.15);color:#15803d;border:1px solid rgba(16,185,129,0.3);">L1 MSME Match Option</span>` : '',
+        ].filter(Boolean).join('');
+
+        tr.innerHTML = `
+            <td style="text-align:center; vertical-align:middle;"><span style="font-weight:700;color:#334155;font-size:.72rem">${bid.sl_no}/${_bids.length}</span></td>
+            <td>
+                <div class="vname" style="font-size:0.8rem; font-weight:700; color:#1e293b;">${bid.vendor_name}</div>
+                <div class="vtags" style="margin-top:4px; display:flex; gap:3px; flex-wrap:wrap;">
+                    ${bid.is_disqualified
+                        ? `<span class="badge br" style="font-size:.55rem;padding:1px 4px;background:rgba(244,63,94,0.1);color:#b91c1c;border:1px solid rgba(244,63,94,0.2);">✗ Rejected</span>`
+                        : `<span class="badge bg" style="font-size:.55rem;padding:1px 4px;background:rgba(16,185,129,0.1);color:#15803d;border:1px solid rgba(16,185,129,0.2);">✓ Accepted</span>`}
+                    ${tags}
+                </div>
+                <div style="font-size:.6rem;color:#64748b;margin-top:2px">${bid.gem_reg_no}</div>
+            </td>
+            <td class="${mafClass}">${mafDisplay}</td>
+            <td class="${modelClass}">${modelDisplay}</td>
+            <td class="${ecoClass}">${ecoDisplay}</td>
+            <td class="${annAClass}">${annADisplay}</td>
+            <td class="${annBClass}">${annBDisplay}</td>
+            <td class="${techRecClass}" style="font-size: 0.72rem; line-height:1.45; vertical-align:middle;">${techRecHtml}</td>
+            <td style="font-size: 0.7rem; line-height:1.45; color:#334155; vertical-align:middle; text-align:center;">${commExpDisplay}</td>
+            <td style="font-size:0.7rem; line-height:1.45; color:#334155;">${commRecHtml}</td>
+            <td class="${tqrClass}" style="font-size:0.7rem; line-height:1.45; color:#334155; vertical-align:middle;">${tqrHtml}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+
+    lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  Prediction Confidence Helper
+// ══════════════════════════════════════════════════════════════════════════════
+function getPredictionConfidence(bid) {
+    const ocrConf = bid.ocr_confidence !== undefined ? bid.ocr_confidence : (bid.pqc_data?.ocr_confidence !== undefined ? bid.pqc_data.ocr_confidence : 0.85);
+    
+    // Document coverage
+    const docCols = [
+        bid.maf,
+        bid.eco,
+        bid.ann_a,
+        bid.ann_b,
+        bid.ann_x
+    ];
+    const okCount = docCols.filter(val => val && val.toLowerCase().includes('given') && !val.toLowerCase().startsWith('not')).length;
+    const coverage = okCount / 5;
+    
+    const score = (ocrConf + coverage) / 2;
+    if (score >= 0.85) return { label: 'High', color: '#10b981', bg: 'rgba(16,185,129,0.1)' };
+    if (score >= 0.65) return { label: 'Medium', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
+    return { label: 'Low', color: '#f43f5e', bg: 'rgba(244,63,94,0.1)' };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: Vendor Cards (with expandable drawers)
+// ══════════════════════════════════════════════════════════════════════════════
+function renderVendorCards() {
+    const panel = document.getElementById('vc-panel');
+    panel.innerHTML = '';
+    const threshold = _data.tender?.technical_threshold || 70;
+
+    _bids.forEach((bid, idx) => {
+        const docCols = [
+            { label:'MAF',   val: bid.maf },
+            { label:'ECO',   val: bid.eco },
+            { label:'Ann-A', val: bid.ann_a },
+            { label:'Ann-B', val: bid.ann_b },
+            { label:'Ann-X', val: bid.ann_x },
+        ];
+        const okCount = docCols.filter(d => d.val && d.val.toLowerCase().includes('given') && !d.val.toLowerCase().startsWith('not')).length;
+
+        // Compliance dots
+        const dotsHtml = docCols.map(d => {
+            const ok = d.val && d.val.toLowerCase().includes('given') && !d.val.toLowerCase().startsWith('not');
+            return `<div class="dot-item">
+                <div class="dot-icon ${ok ? 'doi-ok' : 'doi-no'}">${ok ? '✓' : '✗'}</div>
+                <div class="doi-lbl">${d.label}</div>
+            </div>`;
+        }).join('');
+
+        const statusBadge = bid.is_disqualified
+            ? `<span class="badge br" style="font-size:.6rem">Rejected</span>`
+            : bid.tba2_queries?.length
+                ? `<span class="badge ba" style="font-size:.6rem">Queries Pending</span>`
+                : `<span class="badge bg" style="font-size:.6rem">Tech Accepted</span>`;
+
+        const predConf = getPredictionConfidence(bid);
+        const predBadge = `<span class="badge" style="font-size:.58rem; margin-top:4px; color:${predConf.color}; background:${predConf.bg}; border:1px solid ${predConf.color}40;" title="Prediction Confidence based on OCR and Doc Coverage">Confidence: ${predConf.label}</span>`;
+
+        const card = document.createElement('div');
+        card.className = 'vc';
+        card.id = `vc-${idx}`;
+        card.onclick = () => toggleDrawer(idx, bid, threshold);
+        card.innerHTML = `
+            <div class="vc-top">
+                <div>
+                    <div class="vc-name">${bid.sl_no} — ${bid.vendor_name}</div>
+                    <div class="vc-sub">GEM Reg: ${bid.gem_reg_no} | Score: ${bid.technical_score?.toFixed(1)||'—'}%</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+                    ${statusBadge}
+                    ${predBadge}
+                    <span style="font-size:.62rem;color:#64748b">${okCount}/5 docs ↓ click</span>
+                </div>
+            </div>
+            <div class="doc-dots">${dotsHtml}</div>
+        `;
+
+        const drawer = document.createElement('div');
+        drawer.className = 'drawer';
+        drawer.id = `dd-${idx}`;
+        // Drawer content is rendered on expand
+        panel.appendChild(card);
+        panel.appendChild(drawer);
+    });
+}
+
+function toggleDrawer(idx, bid, threshold) {
+    const drawer = document.getElementById(`dd-${idx}`);
+    const card   = document.getElementById(`vc-${idx}`);
+    const isOpen = drawer.classList.contains('open');
+
+    document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.vc').forEach(c => c.classList.remove('sel'));
+
+    if (!isOpen) {
+        _activeDrawerIdx = idx;
+        const currentBid = _bids.find(b => b.vendor_name === bid.vendor_name) || bid;
+        drawer.innerHTML = buildDrawerHTML(currentBid, threshold, idx);
+        drawer.classList.add('open');
+        card.classList.add('sel');
+        renderCriteriaBreakdownCard(currentBid, threshold);
+        lucide.createIcons();
+    } else {
+        _activeDrawerIdx = null;
+    }
+}
+
+function buildDrawerHTML(bid, threshold, idx) {
+    // Missing docs section
+    const missingHtml = bid.missing_docs?.length
+        ? `<div class="ds-chip-row">${bid.missing_docs.map(m => `<span class="badge br" style="font-size:.62rem">Missing: ${m.split('(')[0].trim()}</span>`).join('')}</div>`
+        : `<span class="badge bg" style="font-size:.62rem">✓ All mandatory documents submitted</span>`;
+
+    // TBA-2 queries section
+    let qHtml = '';
+    if (bid.tba2_queries?.length) {
+        qHtml = `<div class="ds-qrow">${bid.tba2_queries.map((q, i) => {
+            const queryId = `${bid.vendor_name}::${q.label}`;
+            const isResolved = _resolvedQueries[queryId];
+            return `
+            <div class="ds-q" style="${isResolved ? 'background:rgba(16,185,129,0.02);border-color:rgba(16,185,129,0.15)' : ''}">
+                <div class="ds-q-lbl">
+                    <i data-lucide="${isResolved ? 'check-circle' : 'alert-circle'}" style="width:11px;height:11px;color:${isResolved ? '#10b981' : '#f59e0b'}"></i>
+                    Query ${i+1}: ${q.label}
+                    ${isResolved 
+                        ? `<span class="query-resolved-badge">Resolved ✅</span>` 
+                        : `<button class="query-resolve-btn" onclick="resolveQuery('${bid.vendor_name}', '${q.label}')">Simulate Reply</button>`}
+                </div>
+                <div class="ds-q-txt" style="${isResolved ? 'text-decoration:line-through;opacity:0.6' : ''}">${q.text}</div>
+            </div>`;
+        }).join('')}</div>`;
+    } else {
+        qHtml = `<div class="ds-txt">${bid.tba2_final || 'No queries raised.'}</div>`;
+    }
+
+    // Add a custom query section
+    const addQueryHtml = `
+    <div style="display:flex;gap:6px;margin-top:8px">
+        <input type="text" id="new-q-lbl-${idx}" placeholder="Query Label (e.g. GST License)" style="flex:1;background:#090d16;border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;font-size:0.68rem;padding:4px 8px;border-radius:5px;outline:none">
+        <input type="text" id="new-q-txt-${idx}" placeholder="Clarification required details..." style="flex:2;background:#090d16;border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;font-size:0.68rem;padding:4px 8px;border-radius:5px;outline:none">
+        <button class="btn-act" onclick="addCustomQuery(${idx}, '${bid.vendor_name}')" style="padding:4px 10px"><i data-lucide="plus" style="width:11px;height:11px"></i> Add</button>
+    </div>`;
+
+    // Financial docs
+    const finHtml = bid.fin_docs?.length
+        ? bid.fin_docs.map(d => `<div class="ds-txt">
+            <span style="color:${d.verified?'#10b981':'#f59e0b'};font-weight:600">${d.verified?'✓':'~'} ${d.type}</span>
+            ${d.ocr_snippet ? `<span style="font-size:.62rem;color:#475569"> — ${d.ocr_snippet.substring(0,100)}</span>` : ''}
+          </div>`).join('')
+        : `<div class="ds-txt" style="color:#f43f5e">No financial evidence documents submitted.</div>`;
+
+    // Disqualification reason
+    const dqHtml = bid.disqualification_reason
+        ? `<div class="ds-section"><div class="ds-lbl">Disqualification Reason</div><div class="ds-txt" style="color:#f87171">${bid.disqualification_reason}</div></div>` : '';
+
+    // Administrative override box
+    const currentOverride = _overrides[bid.vendor_name]?.disqualified;
+    const overrideStatus = currentOverride === true ? 'force-fail' : currentOverride === false ? 'force-pass' : 'default';
+    const overrideReason = _overrides[bid.vendor_name]?.reason || '';
+
+    const adminHtml = `
+    <div class="admin-override-box">
+        <div class="admin-override-title">
+            <i data-lucide="shield-alert" style="width:13px;height:13px"></i> Committee Evaluation Override
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:0.68rem;color:#94a3b8">Override Status:</span>
+            <select class="admin-select" onchange="toggleBidderOverride('${bid.vendor_name}', this.value, ${idx})">
+                <option value="default" ${overrideStatus === 'default' ? 'selected' : ''}>None (Auto Score)</option>
+                <option value="force-pass" ${overrideStatus === 'force-pass' ? 'selected' : ''}>Force Accept (Pass Tech)</option>
+                <option value="force-fail" ${overrideStatus === 'force-fail' ? 'selected' : ''}>Force Reject (Fail Tech)</option>
+            </select>
+        </div>
+        <div id="override-reason-wrap-${idx}" style="display:${overrideStatus === 'force-fail' ? 'flex' : 'none'};flex-direction:column;gap:5px">
+            <span style="font-size:0.65rem;color:#64748b">Rejection Reason logged in Blockchain audit trail:</span>
+            <textarea class="admin-textarea" id="override-reason-${idx}" placeholder="Specify reason (e.g. Non-compliance with Clause 4.2)...">${overrideReason}</textarea>
+            <button class="admin-btn" onclick="saveOverrideReason('${bid.vendor_name}', ${idx})">Log &amp; Apply Override Reason</button>
+        </div>
+    </div>`;
+
+    const predConf = getPredictionConfidence(bid);
+    const predBadgeDrawer = `<span class="badge" style="color:${predConf.color}; background:${predConf.bg}; border:1px solid ${predConf.color}40; font-size:0.7rem; padding: 3px 8px; font-weight:700;">${predConf.label} CONFIDENCE</span>`;
+
+    return `
+        <div class="ds-section">
+            <div class="ds-lbl" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>📄 Technical Recommendation</span>
+                ${predBadgeDrawer}
+            </div>
+            <div class="ds-txt">${(bid.tech_rec||'').replace(/\n/g,'<br>')}</div>
+        </div>
+        <div class="ds-section"><div class="ds-lbl">📋 Missing Documents</div>${missingHtml}</div>
+        <div class="ds-section"><div class="ds-lbl">💰 Financial Evidence Submitted</div>${finHtml}</div>
+        <div class="ds-section"><div class="ds-lbl">🔍 TBA-2 — Committee Queries / Final Decision</div>
+            ${qHtml}
+            ${addQueryHtml}
+        </div>
+        ${dqHtml}
+        ${adminHtml}
+        <div class="ds-section"><div class="ds-lbl">📊 Composite Score</div>
+            <div class="ds-chip-row">
+                <span class="badge bb">Technical: ${bid.technical_score?.toFixed(1)||'—'}%</span>
+                <span class="badge bp">Financial: ${bid.financial_score?.toFixed(1)||'—'}%</span>
+                <span class="badge bg">Composite: ${bid.composite_score?.toFixed(1)||'—'}%</span>
+                ${bid.rank ? `<span class="badge ba">Rank: L${bid.rank}</span>` : ''}
+                ${bid.eligible_for_match ? `<span class="badge bg match-badge">Match Option (MSME)</span>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function renderCriteriaBreakdownCard(bid, threshold) {
+    const card = document.getElementById('crit-breakdown-card');
+    const body = document.getElementById('crit-breakdown-body');
+    const cb   = bid.criteria_breakdown || [];
+
+    if (!cb.length) { card.style.display = 'none'; return; }
+
+    card.style.display = 'flex';
+    document.getElementById('crit-vendor-name').textContent = bid.vendor_name;
+
+    body.innerHTML = cb.map(c => {
+        const col = scoreColor(c.score_pct, threshold);
+        return `<div class="crit-row">
+            <div class="crit-name" title="${c.name}">${c.name}</div>
+            <div class="crit-bar-bg">
+                <div class="crit-bar-fill" style="width:${c.score_pct}%;background:${col}"></div>
+            </div>
+            <div class="crit-pct" style="color:${col}">${c.score_pct.toFixed(1)}%</div>
+        </div>
+        ${c.remarks ? `<div style="font-size:.62rem;color:#475569;margin:-4px 0 6px 0;padding-left:2px">${c.remarks.substring(0,100)}</div>` : ''}`;
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: Price Bars
+// ══════════════════════════════════════════════════════════════════════════════
+function renderPriceBars() {
+    const box = document.getElementById('pb-box');
+    box.innerHTML = '';
+    const t = _data.tender || {};
+    const ft = _data.financial_threshold || {};
+
+    // Update count badge
+    const countBadge = document.getElementById('pb-count');
+    if (countBadge) countBadge.textContent = `${_bids.length} Bidders`;
+
+    const allAmounts = _bids.map(b => b.total_amount || 0);
+    const maxAmt = Math.max(...allAmounts, t.estimated_value || 0, ft.threshold_1x || 0, 1);
+
+    const mkRow = (label, amt, grad, valColor, extra='') => {
+        const pct = ((amt / maxAmt) * 100).toFixed(1);
+        const el = document.createElement('div');
+        el.className = 'pb-row';
+        el.innerHTML = `
+            <div class="pb-name" style="${extra}">${label}</div>
+            <div class="pb-bg"><div class="pb-fill" style="width:${pct}%;background:${grad}"></div></div>
+            <div class="pb-val" style="color:${valColor}">${fmtAmt(amt)}</div>`;
+        box.appendChild(el);
+    };
+
+    // Estimated budget
+    if (t.estimated_value) {
+        mkRow('📋 Est. Budget', t.estimated_value,
+            'linear-gradient(90deg,rgba(167,139,250,.5),rgba(167,139,250,.1))', '#a78bfa', 'font-weight:700;color:#a78bfa');
+    }
+    // Threshold line
+    if (ft.threshold_1x) {
+        mkRow('⚠ Fin. Threshold (×1)', ft.threshold_1x,
+            'linear-gradient(90deg,rgba(245,158,11,.4),rgba(245,158,11,.08))', '#f59e0b', 'color:#f59e0b');
+    }
+
+    // Bid bars
+    _bids.forEach(bid => {
+        const amt = bid.total_amount || 0;
+        const isL1 = !bid.is_disqualified && bid.rank === 1;
+        const grad = bid.is_disqualified
+            ? 'linear-gradient(90deg,rgba(244,63,94,.15),rgba(244,63,94,.03))'
+            : isL1
+                ? 'linear-gradient(90deg,rgba(16,185,129,.7),rgba(52,211,153,.25))'
+                : 'linear-gradient(90deg,rgba(96,165,250,.45),rgba(96,165,250,.1))';
+        const col  = bid.is_disqualified ? '#475569' : isL1 ? '#10b981' : '#60a5fa';
+        const extra = bid.is_disqualified ? 'color:#475569;text-decoration:line-through' : isL1 ? 'color:#10b981;font-weight:700' : '';
+        mkRow(bid.vendor_name.split(' ')[0], amt, grad, col, extra);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  RENDER: TBA-2 Query Panel
+// ══════════════════════════════════════════════════════════════════════════════
+function renderQueryPanel() {
+    const list = document.getElementById('query-list');
+    list.innerHTML = '';
+
+    const bwq = _bids.filter(b => b.tba2_queries?.length > 0);
+    if (!bwq.length) {
+        list.innerHTML = `<div style="color:#475569;font-size:.73rem;padding:8px">No pending TBA-2 queries. All bid evaluations finalized.</div>`;
+        return;
+    }
+
+    bwq.forEach(bid => {
+        const div = document.createElement('div');
+        div.className = 'qp-item';
+        const qs = bid.tba2_queries.map((q, i) =>
+            `<div class="qp-q"><strong>Q${i+1} — ${q.label}:</strong> ${q.text}</div>`
+        ).join('');
+        div.innerHTML = `
+            <div class="qp-vendor"><i data-lucide="building-2" style="width:11px;height:11px"></i>${bid.vendor_name}</div>
+            ${qs}`;
+        list.appendChild(div);
+    });
+
+    lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  FILTERS & SEARCH
+// ══════════════════════════════════════════════════════════════════════════════
+function setFilter(mode) {
+    _filter = mode;
+    ['all','acc','rej','qry'].forEach(m => document.getElementById(`f-${m}`)?.classList.remove('active'));
+    document.getElementById(`f-${mode}`)?.classList.add('active');
+    renderTable();
+}
+
+function setSearch(val) {
+    _search = val;
+    renderTable();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SWARM NEGOTIATION (SSE)
+// ══════════════════════════════════════════════════════════════════════════════
+function startNegotiation() {
+    const btn     = document.getElementById('btn-neg');
+    const terminal= document.getElementById('neg-terminal');
+    const cons    = document.getElementById('consensus');
+    const tenderId= new URLSearchParams(window.location.search).get('tender_id') || '1';
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="width:12px;height:12px;display:inline-block;margin-right:7px"></span>Negotiating...`;
+    terminal.style.display = 'block';
+    terminal.innerHTML = `<div class="tl" style="color:#64748b">[SYSTEM] Initializing SSE Swarm Bus v3.0... Targeting L1 qualified bidder.</div>`;
+    cons.classList.remove('show');
+
+    if (_sseSource) _sseSource.close();
+
+    _sseSource = new EventSource(`${API_BASE_URL}/ai-ops/negotiate-stream/${tenderId}`);
+    const agentColors = {
+        'PLANNER':'#c084fc','ANALYST':'#f59e0b','SENTINEL':'#f43f5e',
+        'ORACLE':'#22d3ee','NEGOTIATOR':'#34d399','AUDITOR':'#60a5fa'
+    };
+
+    _sseSource.onmessage = (event) => {
+        try {
+            const d = JSON.parse(event.data);
+            const col = agentColors[d.sender] || '#64748b';
+            const line = document.createElement('div');
+            line.className = 'tl';
+            line.innerHTML = `<span style="color:${col};font-weight:700">[${d.sender||'SYS'}]</span> ${d.message||''}`;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+
+            if (d.phase === 'consensus' && d.metadata) {
+                document.getElementById('res-price').textContent   = `₹${(d.metadata.final_amount/100000).toFixed(2)}L`;
+                document.getElementById('res-savings').textContent = `₹${(d.metadata.savings/100000).toFixed(2)}L (${d.metadata.savings_pct}%)`;
+                cons.classList.add('show');
+                terminal.style.borderColor = '#34d399';
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="play" style="width:13px;height:13px"></i>Re-Deploy Swarm`;
+                lucide.createIcons();
+                _sseSource.close();
+            }
+        } catch(e) { console.error('SSE parse error:', e); }
+    };
+
+    _sseSource.onerror = () => {
+        const line = document.createElement('div');
+        line.className = 'tl';
+        line.style.color = '#34d399';
+        line.textContent = '[SYSTEM] Swarm cycle complete. Results synchronized.';
+        terminal.appendChild(line);
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="play" style="width:13px;height:13px"></i>Deploy Negotiation Swarm`;
+        lucide.createIcons();
+        _sseSource.close();
+    };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SCENARIO SIMULATOR MODELING ENGINE
+// ══════════════════════════════════════════════════════════════════════════════
+function runSimulation() {
+    if (!_originalBids || !_originalBids.length) return;
+
+    // Read simulator parameters
+    const techWeight = parseFloat(document.getElementById('sim-tech-weight').value);
+    const finWeight = 100 - techWeight;
+    const techThreshold = parseFloat(document.getElementById('sim-tech-threshold').value);
+    const msmePref = document.getElementById('sim-msme-pref').checked;
+    const msmeMargin = parseFloat(document.getElementById('sim-msme-margin').value || 15);
+
+    // Update simulator UI labels
+    document.getElementById('lbl-tech-weight').textContent = techWeight + '%';
+    document.getElementById('lbl-fin-weight').textContent = finWeight + '%';
+    document.getElementById('lbl-tech-threshold').textContent = techThreshold + '%';
+
+    // Deep copy original bids to work on clean state
+    _bids = JSON.parse(JSON.stringify(_originalBids));
+
+    // Factor in custom queries, overrides, and threshold disqualifications
+    _bids.forEach(bid => {
+        // Apply custom queries
+        if (_customQueries[bid.vendor_name]) {
+            bid.tba2_queries = [...(bid.tba2_queries || []), ..._customQueries[bid.vendor_name]];
+        }
+
+        // Apply overrides
+        const override = _overrides[bid.vendor_name];
+        if (override !== undefined) {
+            if (override.disqualified) {
+                bid.is_disqualified = true;
+                bid.disqualification_reason = override.reason || "Forced disqualification by committee decision.";
+            } else {
+                bid.is_disqualified = false;
+                bid.disqualification_reason = "";
+            }
+        } else {
+            // Apply threshold disqualification
+            if (bid.technical_score < techThreshold) {
+                bid.is_disqualified = true;
+                bid.disqualification_reason = `Failed technical threshold (${bid.technical_score.toFixed(1)}% < ${techThreshold}%)`;
+            }
+        }
+
+        // Update basic round 1 recommendations based on current compliance
+        if (bid.is_disqualified) {
+            bid.tba1 = "Technically NOT Accepted";
+            bid.tba2_final = bid.disqualification_reason || "Disqualified.";
+        } else {
+            bid.tba1 = "Technically Accepted";
+        }
+        
+        bid.eligible_for_match = false; // Reset L1 match option
+    });
+
+    // Recalculate financial and composite scores based on L1 method
+    const qualifiedBids = _bids.filter(b => !b.is_disqualified && b.total_amount > 0);
+    const simL1Amount = qualifiedBids.length ? Math.min(...qualifiedBids.map(b => b.total_amount)) : 0;
+
+    _bids.forEach(bid => {
+        if (bid.is_disqualified) {
+            bid.financial_score = 0;
+            bid.composite_score = 0;
+            bid.rank = null;
+        } else {
+            const finScore = simL1Amount > 0 ? (simL1Amount / bid.total_amount) * 100 : 0;
+            bid.financial_score = finScore;
+            bid.composite_score = (bid.technical_score * (techWeight/100)) + (finScore * (finWeight/100));
+        }
+    });
+
+    // Assign rank to qualified bids based on composite score descending
+    const ranked = _bids.filter(b => !b.is_disqualified)
+                       .sort((a, b) => b.composite_score - a.composite_score);
+    
+    ranked.forEach((bid, rIdx) => {
+        bid.rank = rIdx + 1;
+    });
+
+    // Re-sort the main _bids array alphabetically by vendor name to match spreadsheet mockup exactly
+    _bids.sort((a, b) => a.vendor_name.localeCompare(b.vendor_name));
+
+    // Apply MSME preference if enabled
+    const l1Bid = _bids.find(b => !b.is_disqualified && b.rank === 1);
+    if (msmePref && l1Bid && !l1Bid.msme && !l1Bid.startup) {
+        _bids.forEach(bid => {
+            if (!bid.is_disqualified && bid.rank !== 1 && (bid.msme || bid.startup)) {
+                if (bid.total_amount <= simL1Amount * (1 + msmeMargin/100)) {
+                    bid.eligible_for_match = true;
+                }
+            }
+        });
+    }
+
+    // Trigger re-rendering
+    renderKPIsSimulated(simL1Amount, l1Bid);
+    renderTable();
+    renderPriceBars();
+    renderQueryPanel();
+    drawSensitivityChart(techWeight, techThreshold);
+    updateOptimalWeightRanges(techWeight, techThreshold, simL1Amount);
+
+    // Keep open drawer updated
+    if (_activeDrawerIdx !== null) {
+        const drawer = document.getElementById(`dd-${_activeDrawerIdx}`);
+        const nameElement = document.getElementById(`vc-${_activeDrawerIdx}`).querySelector('.vc-name');
+        if (nameElement) {
+            const text = nameElement.textContent;
+            const name = text.substring(text.indexOf('—') + 1).trim();
+            const currentBid = _bids.find(b => b.vendor_name === name);
+            if (currentBid) {
+                drawer.innerHTML = buildDrawerHTML(currentBid, techThreshold, _activeDrawerIdx);
+                lucide.createIcons();
+            }
+        }
+    }
+}
+
+function renderKPIsSimulated(simL1Amount, l1Bid) {
+    const total = _bids.length;
+    const acceptedCount = _bids.filter(b => !b.is_disqualified).length;
+    const rejectedCount = _bids.filter(b => b.is_disqualified).length;
+    const queriesCount = _bids.filter(b => !b.is_disqualified && b.tba2_queries?.filter(q => !_resolvedQueries[`${b.vendor_name}::${q.label}`]).length > 0).length;
+    const finQualifiedCount = _bids.filter(b => b.fin_qualified || (!b.is_disqualified && b.total_amount >= ((_data?.financial_threshold?.threshold_3x) || 0))).length;
+
+    document.getElementById('kpi-acc').textContent = acceptedCount;
+    document.getElementById('kpi-rej').textContent = rejectedCount;
+    document.getElementById('kpi-qry').textContent = queriesCount;
+    document.getElementById('kpi-fin').textContent = finQualifiedCount;
+
+    const l1Card = document.getElementById('kpi-l1').closest('.kpi-card');
+    
+    if (l1Bid) {
+        document.getElementById('kpi-l1').textContent = l1Bid.vendor_name;
+        document.getElementById('kpi-l1-sub').textContent = `Composite: ${l1Bid.composite_score.toFixed(1)}% | ₹${(l1Bid.total_amount/100000).toFixed(2)}L`;
+        
+        // Add animated glow if L1 vendor changed
+        if (_currentL1Vendor && _currentL1Vendor !== l1Bid.vendor_name) {
+            l1Card.classList.add('l1-glow-active');
+            setTimeout(() => {
+                l1Card.classList.remove('l1-glow-active');
+            }, 5000);
+            showToast(`New L1 Bidder: ${l1Bid.vendor_name}!`, "warning");
+        }
+        _currentL1Vendor = l1Bid.vendor_name;
+    } else {
+        document.getElementById('kpi-l1').textContent = 'None Eligible';
+        document.getElementById('kpi-l1-sub').textContent = 'No bidder met all requirements';
+        _currentL1Vendor = null;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  QCBS SENSITIVITY PLOT DRAWING
+// ══════════════════════════════════════════════════════════════════════════════
+function drawSensitivityChart(currentTechWeight, currentThreshold) {
+    const svg = document.getElementById('sensitivity-svg');
+    if (!svg) return;
+    svg.innerHTML = '';
+
+    const width = 600;
+    const height = 280;
+    const paddingLeft = 42;
+    const paddingRight = 18;
+    const paddingTop = 18;
+    const paddingBottom = 28;
+
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
+
+    const scaleX = (w) => paddingLeft + (w / 100) * chartWidth;
+    const scaleY = (score) => paddingTop + chartHeight - (score / 100) * chartHeight;
+
+    // Create defs for gradients
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    grad.setAttribute('id', 'chart-bg-grad'); grad.setAttribute('x1','0'); grad.setAttribute('y1','0'); grad.setAttribute('x2','0'); grad.setAttribute('y2','1');
+    const s1 = document.createElementNS('http://www.w3.org/2000/svg','stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color','rgba(139,92,246,0.05)');
+    const s2 = document.createElementNS('http://www.w3.org/2000/svg','stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','rgba(0,0,0,0)');
+    grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    // Chart background fill
+    const bgRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    bgRect.setAttribute('x', paddingLeft); bgRect.setAttribute('y', paddingTop);
+    bgRect.setAttribute('width', chartWidth); bgRect.setAttribute('height', chartHeight);
+    bgRect.setAttribute('fill', 'url(#chart-bg-grad)'); bgRect.setAttribute('rx','4');
+    svg.appendChild(bgRect);
+
+    // Y Grid lines with labels (0, 20, 40, 60, 80, 100)
+    [0, 20, 40, 60, 80, 100].forEach(score => {
+        const y = scaleY(score);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', paddingLeft); line.setAttribute('y1', y);
+        line.setAttribute('x2', width - paddingRight); line.setAttribute('y2', y);
+        line.setAttribute('class', 'chart-grid-line');
+        svg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', paddingLeft - 6); txt.setAttribute('y', y + 3);
+        txt.setAttribute('text-anchor', 'end'); txt.setAttribute('class', 'chart-label');
+        txt.setAttribute('font-size', '9'); txt.textContent = score;
+        svg.appendChild(txt);
+    });
+
+    // X Grid lines (every 10%)
+    for (let w = 0; w <= 100; w += 10) {
+        const x = scaleX(w);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x); line.setAttribute('y1', paddingTop);
+        line.setAttribute('x2', x); line.setAttribute('y2', height - paddingBottom);
+        line.setAttribute('class', 'chart-grid-line');
+        if (w % 20 !== 0) line.setAttribute('stroke-dasharray', '2,4');
+        svg.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', x); txt.setAttribute('y', height - paddingBottom + 14);
+        txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('class', 'chart-label');
+        txt.setAttribute('font-size', '9'); txt.textContent = w + '%';
+        svg.appendChild(txt);
+    }
+
+    // Axis labels
+    const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    xLabel.setAttribute('x', paddingLeft + chartWidth / 2); xLabel.setAttribute('y', height - 2);
+    xLabel.setAttribute('text-anchor', 'middle'); xLabel.setAttribute('fill', '#64748b');
+    xLabel.setAttribute('font-size', '10'); xLabel.setAttribute('font-weight', '700');
+    xLabel.textContent = 'Technical Weightage →'; svg.appendChild(xLabel);
+
+    const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    yLabel.setAttribute('transform', `rotate(-90,12,${paddingTop + chartHeight/2})`);
+    yLabel.setAttribute('x', 12); yLabel.setAttribute('y', paddingTop + chartHeight/2);
+    yLabel.setAttribute('text-anchor', 'middle'); yLabel.setAttribute('fill', '#64748b');
+    yLabel.setAttribute('font-size', '10'); yLabel.setAttribute('font-weight', '700');
+    yLabel.textContent = 'Composite Score →'; svg.appendChild(yLabel);
+
+    // Axes
+    const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    xAxis.setAttribute('x1', paddingLeft); xAxis.setAttribute('y1', height - paddingBottom);
+    xAxis.setAttribute('x2', width - paddingRight); xAxis.setAttribute('y2', height - paddingBottom);
+    xAxis.setAttribute('class', 'chart-axis-line'); svg.appendChild(xAxis);
+
+    const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    yAxis.setAttribute('x1', paddingLeft); yAxis.setAttribute('y1', paddingTop);
+    yAxis.setAttribute('x2', paddingLeft); yAxis.setAttribute('y2', height - paddingBottom);
+    yAxis.setAttribute('class', 'chart-axis-line'); svg.appendChild(yAxis);
+
+    // Compute qualified data
+    const qualifiedBids = _bids.filter(b => !b.is_disqualified && b.total_amount > 0);
+    const simL1Amount = qualifiedBids.length ? Math.min(...qualifiedBids.map(b => b.total_amount)) : 0;
+
+    const showRejected = document.getElementById('chart-show-rejected')?.checked || false;
+    const showCrossover = document.getElementById('chart-show-crossover')?.checked || true;
+
+    const legendContainer = document.getElementById('chart-legend');
+    legendContainer.innerHTML = '';
+
+    // Pre-compute all vendor trajectories for crossover detection
+    const vendorData = [];
+    let qualifiedCount = 0;
+
+    _bids.forEach((bid, idx) => {
+        const color = getVendorColor(bid.vendor_name, idx);
+        const override = _overrides[bid.vendor_name];
+        let isDisqualified = false;
+        if (override !== undefined) { isDisqualified = override.disqualified; }
+        else { isDisqualified = bid.technical_score < currentThreshold; }
+
+        if (!isDisqualified) qualifiedCount++;
+        if (isDisqualified && !showRejected) return;
+
+        const techScore = bid.technical_score || 0;
+        const finScore = (!isDisqualified && simL1Amount > 0 && bid.total_amount > 0)
+            ? (simL1Amount / bid.total_amount) * 100 : 0;
+
+        vendorData.push({ bid, idx, color, isDisqualified, techScore, finScore });
+    });
+
+    // Update vendor count badge
+    const countBadge = document.getElementById('chart-vendor-count');
+    if (countBadge) countBadge.textContent = `${qualifiedCount} Qualified / ${_bids.length} Total`;
+
+    // Detect crossover points between qualified vendors
+    const crossoverPoints = [];
+    if (showCrossover) {
+        const qualVendors = vendorData.filter(v => !v.isDisqualified);
+        for (let i = 0; i < qualVendors.length; i++) {
+            for (let j = i + 1; j < qualVendors.length; j++) {
+                const a = qualVendors[i], b = qualVendors[j];
+                // Linear composite: c = techScore*(w/100) + finScore*(1-w/100)
+                // a.c = b.c => solve for w
+                const dTech = a.techScore - b.techScore;
+                const dFin = a.finScore - b.finScore;
+                if (Math.abs(dTech - dFin) > 0.01) {
+                    const crossW = (dFin * 100) / (dFin - dTech);
+                    if (crossW >= 0 && crossW <= 100) {
+                        const crossScore = a.techScore * (crossW/100) + a.finScore * (1 - crossW/100);
+                        crossoverPoints.push({
+                            weight: crossW, score: crossScore,
+                            vendorA: a.bid.vendor_name.split(' ')[0],
+                            vendorB: b.bid.vendor_name.split(' ')[0]
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    // Draw crossover markers BELOW lines
+    crossoverPoints.forEach(cp => {
+        const cx = scaleX(cp.weight);
+        const cy = scaleY(cp.score);
+        // diamond shape
+        const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = 5;
+        diamond.setAttribute('d', `M${cx} ${cy-d} L${cx+d} ${cy} L${cx} ${cy+d} L${cx-d} ${cy} Z`);
+        diamond.setAttribute('fill', 'rgba(251,191,36,0.6)');
+        diamond.setAttribute('stroke', '#fbbf24');
+        diamond.setAttribute('stroke-width', '1');
+        diamond.addEventListener('mouseenter', (e) => {
+            const tooltip = document.getElementById('chart-tooltip');
+            if (!tooltip) return;
+            tooltip.innerHTML = `<div style="font-weight:700;color:#fbbf24;margin-bottom:3px;">⬥ Crossover Point</div>
+                <div>Weight: <strong>${cp.weight.toFixed(1)}%</strong></div>
+                <div>Score: <strong>${cp.score.toFixed(1)}</strong></div>
+                <div style="margin-top:3px;color:#94a3b8;">${cp.vendorA} ⇌ ${cp.vendorB}</div>`;
+            tooltip.style.display = 'block';
+            moveChartTooltip(e);
+        });
+        diamond.addEventListener('mousemove', moveChartTooltip);
+        diamond.addEventListener('mouseleave', hideChartTooltip);
+        svg.appendChild(diamond);
+    });
+
+    // Draw vendor lines — thicker for qualified, thinner for disqualified
+    vendorData.forEach(v => {
+        const { bid, idx, color, isDisqualified, techScore, finScore } = v;
+
+        // Use polyline for smoother rendering with multiple points
+        let points = '';
+        for (let w = 0; w <= 100; w += 2) {
+            const composite = techScore * (w/100) + finScore * (1 - w/100);
+            points += `${scaleX(w).toFixed(1)},${scaleY(composite).toFixed(1)} `;
+        }
+
+        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        polyline.setAttribute('points', points.trim());
+        polyline.setAttribute('fill', 'none');
+        polyline.setAttribute('stroke', color);
+        polyline.setAttribute('stroke-width', isDisqualified ? '1' : '2.5');
+        polyline.setAttribute('stroke-linecap', 'round');
+        if (isDisqualified) {
+            polyline.setAttribute('stroke-dasharray', '4,4');
+            polyline.setAttribute('opacity', '0.35');
+        }
+        polyline.addEventListener('mouseenter', (e) => showChartTooltip(e, bid.vendor_name, color, techScore, finScore));
+        polyline.addEventListener('mousemove', moveChartTooltip);
+        polyline.addEventListener('mouseleave', hideChartTooltip);
+        svg.appendChild(polyline);
+
+        // Current weight dot
+        const scoreCurr = techScore * (currentTechWeight/100) + finScore * (1 - currentTechWeight/100);
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', scaleX(currentTechWeight));
+        circle.setAttribute('cy', scaleY(scoreCurr));
+        circle.setAttribute('r', isDisqualified ? '2.5' : '5');
+        circle.setAttribute('fill', color);
+        circle.setAttribute('stroke', '#030712');
+        circle.setAttribute('stroke-width', isDisqualified ? '0.5' : '1.5');
+        if (!isDisqualified && bid.rank === 1) {
+            // Pulse effect for L1 dot
+            circle.setAttribute('r', '6');
+            const animate = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+            animate.setAttribute('attributeName', 'r');
+            animate.setAttribute('values', '5;7;5');
+            animate.setAttribute('dur', '2s');
+            animate.setAttribute('repeatCount', 'indefinite');
+            circle.appendChild(animate);
+        }
+        circle.addEventListener('mouseenter', (e) => showChartTooltip(e, bid.vendor_name, color, techScore, finScore, scoreCurr));
+        circle.addEventListener('mousemove', moveChartTooltip);
+        circle.addEventListener('mouseleave', hideChartTooltip);
+        svg.appendChild(circle);
+
+        // Compact legend entry (show short name)
+        const shortName = bid.vendor_name.split(' ').slice(0, 2).join(' ');
+        const legendItem = document.createElement('div');
+        legendItem.style.cssText = `display:inline-flex;align-items:center;gap:3px;font-size:0.58rem;color:${isDisqualified ? '#475569' : '#94a3b8'};padding:2px 5px;background:rgba(255,255,255,0.02);border-radius:4px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s;${isDisqualified ? 'opacity:0.5;text-decoration:line-through;' : ''}`;
+        legendItem.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>${shortName}${bid.rank === 1 ? ' <span style="color:#4ade80;font-weight:700;">★L1</span>' : ''}`;
+        legendItem.addEventListener('mouseenter', () => { legendItem.style.borderColor = color; legendItem.style.background = 'rgba(255,255,255,0.06)'; });
+        legendItem.addEventListener('mouseleave', () => { legendItem.style.borderColor = 'rgba(255,255,255,0.04)'; legendItem.style.background = 'rgba(255,255,255,0.02)'; });
+        legendContainer.appendChild(legendItem);
+    });
+
+    // Draw active vertical dotted line
+    const xActive = scaleX(currentTechWeight);
+    const activeLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    activeLine.setAttribute('x1', xActive); activeLine.setAttribute('y1', paddingTop);
+    activeLine.setAttribute('x2', xActive); activeLine.setAttribute('y2', height - paddingBottom);
+    activeLine.setAttribute('stroke', '#a78bfa'); activeLine.setAttribute('stroke-width', '2');
+    activeLine.setAttribute('stroke-dasharray', '4,3'); activeLine.setAttribute('opacity', '0.8');
+    svg.appendChild(activeLine);
+
+    // Label on the active line
+    const activeLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    activeLabel.setAttribute('x', xActive); activeLabel.setAttribute('y', paddingTop - 4);
+    activeLabel.setAttribute('text-anchor', 'middle'); activeLabel.setAttribute('fill', '#a78bfa');
+    activeLabel.setAttribute('font-size', '9'); activeLabel.setAttribute('font-weight', '700');
+    activeLabel.textContent = `Active: ${currentTechWeight}%`;
+    svg.appendChild(activeLabel);
+
+    // Threshold line (horizontal) if meaningful
+    if (currentThreshold > 0 && currentThreshold < 100) {
+        const yThresh = scaleY(currentThreshold);
+        const thLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        thLine.setAttribute('x1', paddingLeft); thLine.setAttribute('y1', yThresh);
+        thLine.setAttribute('x2', width - paddingRight); thLine.setAttribute('y2', yThresh);
+        thLine.setAttribute('stroke', '#f43f5e'); thLine.setAttribute('stroke-width', '1');
+        thLine.setAttribute('stroke-dasharray', '6,3'); thLine.setAttribute('opacity', '0.4');
+        svg.appendChild(thLine);
+        const thLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        thLabel.setAttribute('x', width - paddingRight + 2); thLabel.setAttribute('y', yThresh + 3);
+        thLabel.setAttribute('text-anchor', 'start'); thLabel.setAttribute('fill', '#f43f5e');
+        thLabel.setAttribute('font-size', '8'); thLabel.setAttribute('opacity', '0.6');
+        thLabel.textContent = `Min: ${currentThreshold}%`;
+        svg.appendChild(thLabel);
+    }
+}
+
+function updateOptimalWeightRanges(currentWeight, threshold, simL1Amount) {
+    const textEl = document.getElementById('qcbs-prediction-text');
+    const statsEl = document.getElementById('qcbs-stats-text');
+    if (!textEl) return;
+
+    const qualified = _bids.filter(b => {
+        const override = _overrides[b.vendor_name];
+        if (override !== undefined) { return !override.disqualified; }
+        return b.technical_score >= threshold;
+    }).filter(b => b.total_amount > 0);
+
+    if (qualified.length === 0) {
+        textEl.innerHTML = '<span style="color:#f43f5e; font-weight:600;">No qualified bidders met the technical threshold. Decision frontier cannot be calculated.</span>';
+        if (statsEl) statsEl.innerHTML = '<span style="color:#f43f5e;">Insufficient data for analysis.</span>';
+        return;
+    }
+
+    // ── Simulate L1 winner for every weight step ──
+    let lastWinner = null;
+    let startWt = 0;
+    let ranges = [];
+    const winnerAtWeight = {};
+
+    for (let wt = 0; wt <= 100; wt++) {
+        let maxComposite = -1;
+        let winnerName = null;
+        let winnerScore = 0;
+
+        qualified.forEach(bid => {
+            const finScore = simL1Amount > 0 ? (simL1Amount / bid.total_amount) * 100 : 0;
+            const composite = (bid.technical_score * (wt/100)) + (finScore * ((100 - wt)/100));
+            if (composite > maxComposite) {
+                maxComposite = composite;
+                winnerName = bid.vendor_name;
+                winnerScore = composite;
+            }
+        });
+
+        winnerAtWeight[wt] = { name: winnerName, score: winnerScore };
+
+        if (winnerName !== lastWinner) {
+            if (lastWinner !== null) {
+                ranges.push({ winner: lastWinner, start: startWt, end: wt - 1 });
+            }
+            lastWinner = winnerName;
+            startWt = wt;
+        }
+    }
+    if (lastWinner !== null) {
+        ranges.push({ winner: lastWinner, start: startWt, end: 100 });
+    }
+
+    // ── Decision Frontier Ranges Display ──
+    let rangesHtml = '<div style="margin-top:6px; display:flex; flex-direction:column; gap:3px;">';
+    let currentWinnerRangeText = "";
+    let currentWinnerRange = null;
+    
+    ranges.forEach(r => {
+        const isCurrent = currentWeight >= r.start && currentWeight <= r.end;
+        const rangeSpan = r.end - r.start + 1;
+        const dominance = rangeSpan >= 50 ? '🏆' : rangeSpan >= 20 ? '📊' : '📌';
+        const barWidth = Math.max(8, rangeSpan);
+        const style = isCurrent ? 'font-weight:700; color:#4ade80;' : 'color:#94a3b8;';
+        const indicator = isCurrent ? ' <span style="background:rgba(74,222,128,0.2); padding:1px 5px; border-radius:3px; font-size:0.55rem; color:#4ade80; font-weight:700; animation: pulse-green 2s infinite alternate;">▸ ACTIVE</span>' : '';
+        
+        rangesHtml += `<div style="font-size:0.62rem; ${style}; display:flex; align-items:center; gap:6px;">
+            <span style="min-width:14px;">${dominance}</span>
+            <div style="width:${barWidth}px; height:4px; background:${isCurrent ? '#4ade80' : 'rgba(255,255,255,0.1)'}; border-radius:2px; flex-shrink:0;"></div>
+            <span>Tech <strong>${r.start}%–${r.end}%</strong>: <strong>${r.winner}</strong> (${rangeSpan}% coverage)${indicator}</span>
+        </div>`;
+        
+        if (isCurrent) {
+            currentWinnerRangeText = r.winner;
+            currentWinnerRange = r;
+        }
+    });
+    rangesHtml += '</div>';
+
+    // ── Advanced Data-Driven Optimal Recommendation ──
+    const highestTechBidder = [...qualified].sort((a,b) => b.technical_score - a.technical_score)[0];
+    const lowestPriceBidder = [...qualified].sort((a,b) => a.total_amount - b.total_amount)[0];
+    const bestCompositeAtCurrent = winnerAtWeight[currentWeight];
+
+    // Find the Pareto-optimal vendor (highest coverage range + best composite)
+    let paretoOptimal = null;
+    let maxCoverage = 0;
+    ranges.forEach(r => {
+        const coverage = r.end - r.start + 1;
+        if (coverage > maxCoverage) {
+            maxCoverage = coverage;
+            paretoOptimal = r;
+        }
+    });
+
+    // Compute score margins at current weight
+    const scoresAtCurrent = qualified.map(b => {
+        const finScore = simL1Amount > 0 ? (simL1Amount / b.total_amount) * 100 : 0;
+        return {
+            name: b.vendor_name,
+            composite: (b.technical_score * (currentWeight/100)) + (finScore * ((100 - currentWeight)/100)),
+            techScore: b.technical_score,
+            finScore: finScore,
+            amount: b.total_amount
+        };
+    }).sort((a,b) => b.composite - a.composite);
+
+    const l1Score = scoresAtCurrent[0]?.composite || 0;
+    const l2Score = scoresAtCurrent[1]?.composite || 0;
+    const l1l2Margin = l1Score - l2Score;
+
+    let advice = "";
+    if (highestTechBidder.vendor_name === lowestPriceBidder.vendor_name) {
+        advice = `<div style="padding:6px 8px; background:rgba(16,185,129,0.1); border-radius:6px; border:1px solid rgba(16,185,129,0.2); margin-bottom:6px;">
+            <span style="color:#4ade80;font-weight:700;">⚡ Dominant Bidder Detected</span><br>
+            <strong>${highestTechBidder.vendor_name}</strong> leads in both technical score (${highestTechBidder.technical_score.toFixed(1)}%) and lowest bid price (₹${(lowestPriceBidder.total_amount/100000).toFixed(2)}L). They are the optimal choice under <strong>all</strong> weight configurations.
+        </div>`;
+    } else {
+        // Build intelligent multi-factor recommendation
+        advice += `<div style="margin-bottom:5px;">`;
+        
+        // Current winner analysis
+        if (currentWinnerRangeText) {
+            advice += `<div style="font-size:0.63rem; margin-bottom:4px;">At <strong>Tech ${currentWeight}%</strong>, <strong style="color:#4ade80;">${currentWinnerRangeText}</strong> wins with composite <strong>${bestCompositeAtCurrent.score.toFixed(1)}%</strong>.`;
+            if (l1l2Margin > 0) {
+                const marginColor = l1l2Margin > 5 ? '#4ade80' : l1l2Margin > 2 ? '#fbbf24' : '#f43f5e';
+                advice += ` L1-L2 margin: <strong style="color:${marginColor};">${l1l2Margin.toFixed(1)}%</strong> ${l1l2Margin < 2 ? '⚠ Tight contest' : l1l2Margin > 5 ? '✓ Comfortable lead' : '~ Moderate margin'}.`;
+            }
+            advice += `</div>`;
+        }
+
+        // Tech quality pathway
+        const highestTechWinsAt = ranges.find(r => r.winner === highestTechBidder.vendor_name);
+        if (highestTechWinsAt) {
+            advice += `<div style="font-size:0.62rem; color:#93c5fd;">📐 Quality-first: Tech Weight ≥ <strong>${highestTechWinsAt.start}%</strong> → <strong>${highestTechBidder.vendor_name}</strong> (Score: ${highestTechBidder.technical_score.toFixed(1)}%)</div>`;
+        }
+
+        // Cost-optimal pathway
+        const lowestPriceWinsAt = ranges.find(r => r.winner === lowestPriceBidder.vendor_name);
+        if (lowestPriceWinsAt && lowestPriceBidder.vendor_name !== highestTechBidder.vendor_name) {
+            advice += `<div style="font-size:0.62rem; color:#fda4af;">💰 Cost-optimal: Tech Weight ≤ <strong>${lowestPriceWinsAt.end}%</strong> → <strong>${lowestPriceBidder.vendor_name}</strong> (₹${(lowestPriceBidder.total_amount/100000).toFixed(2)}L)</div>`;
+        }
+
+        // Pareto-optimal (widest coverage) recommendation
+        if (paretoOptimal && paretoOptimal.winner !== currentWinnerRangeText) {
+            advice += `<div style="font-size:0.62rem; color:#c4b5fd; margin-top:3px;">🎯 Recommended: <strong>${paretoOptimal.winner}</strong> dominates ${maxCoverage}% of the weight spectrum (${paretoOptimal.start}%–${paretoOptimal.end}%), indicating highest robustness.</div>`;
+        }
+        advice += `</div>`;
+    }
+
+    textEl.innerHTML = `
+        <div style="line-height:1.45;">${advice}</div>
+        <div style="font-size:0.58rem; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; margin-top:6px; font-weight:700; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px;">Decision Frontier (${ranges.length} regions, ${qualified.length} qualified bidders):</div>
+        ${rangesHtml}
+    `;
+
+    // ── Statistical Intelligence Summary ──
+    if (statsEl) {
+        // Compute advanced statistics
+        const techScores = qualified.map(b => b.technical_score);
+        const finScores = scoresAtCurrent.map(s => s.finScore);
+        const composites = scoresAtCurrent.map(s => s.composite);
+        const amounts = qualified.map(b => b.total_amount);
+
+        const mean = arr => arr.reduce((a,b) => a+b, 0) / arr.length;
+        const stdDev = arr => { const m = mean(arr); return Math.sqrt(arr.reduce((a,b) => a + (b-m)**2, 0) / arr.length); };
+        const coeffVar = arr => { const m = mean(arr); return m > 0 ? (stdDev(arr) / m * 100) : 0; };
+
+        // Herfindahl-Hirschman Index for competitiveness
+        const totalComp = composites.reduce((a,b) => a+b, 0);
+        const hhi = totalComp > 0 ? composites.reduce((a,s) => a + ((s/totalComp)*100)**2, 0) : 0;
+        const hhiNormalized = Math.max(0, Math.min(100, (10000 - hhi) / 100));
+
+        // Price spread analysis
+        const minAmt = Math.min(...amounts);
+        const maxAmt = Math.max(...amounts);
+        const priceSpread = minAmt > 0 ? ((maxAmt - minAmt) / minAmt * 100) : 0;
+
+        // Crossover count (switching points)
+        const crossoverCount = ranges.length - 1;
+
+        // Competitive tension indicator
+        const tensionLevel = l1l2Margin < 1 ? 'Critical' : l1l2Margin < 3 ? 'High' : l1l2Margin < 6 ? 'Moderate' : 'Low';
+        const tensionColor = l1l2Margin < 1 ? '#f43f5e' : l1l2Margin < 3 ? '#f59e0b' : l1l2Margin < 6 ? '#22d3ee' : '#4ade80';
+
+        statsEl.innerHTML = `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:0.62rem;">
+                <div style="background:rgba(0,0,0,0.15); padding:6px 8px; border-radius:6px;">
+                    <div style="color:#64748b; font-size:0.55rem; text-transform:uppercase; letter-spacing:0.04em;">Tech Score Mean</div>
+                    <div style="font-weight:700; color:#60a5fa; font-size:0.72rem;">${mean(techScores).toFixed(1)}%</div>
+                    <div style="color:#475569; font-size:0.52rem;">σ = ${stdDev(techScores).toFixed(1)}%</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.15); padding:6px 8px; border-radius:6px;">
+                    <div style="color:#64748b; font-size:0.55rem; text-transform:uppercase; letter-spacing:0.04em;">Composite Mean</div>
+                    <div style="font-weight:700; color:#a78bfa; font-size:0.72rem;">${mean(composites).toFixed(1)}%</div>
+                    <div style="color:#475569; font-size:0.52rem;">CV = ${coeffVar(composites).toFixed(1)}%</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.15); padding:6px 8px; border-radius:6px;">
+                    <div style="color:#64748b; font-size:0.55rem; text-transform:uppercase; letter-spacing:0.04em;">Competitive Tension</div>
+                    <div style="font-weight:700; color:${tensionColor}; font-size:0.72rem;">${tensionLevel}</div>
+                    <div style="color:#475569; font-size:0.52rem;">L1-L2 gap: ${l1l2Margin.toFixed(1)}%</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.15); padding:6px 8px; border-radius:6px;">
+                    <div style="color:#64748b; font-size:0.55rem; text-transform:uppercase; letter-spacing:0.04em;">Price Spread</div>
+                    <div style="font-weight:700; color:#fbbf24; font-size:0.72rem;">${priceSpread.toFixed(1)}%</div>
+                    <div style="color:#475569; font-size:0.52rem;">${crossoverCount} crossover${crossoverCount !== 1 ? 's' : ''}</div>
+                </div>
+            </div>
+            <div style="margin-top:8px; padding:5px 8px; background:rgba(0,0,0,0.1); border-radius:5px; font-size:0.58rem; color:#94a3b8; line-height:1.45;">
+                <strong style="color:#e2e8f0;">Ranking at ${currentWeight}% Tech:</strong>
+                ${scoresAtCurrent.slice(0, 5).map((s, i) => `<span style="color:${i===0?'#4ade80':i===1?'#60a5fa':'#94a3b8'};">${i===0?'🥇':i===1?'🥈':i===2?'🥉':` ${i+1}.`} ${s.name.split(' ')[0]} (${s.composite.toFixed(1)}%)</span>`).join(', ')}
+                ${scoresAtCurrent.length > 5 ? ` <span style="color:#475569;">+${scoresAtCurrent.length - 5} more</span>` : ''}
+            </div>
+        `;
+    }
+}
+
+
+function showChartTooltip(event, vendorName, color, techScore, finScore, currentScore = null) {
+    const tooltip = document.getElementById('chart-tooltip');
+    if (!tooltip) return;
+    
+    const bid = _bids.find(b => b.vendor_name === vendorName);
+    const rankLabel = bid?.rank ? `L${bid.rank}` : (bid?.is_disqualified ? 'DQ' : '—');
+    const rankColor = bid?.rank === 1 ? '#4ade80' : bid?.rank === 2 ? '#60a5fa' : bid?.is_disqualified ? '#f43f5e' : '#94a3b8';
+    
+    let html = `<div style="font-weight:700;color:${color};margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span>${vendorName}</span>
+        <span style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;font-size:0.58rem;color:${rankColor};font-weight:800;">${rankLabel}</span>
+    </div>`;
+    html += `<div>Tech Score: <strong>${techScore.toFixed(1)}%</strong></div>`;
+    html += `<div>Fin Score: <strong>${finScore.toFixed(1)}%</strong></div>`;
+    if (bid?.total_amount) {
+        html += `<div style="color:#94a3b8;">Bid: ₹${(bid.total_amount/100000).toFixed(2)}L</div>`;
+    }
+    if (currentScore !== null) {
+        html += `<div style="font-weight:700;margin-top:3px;color:#a78bfa;border-top:1px solid rgba(255,255,255,0.08);padding-top:3px;">Composite: ${currentScore.toFixed(1)}%</div>`;
+    }
+    
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    moveChartTooltip(event);
+}
+
+function moveChartTooltip(event) {
+    const tooltip = document.getElementById('chart-tooltip');
+    if (!tooltip) return;
+    
+    const parentRect = tooltip.parentElement.getBoundingClientRect();
+    const x = event.clientX - parentRect.left + 10;
+    const y = event.clientY - parentRect.top - 10;
+    
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+}
+
+function hideChartTooltip() {
+    const tooltip = document.getElementById('chart-tooltip');
+    if (tooltip) tooltip.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SLIDER / PARAMETER EVENT LISTENERS
+// ══════════════════════════════════════════════════════════════════════════════
+function updateWeightsFromSlider(val) {
+    runSimulation();
+}
+
+function updateThresholdFromSlider(val) {
+    runSimulation();
+}
+
+function toggleMsmePreference(checked) {
+    runSimulation();
+}
+
+function updateMsmeMargin(val) {
+    runSimulation();
+}
+
+function resetSimulation() {
+    const tw = _data.tender?.technical_weightage || 70;
+    const tt = _data.tender?.technical_threshold || 70;
+    
+    document.getElementById('sim-tech-weight').value = tw;
+    document.getElementById('sim-tech-threshold').value = tt;
+    document.getElementById('sim-msme-pref').checked = false;
+    document.getElementById('sim-msme-margin').value = 15;
+    
+    _overrides = {};
+    _resolvedQueries = {};
+    _customQueries = {};
+    _activeDrawerIdx = null;
+    
+    showToast("Simulation console reset to baseline records.", "success");
+    runSimulation();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ADMINISTRATIVE DECIDER / OVERRIDES / QUERY RESOLUTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+function resolveQuery(vendorName, queryLabel) {
+    const queryId = `${vendorName}::${queryLabel}`;
+    _resolvedQueries[queryId] = true;
+    showToast(`Reply received and approved for ${vendorName} - ${queryLabel}.`, "success");
+    runSimulation();
+}
+
+function addCustomQuery(idx, vendorName) {
+    const lblInput = document.getElementById(`new-q-lbl-${idx}`);
+    const txtInput = document.getElementById(`new-q-txt-${idx}`);
+    const label = lblInput.value.trim();
+    const text = txtInput.value.trim();
+    
+    if (!label || !text) {
+        showToast("Please fill in both the query label and description details.", "warning");
+        return;
+    }
+    
+    if (!_customQueries[vendorName]) {
+        _customQueries[vendorName] = [];
+    }
+    _customQueries[vendorName].push({ label, text });
+    
+    lblInput.value = '';
+    txtInput.value = '';
+    showToast(`New clarification query added for ${vendorName}.`, "success");
+    runSimulation();
+}
+
+function toggleBidderOverride(vendorName, value, idx) {
+    const reasonWrap = document.getElementById(`override-reason-wrap-${idx}`);
+    if (value === 'force-fail') {
+        reasonWrap.style.display = 'flex';
+        _overrides[vendorName] = { disqualified: true, reason: '' };
+    } else if (value === 'force-pass') {
+        reasonWrap.style.display = 'none';
+        _overrides[vendorName] = { disqualified: false };
+        showToast(`Override applied: Forced Accept for ${vendorName}.`, "success");
+        runSimulation();
+    } else {
+        reasonWrap.style.display = 'none';
+        delete _overrides[vendorName];
+        showToast(`Override removed for ${vendorName}.`, "success");
+        runSimulation();
+    }
+}
+
+function saveOverrideReason(vendorName, idx) {
+    const reason = document.getElementById(`override-reason-${idx}`).value.trim();
+    if (!reason) {
+        showToast("Please specify a reason for disqualification override.", "warning");
+        return;
+    }
+    _overrides[vendorName] = { disqualified: true, reason: reason };
+    showToast(`Override applied: Forced Reject for ${vendorName}. Reason logged.`, "success");
+    runSimulation();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ENTERPRISE EXPORTERS
+// ══════════════════════════════════════════════════════════════════════════════
+function exportComparativeCSV() {
+    const headers = [
+        "Rank", "Vendor Name", "GEM Reg No", "MSME", "Startup", "MII",
+        "MAF", "ECO Enquiry", "Ann-A", "Ann-B", "Ann-X", 
+        "Technical Score %", "Bid Amount (INR)", "Financial Score %", "Composite Score %",
+        "Status", "Technical Recommendation", "TBA-2 Query Status", "Disqualification Reason"
+    ];
+    
+    let csvRows = [headers.join(",")];
+    
+    _bids.forEach(b => {
+        const row = [
+            b.is_disqualified ? "DQ" : (b.rank ? `L${b.rank}` : "—"),
+            `"${b.vendor_name.replace(/"/g, '""')}"`,
+            `"${b.gem_reg_no}"`,
+            b.msme ? "Yes" : "No",
+            b.startup ? "Yes" : "No",
+            b.make_in_india ? "Yes" : "No",
+            `"${(b.maf || "").replace(/"/g, '""')}"`,
+            `"${(b.eco || "").replace(/"/g, '""')}"`,
+            `"${(b.ann_a || "").replace(/"/g, '""')}"`,
+            `"${(b.ann_b || "").replace(/"/g, '""')}"`,
+            `"${(b.ann_x || "").replace(/"/g, '""')}"`,
+            b.technical_score ? b.technical_score.toFixed(1) + "%" : "0%",
+            b.total_amount || 0,
+            b.financial_score ? b.financial_score.toFixed(1) + "%" : "0%",
+            b.composite_score ? b.composite_score.toFixed(1) + "%" : "0%",
+            b.status || "—",
+            `"${(b.tech_rec || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+            `"${b.tba2_queries && b.tba2_queries.length ? b.tba2_queries.length + " Queries Pending" : "None"}"`,
+            `"${(b.disqualification_reason || "").replace(/"/g, '""')}"`
+        ];
+        csvRows.push(row.join(","));
+    });
+    
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    
+    const t = _data?.tender || {};
+    const bidNo = (t.bid_number || "Tender").replace(/[\/\\?%*:|"<>\s]/g, "_");
+    link.setAttribute("download", `GEM_Comparative_TCR_${bidNo}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("TCR Comparative CSV exported successfully!", "success");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  BACKEND TRIGGERS
+// ══════════════════════════════════════════════════════════════════════════════
+async function openFinancialBidsLocal() {
+    const tenderId = new URLSearchParams(window.location.search).get('tender_id') || '1';
+    const token    = localStorage.getItem('gem_token') || '';
+
+    if (!confirm("Are you sure you want to unlock and open the financial bids for this tender? This action is immutable and logged in the blockchain audit trail.")) {
+        return;
+    }
+
+    showToast("Unlocking financial bids on blockchain...", "warning");
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/evaluation/open-financial/${tenderId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        showToast(data.message || "Financial Bids Successfully Unlocked!", "success");
+        
+        // Reload data to reflect financial scores
+        setTimeout(boot, 1000);
+    } catch (err) {
+        console.error("Error unlocking financial bids:", err);
+        showToast(err.message || "Failed to unlock financial bids. Ensure you are logged in as Admin.", "error");
+    }
+}
+
+async function autoEvaluateTenderLocal() {
+    const tenderId = new URLSearchParams(window.location.search).get('tender_id') || '1';
+    const token    = localStorage.getItem('gem_token') || '';
+
+    showToast("Deploying cognitive AI agents for auto-evaluation...", "warning");
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/evaluation/auto-evaluate/${tenderId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        showToast("Autonomous evaluation task dispatched in background!", "success");
+        
+        // Wait and refresh to pull the new scores
+        setTimeout(() => {
+            showToast("Syncing AI evaluation records...", "warning");
+            boot();
+        }, 4000);
+    } catch (err) {
+        console.error("Error running auto-evaluation:", err);
+        showToast(err.message || "Failed to launch AI evaluation.", "error");
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>

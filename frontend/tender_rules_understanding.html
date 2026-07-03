@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tender Rules Understanding | GEM Intelligence</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .rules-dashboard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding: 0 0 40px 0;
+        }
+        .banner-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(59, 130, 246, 0.12));
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+        .banner-title-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .banner-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+        .banner-details {
+            display: flex;
+            gap: 40px;
+        }
+        .banner-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .banner-stat .label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        .banner-stat .value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .split-columns {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 24px;
+        }
+        .ocr-terminal-card {
+            display: flex;
+            flex-direction: column;
+            height: 560px;
+            padding: 24px;
+        }
+        .ocr-terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 12px;
+        }
+        .ocr-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ocr-search-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px 12px;
+            width: 250px;
+        }
+        .ocr-search-container input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-size: 0.8rem;
+            width: 100%;
+        }
+        .ocr-terminal-body {
+            flex-grow: 1;
+            background: #05070f;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            overflow-y: auto;
+            color: #34d399; /* Emerald green text */
+        }
+        .ocr-line {
+            white-space: pre-wrap;
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ocr-line:hover {
+            background: rgba(139, 92, 246, 0.15);
+            color: white;
+        }
+        .ocr-line.highlight {
+            background: rgba(245, 158, 11, 0.25);
+            border-left: 2px solid var(--warning);
+            padding-left: 8px;
+        }
+        .ocr-line.selected {
+            background: rgba(139, 92, 246, 0.25);
+            border: 1px dashed #a78bfa;
+            color: white;
+        }
+        .right-rules-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .rules-subcard {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 24px;
+        }
+        .rules-subcard-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 10px;
+        }
+        .rules-subcard-header h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .rules-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .rule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        .rule-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        .rule-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .rule-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .rule-description {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .rule-value {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #f472b6;
+        }
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .spec-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+        .spec-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        .spec-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .spec-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .spec-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .spec-value {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sentinel-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(139, 92, 246, 0.06));
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 32px;
+            padding: 32px;
+            border-color: rgba(139, 92, 246, 0.15);
+        }
+        .sentinel-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding-right: 32px;
+        }
+        .progress-ring-container {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin-bottom: 12px;
+        }
+        .progress-ring-text {
+            position: absolute;
+            top: 52%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .sentinel-right {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .sentinel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sentinel-advisory {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px 18px;
+        }
+        .sentinel-advisory-highlight {
+            color: var(--warning);
+            font-weight: 600;
+        }
+        .clauses-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .clause-pill {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.18);
+            color: #f87171;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .clause-pill.present {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.18);
+            color: #34d399;
+        }
+        .cvc-flags-container {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .cvc-flag-item {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.18);
+            color: #fbbf24;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .waivers-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .waiver-tag {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .btn-outline-glow {
+            background: rgba(255, 255, 255, 0.02);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s;
+        }
+        .btn-outline-glow:hover {
+            border-color: #f472b6;
+            color: #f472b6;
+            box-shadow: 0 0 15px rgba(244, 114, 182, 0.2);
+        }
+        .btn-glow {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-glow:hover {
+            filter: brightness(1.15);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+        }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-left-color: #ec4899;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ── Advanced AI Sidebar Chat Drawer ── */
+        .chat-drawer {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(10, 14, 26, 0.98);
+            backdrop-filter: blur(16px);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .chat-drawer.open {
+            right: 0;
+        }
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(30, 41, 59, 0.4);
+        }
+        .chat-header h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .chat-close-btn:hover {
+            color: var(--text-main);
+        }
+        .chat-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .chat-message {
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            line-height: 1.55;
+        }
+        .chat-message.assistant {
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: var(--text-main);
+        }
+        .chat-message.system {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+        }
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.85);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-textarea {
+            width: 100%;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            color: var(--text-main);
+            font-size: 0.8rem;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .chat-textarea:focus {
+            border-color: #a78bfa;
+        }
+        .chat-send-btn {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .chat-send-btn:hover {
+            filter: brightness(1.15);
+        }
+
+        /* ── Advanced AI Proposal Diff Modal ── */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-card {
+            background: #0d1222;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            width: 750px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.open .modal-card {
+            transform: translateY(0);
+        }
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+        }
+        .diff-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        .diff-table th {
+            padding: 10px;
+            color: var(--text-muted);
+            font-weight: 700;
+            border-bottom: 2px solid rgba(255,255,255,0.08);
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+        }
+        .diff-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .diff-table tr.changed {
+            background: rgba(245, 158, 11, 0.04);
+        }
+        .diff-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+        .diff-badge.equal {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+        }
+        .diff-badge.modified {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>AI Tender Rules Understanding Console</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Inspect extracted PQC thresholds, technical specifications, and CVC procurement compliance sentinel parameters before evaluation.</p>
+                </div>
+                <div class="user-profile">
+                    <div style="text-align: right;">
+                        <div id="user-name" style="font-weight: 500;">Evaluator</div>
+                        <div id="user-role" style="font-size: 0.8rem; color: var(--text-muted);">Role</div>
+                    </div>
+                    <div class="avatar" id="user-avatar">E</div>
+                    <button class="btn btn-outline" onclick="logout()" style="padding: 8px; margin-left: 12px; border-radius: 8px; cursor: pointer; color: var(--text-muted); background: transparent; border: 1px solid var(--border);">
+                        <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div id="loading-overlay" style="text-align:center; padding: 100px 0;">
+                <div class="spinner" style="width: 45px; height: 45px; border-width: 4px; border-left-color: #ec4899;"></div>
+                <p style="margin-top:20px; color:var(--text-muted); font-size:0.95rem; font-weight: 500;">AI is analyzing active tender clauses & scanning policy sentinels...</p>
+            </div>
+
+            <div id="console-workspace" style="display:none;" class="rules-dashboard-container">
+                <!-- Row 1: Header Banner -->
+                <div class="card banner-card">
+                    <div class="banner-title-area">
+                        <div class="banner-icon">
+                            <i data-lucide="brain-circuit" style="width:24px;height:24px;"></i>
+                        </div>
+                        <div>
+                            <h2 id="tender-ref-heading" style="font-size:1.2rem;font-weight:800;">Tender Reference: -</h2>
+                            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">Extracted from active document index</p>
+                        </div>
+                    </div>
+                    <div class="banner-details">
+                        <div class="banner-stat">
+                            <span class="label">Startup & MSE Waiver Policy</span>
+                            <span class="value" id="relaxation-status-badge">-</span>
+                        </div>
+                        <div class="banner-stat">
+                            <span class="label">Source Index Integrity</span>
+                            <span class="value" style="color:#34d399;display:flex;align-items:center;gap:6px;"><i data-lucide="shield-check" style="width:16px;height:16px;"></i> VERIFIED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Dual Split Panels -->
+                <div class="split-columns">
+                    <!-- Left Column: Raw text log viewer -->
+                    <div class="card ocr-terminal-card">
+                        <div class="ocr-terminal-header">
+                            <span class="ocr-title">
+                                <i data-lucide="file-text" style="color:#34d399;width:18px;height:18px;"></i> Raw Ingested Tender Text (OCR Logs)
+                                <span style="font-size:0.68rem;color:var(--text-muted);font-weight:normal;margin-left:8px;">(Click any line for Policy Explanation)</span>
+                            </span>
+                            <div class="ocr-search-container">
+                                <i data-lucide="search" style="color:var(--text-muted);width:14px;height:14px;"></i>
+                                <input type="text" id="ocr-search-input" placeholder="Search logs (e.g. Annexure)..." oninput="filterOcrLogs()">
+                            </div>
+                        </div>
+                        <div class="ocr-terminal-body" id="ocr-terminal-logs">
+                            <!-- Lines injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Extracted rule configuration values -->
+                    <div class="right-rules-cards">
+                        <!-- Commercial PQC Limits -->
+                        <div class="rules-subcard">
+                            <div class="rules-subcard-header">
+                                <i data-lucide="shield-alert" style="color:#f472b6;width:20px;height:20px;"></i>
+                                <h3>AI Extracted Commercial Eligibility</h3>
+                            </div>
+                            <div class="rules-list">
+                                <div class="rule-item">
+                                    <div class="rule-meta">
+                                        <span class="rule-title">Min Average Annual Turnover</span>
+                                        <span class="rule-description">Minimum annual turnover requirement in INR Lakhs</span>
+                                    </div>
+                                    <span class="rule-value" id="val-turnover">-</span>
+                                </div>
+                                <div class="rule-item">
+                                    <div class="rule-meta">
+                                        <span class="rule-title">3 Similar Purchase Orders</span>
+                                        <span class="rule-description">Threshold for three concurrent executed orders</span>
+                                    </div>
+                                    <span class="rule-value" id="val-exp-3">-</span>
+                                </div>
+                                <div class="rule-item">
+                                    <div class="rule-meta">
+                                        <span class="rule-title">2 Similar Purchase Orders</span>
+                                        <span class="rule-description">Threshold for two concurrent executed orders</span>
+                                    </div>
+                                    <span class="rule-value" id="val-exp-2">-</span>
+                                </div>
+                                <div class="rule-item">
+                                    <div class="rule-meta">
+                                        <span class="rule-title">1 Similar Purchase Order</span>
+                                        <span class="rule-description">Threshold value for single executed PO</span>
+                                    </div>
+                                    <span class="rule-value" id="val-exp-1">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Specification Baselines -->
+                        <div class="rules-subcard" style="flex-grow:1;">
+                            <div class="rules-subcard-header">
+                                <i data-lucide="cpu" style="color:#3b82f6;width:20px;height:20px;"></i>
+                                <h3>AI Extracted Technical Baseline</h3>
+                            </div>
+                            <div class="spec-grid">
+                                <!-- LED size -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="monitor" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LED Screen Size</span>
+                                        <span class="spec-value" id="spec-led-size">-</span>
+                                    </div>
+                                </div>
+                                <!-- LED Pitch -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="grid" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LED Max Pitch</span>
+                                        <span class="spec-value" id="spec-led-pitch">-</span>
+                                    </div>
+                                </div>
+                                <!-- LED Resolution -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="maximize-2" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LED Resolution</span>
+                                        <span class="spec-value" id="spec-led-res">-</span>
+                                    </div>
+                                </div>
+                                <!-- LED Contrast -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="contrast" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LED Min Contrast</span>
+                                        <span class="spec-value" id="spec-led-contrast">-</span>
+                                    </div>
+                                </div>
+                                <!-- LED Brightness -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="sun" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LED Peak Brightness</span>
+                                        <span class="spec-value" id="spec-led-brightness">-</span>
+                                    </div>
+                                </div>
+                                <!-- LED Warranty -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="shield-check" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LED Warranty</span>
+                                        <span class="spec-value" id="spec-led-warranty">-</span>
+                                    </div>
+                                </div>
+                                <!-- LFD Size -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="tv" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LFD Screen Size</span>
+                                        <span class="spec-value" id="spec-lfd-size">-</span>
+                                    </div>
+                                </div>
+                                <!-- LFD Resolution -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="layout" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LFD Resolution</span>
+                                        <span class="spec-value" id="spec-lfd-res">-</span>
+                                    </div>
+                                </div>
+                                <!-- LFD Brightness -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="sun" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LFD Brightness</span>
+                                        <span class="spec-value" id="spec-lfd-brightness">-</span>
+                                    </div>
+                                </div>
+                                <!-- LFD Contrast -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="contrast" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LFD Min Contrast</span>
+                                        <span class="spec-value" id="spec-lfd-contrast">-</span>
+                                    </div>
+                                </div>
+                                <!-- LFD Warranty -->
+                                <div class="spec-item">
+                                    <div class="spec-icon"><i data-lucide="shield-check" style="width:16px;height:16px;"></i></div>
+                                    <div class="spec-info">
+                                        <span class="spec-label">LFD Warranty</span>
+                                        <span class="spec-value" id="spec-lfd-warranty">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Compliance Sentinel & Policy Guardian -->
+                <div class="card sentinel-card">
+                    <div class="sentinel-left">
+                        <div class="progress-ring-container">
+                            <svg width="130" height="130" viewBox="0 0 130 130" style="transform: rotate(-90deg);">
+                                <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"></circle>
+                                <circle id="sentinel-progress-bar" cx="65" cy="65" r="54" fill="none" stroke="#a78bfa" stroke-width="10" stroke-dasharray="339.29" stroke-dashoffset="339.29" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease-out;"></circle>
+                            </svg>
+                            <div class="progress-ring-text" id="sentinel-score-text">0%</div>
+                        </div>
+                        <h4 style="font-size:0.9rem;font-weight:700;margin-top:6px;">Tender Policy Score</h4>
+                        <span id="sentinel-status-badge" class="badge" style="margin-top:8px;padding:4px 10px;">SCANNING</span>
+                    </div>
+                    <div class="sentinel-right">
+                        <div class="sentinel-header">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <i data-lucide="shield-alert" style="color:#a78bfa;width:18px;height:18px;"></i>
+                                <span style="font-size:0.85rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Policy Guardian Γ Sentinel Feed</span>
+                            </div>
+                            <span style="font-size:0.65rem;background:rgba(139,92,246,0.15);color:#c084fc;border:1px solid rgba(139,92,246,0.3);border-radius:4px;padding:2px 8px;font-weight:700;">Government Compliance Check</span>
+                        </div>
+
+                        <div class="sentinel-advisory" id="sentinel-advisory-note">
+                            <!-- Policy Guardian advisory text goes here -->
+                            Advisory: Analyzing document policy compliance...
+                        </div>
+
+                        <div>
+                            <h4 style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px;">Mandatory GEM/CVC Clauses</h4>
+                            <div class="clauses-grid" id="clauses-checklist-grid">
+                                <!-- Dynamic clauses checklist -->
+                            </div>
+                        </div>
+
+                        <div id="cvc-warnings-area" style="display:none;">
+                            <h4 style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px;">CVC Compliance Flagged Warnings</h4>
+                            <div class="cvc-flags-container" id="cvc-flags-list">
+                                <!-- CVC Warnings -->
+                            </div>
+                        </div>
+
+                        <div id="msme-waivers-area" style="display:none;">
+                            <h4 style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:6px;">Eligible MSME / Startup Exemptions</h4>
+                            <div class="waivers-container" id="msme-waivers-list">
+                                <!-- Waivers tags -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Action Bar -->
+                <div class="action-bar">
+                    <button onclick="triggerLlmRuleExtraction()" class="btn btn-outline-glow" id="btn-run-extraction" style="cursor:pointer;padding:12px 24px;border-radius:12px;font-weight:600;font-size:0.95rem;display:inline-flex;align-items:center;gap:8px;">
+                        <i data-lucide="sparkles" style="width:16px;height:16px;color:#a78bfa;"></i> Run Swarm LLM Extractor
+                    </button>
+                    <a href="pqc_rules_builder.html" class="btn btn-outline-glow">
+                        <i data-lucide="edit" style="width:16px;height:16px;"></i> Edit Thresholds Builder
+                    </a>
+                    <a href="pqc_comparison.html" class="btn btn-glow">
+                        Proceed to Vendor Comparison Matrix <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ── sliding sidebar Chat Drawer ── -->
+    <div class="chat-drawer" id="chat-drawer">
+        <div class="chat-header">
+            <h3><i data-lucide="bot" style="color:#a78bfa;width:18px;height:18px;"></i> Policy Clause Explainer</h3>
+            <button class="chat-close-btn" onclick="closeChatDrawer()">
+                <i data-lucide="x" style="width:18px;height:18px;"></i>
+            </button>
+        </div>
+        <div class="chat-body" id="chat-conversation-body">
+            <div class="chat-message system">
+                Select any line of the OCR logs on the left to analyze its meaning, GFR/CVC citations, and restrictive rule violations automatically.
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <textarea class="chat-textarea" id="chat-input-box" placeholder="Ask specific questions about the highlighted clause..."></textarea>
+            <button class="chat-send-btn" onclick="runClauseExplanationQuery()" id="chat-send-btn">
+                <i data-lucide="send" style="width:14px;height:14px;"></i> Explain Clause
+            </button>
+        </div>
+    </div>
+
+    <!-- ── proposal diff modal ── -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="font-size:1.1rem;font-weight:800;color:white;display:flex;align-items:center;gap:8px;">
+                    <i data-lucide="sparkles" style="color:#fbbf24;"></i> AI Structured Rule Proposals
+                </h3>
+                <button onclick="closeModal()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;">
+                    <i data-lucide="x" style="width:20px;height:20px;"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:16px;">
+                    The Llama-3 Swarm extractor analyzed the raw text and proposed the following rule modifications. Review the changes before saving to the database.
+                </p>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="diff-table">
+                        <thead>
+                            <tr>
+                                <th>Field Parameter</th>
+                                <th>Active DB Value</th>
+                                <th>Proposed AI Value</th>
+                                <th>Ingestion Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="diff-table-body">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="btn btn-outline-glow" style="padding:10px 20px;border-radius:8px;">Discard</button>
+                <button onclick="applyProposal()" class="btn btn-glow" id="btn-save-proposal" style="padding:10px 20px;border-radius:8px;">Accept & Sync to DB</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+
+        // Global storage
+        let rawOcrTextLines = [];
+        let fetchedConfig = {};
+        let proposedProposal = {};
+
+        // Load profile and setup role-based menus
+        function loadUserProfile() {
+            const user = ApiClient.getStoredUser() || JSON.parse(localStorage.getItem('gem_user'));
+            if (user) {
+                document.getElementById('user-name').textContent = user.name || 'User';
+                document.getElementById('user-role').textContent = user.role || 'Evaluator';
+                document.getElementById('user-avatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+
+                const isStaff = user.role === 'Admin' || user.role === 'Evaluator';
+                ['nav-evaluation', 'nav-cartel', 'nav-plagiarism', 'nav-pqc', 'nav-tender-rules', 'nav-forensics', 'nav-analysis', 'nav-rule-analyzer', 'nav-predictive', 'nav-oracle', 'nav-ai-intelligence'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = isStaff ? 'block' : 'none';
+                });
+            } else {
+                logout();
+            }
+        }
+
+        function logout() {
+            ApiClient.clearAuth();
+            window.location.href = 'index.html';
+        }
+
+        // Fetch document rules and text
+        async function initialize() {
+            loadUserProfile();
+
+            try {
+                // 1. Fetch raw tender text
+                const textData = await ApiClient.request('/reports/pqc-document-text');
+                const fullText = textData.text || '';
+                rawOcrTextLines = fullText.split('\n');
+
+                // Render logs in Left Panel
+                renderOcrLogs(rawOcrTextLines);
+
+                // 2. Fetch structured rules
+                const rulesConfig = await ApiClient.request('/reports/pqc-rules');
+                fetchedConfig = rulesConfig;
+                populateStructuredRules(rulesConfig);
+
+                // 3. Trigger Policy Guardian Compliance scan using the text
+                if (fullText.trim().length > 20) {
+                    const scanResult = await ApiClient.request('/ai-ops/compliance-scan', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            document_text: fullText,
+                            tender_title: rulesConfig.tender_ref_no || "Tender Document"
+                        })
+                    });
+                    populateSentinelScan(scanResult);
+                } else {
+                    showDefaultEmptySentinel();
+                }
+
+                // Hide loader, show console
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('console-workspace').style.display = 'flex';
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error("AI Rules Understanding init failed:", error);
+                document.getElementById('loading-overlay').innerHTML = `
+                    <div style="color:var(--danger); font-family:monospace; padding: 40px;">
+                        <i data-lucide="alert-triangle" style="width:48px; height:48px; margin-bottom:14px; display:inline-block;"></i>
+                        <h3 style="font-size:1.15rem;font-weight:700;">Core Scan Failure</h3>
+                        <p style="margin-top:8px;color:var(--text-muted);font-size:0.85rem;">Error: ${error.message}</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        // Render OCR logs into Left terminal view
+        function renderOcrLogs(lines, filterQuery = '') {
+            const container = document.getElementById('ocr-terminal-logs');
+            container.innerHTML = '';
+
+            const query = filterQuery.toLowerCase().trim();
+            lines.forEach((line) => {
+                const div = document.createElement('div');
+                div.className = 'ocr-line';
+                
+                // Click handler for explanation
+                div.onclick = (e) => {
+                    document.querySelectorAll('.ocr-line').forEach(l => l.classList.remove('selected'));
+                    div.classList.add('selected');
+                    openChatDrawer(line);
+                };
+
+                if (query && line.toLowerCase().includes(query)) {
+                    div.className = 'ocr-line highlight';
+                    const regex = new RegExp(`(${escapeRegExp(filterQuery)})`, 'gi');
+                    div.innerHTML = line.replace(regex, `<span style="color:#020617;background:#fbbf24;font-weight:700;padding:0 2px;border-radius:2px;">$1</span>`);
+                } else {
+                    div.textContent = line;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        function filterOcrLogs() {
+            const query = document.getElementById('ocr-search-input').value;
+            renderOcrLogs(rawOcrTextLines, query);
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Bind commercial & specs card data
+        function populateStructuredRules(data) {
+            document.getElementById('tender-ref-heading').textContent = `Tender Reference: ${data.tender_ref_no || 'NOT DEFINED'}`;
+            
+            const relStatus = document.getElementById('relaxation-status-badge');
+            if (data.relaxation_applicable) {
+                relStatus.textContent = "ACTIVE (MSE EXEMPTIONS)";
+                relStatus.style.color = "#34d399";
+            } else {
+                relStatus.textContent = "STRICT (NO WAIVERS)";
+                relStatus.style.color = "#f87171";
+            }
+
+            // Citation verification badge generator helper
+            function getVerificationBadgeHtml(metadata, fieldKey) {
+                if (!metadata) return '';
+                const status = metadata[fieldKey];
+                if (!status) return '';
+                
+                if (status.verified) {
+                    return ` <span class="badge badge-success" style="font-size: 0.65rem; margin-left: 6px; padding: 1px 6px; display: inline-flex; align-items: center; gap: 3px;" title="Verbatim Citation: ${status.quote || ''}"><i data-lucide="shield-check" style="width:10px;height:10px;"></i> Grounded</span>`;
+                } else {
+                    return ` <span class="badge badge-warning" style="font-size: 0.65rem; margin-left: 6px; padding: 1px 6px; display: inline-flex; align-items: center; gap: 3px;" title="${status.reason || 'Citation failed verification'}"><i data-lucide="alert-triangle" style="width:10px;height:10px;"></i> Unverified</span>`;
+                }
+            }
+
+            const meta = data.citations_metadata;
+
+            // Commercial limits
+            document.getElementById('val-turnover').innerHTML = (data.turnover_lakhs > 0 ? `${data.turnover_lakhs.toFixed(2)} Lakhs` : 'Not Applicable (0.00L)') + getVerificationBadgeHtml(meta, 'turnover_lakhs');
+            document.getElementById('val-exp-3').innerHTML = `${(data.exp_3_orders_lakhs || 0).toFixed(2)} Lakhs` + getVerificationBadgeHtml(meta, 'exp_3_orders_lakhs');
+            document.getElementById('val-exp-2').innerHTML = `${(data.exp_2_orders_lakhs || 0).toFixed(2)} Lakhs` + getVerificationBadgeHtml(meta, 'exp_2_orders_lakhs');
+            document.getElementById('val-exp-1').innerHTML = `${(data.exp_1_order_lakhs || 0).toFixed(2)} Lakhs` + getVerificationBadgeHtml(meta, 'exp_1_order_lakhs');
+
+            // Tech Specs - LED (Annexure A)
+            const annA = data.annexure_a || {};
+            document.getElementById('spec-led-size').innerHTML = (annA.size_inch ? `${annA.size_inch} Inch` : '-') + getVerificationBadgeHtml(meta, 'annexure_a.size_inch');
+            document.getElementById('spec-led-pitch').innerHTML = (annA.pixel_pitch_mm ? `${annA.pixel_pitch_mm} mm` : '-') + getVerificationBadgeHtml(meta, 'annexure_a.pixel_pitch_mm');
+            document.getElementById('spec-led-res').innerHTML = (annA.resolution || '-') + getVerificationBadgeHtml(meta, 'annexure_a.resolution');
+            document.getElementById('spec-led-contrast').innerHTML = (annA.contrast_ratio_min ? `1:${annA.contrast_ratio_min}` : '-') + getVerificationBadgeHtml(meta, 'annexure_a.contrast_ratio_min');
+            document.getElementById('spec-led-brightness').innerHTML = (annA.brightness_peak_nit ? `${annA.brightness_peak_nit} Nits` : '-') + getVerificationBadgeHtml(meta, 'annexure_a.brightness_peak_nit');
+            document.getElementById('spec-led-warranty').innerHTML = (annA.warranty_years ? `${annA.warranty_years} Years Onsite` : '-') + getVerificationBadgeHtml(meta, 'annexure_a.warranty_years');
+
+            // Tech Specs - LFD (Annexure B)
+            const annB = data.annexure_b || {};
+            document.getElementById('spec-lfd-size').innerHTML = (annB.size_inch ? `${annB.size_inch} Inch` : '-') + getVerificationBadgeHtml(meta, 'annexure_b.size_inch');
+            document.getElementById('spec-lfd-res').innerHTML = (annB.resolution || '-') + getVerificationBadgeHtml(meta, 'annexure_b.resolution');
+            document.getElementById('spec-lfd-brightness').innerHTML = (annB.brightness_nit ? `${annB.brightness_nit} Nits` : '-') + getVerificationBadgeHtml(meta, 'annexure_b.brightness_nit');
+            document.getElementById('spec-lfd-contrast').innerHTML = (annB.contrast_ratio_min ? `1:${annB.contrast_ratio_min}` : '-') + getVerificationBadgeHtml(meta, 'annexure_b.contrast_ratio_min');
+            document.getElementById('spec-lfd-warranty').innerHTML = (annB.warranty_years ? `${annB.warranty_years} Years Onsite` : '-') + getVerificationBadgeHtml(meta, 'annexure_b.warranty_years');
+
+            // Re-render Lucide Icons for dynamic badges
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
+        // Bind Policy Guardian compliance outputs
+        function populateSentinelScan(res) {
+            const score = Math.round(res.compliance_score_pct || 0);
+            
+            document.getElementById('sentinel-score-text').textContent = `${score}%`;
+            const circle = document.getElementById('sentinel-progress-bar');
+            const circumference = 2 * Math.PI * 54; // r=54 -> 339.29
+            const offset = circumference - (score / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            const statusBadge = document.getElementById('sentinel-status-badge');
+            statusBadge.textContent = res.compliance_status || 'UNKNOWN';
+            
+            if (score >= 90) {
+                statusBadge.className = "badge badge-green";
+                circle.style.stroke = "#10b981";
+            } else if (score >= 70) {
+                statusBadge.className = "badge badge-blue";
+                circle.style.stroke = "#3b82f6";
+            } else if (score >= 50) {
+                statusBadge.className = "badge badge-amber";
+                circle.style.stroke = "#f59e0b";
+            } else {
+                statusBadge.className = "badge badge-red";
+                circle.style.stroke = "#ef4444";
+            }
+
+            document.getElementById('sentinel-advisory-note').textContent = res.transcript || 'No formal compliance advisory note issued by Sentinel.';
+
+            const checklistGrid = document.getElementById('clauses-checklist-grid');
+            checklistGrid.innerHTML = '';
+            
+            const allClauses = [
+                {id: "GEM-EMD", name: "EMD / Bid Security"},
+                {id: "GEM-LD", name: "Liquidated Damages"},
+                {id: "GEM-INTEGRITY", name: "Integrity Pact"},
+                {id: "GEM-WARRANTY", name: "Warranty / Defect"},
+                {id: "GEM-MSME", name: "MSME Preference"},
+                {id: "GEM-MII", name: "Make in India"},
+                {id: "GEM-GST", name: "GST Compliance"},
+                {id: "GEM-DEBARMENT", name: "Debarment Checks"}
+            ];
+
+            const presentIds = res.present_clauses || [];
+
+            allClauses.forEach(clause => {
+                const isPresent = presentIds.includes(clause.id);
+                const pill = document.createElement('div');
+                pill.className = `clause-pill ${isPresent ? 'present' : ''}`;
+                
+                const icon = isPresent ? 'check-circle' : 'alert-circle';
+                pill.innerHTML = `
+                    <i data-lucide="${icon}" style="width:14px;height:14px;flex-shrink:0;"></i>
+                    <span>${clause.name}</span>
+                `;
+                checklistGrid.appendChild(pill);
+            });
+
+            // CVC Flags
+            const cvcArea = document.getElementById('cvc-warnings-area');
+            const cvcList = document.getElementById('cvc-flags-list');
+            cvcList.innerHTML = '';
+            const flags = res.cvc_flags || [];
+            if (flags.length > 0) {
+                cvcArea.style.display = 'block';
+                flags.forEach(flag => {
+                    const item = document.createElement('div');
+                    item.className = 'cvc-flag-item';
+                    item.innerHTML = `
+                        <i data-lucide="alert-triangle" style="width:16px;height:16px;flex-shrink:0;color:#fbbf24;"></i>
+                        <span>${flag}</span>
+                    `;
+                    cvcList.appendChild(item);
+                });
+            } else {
+                cvcArea.style.display = 'none';
+            }
+
+            // MSME Waivers
+            const waiversArea = document.getElementById('msme-waivers-area');
+            const waiversList = document.getElementById('msme-waivers-list');
+            waiversList.innerHTML = '';
+            const waivers = res.msme_eligible_waivers || [];
+            if (waivers.length > 0) {
+                waiversArea.style.display = 'block';
+                waivers.forEach(waiver => {
+                    const tag = document.createElement('span');
+                    tag.className = 'waiver-tag';
+                    tag.textContent = waiver;
+                    waiversList.appendChild(tag);
+                });
+            } else {
+                waiversArea.style.display = 'none';
+            }
+        }
+
+        function showDefaultEmptySentinel() {
+            document.getElementById('sentinel-score-text').textContent = "N/A";
+            document.getElementById('sentinel-status-badge').textContent = "NO DATA";
+            document.getElementById('sentinel-status-badge').className = "badge badge-secondary";
+            document.getElementById('sentinel-advisory-note').textContent = "Tender OCR log payload is too small to perform Government policy validation scan.";
+        }
+
+        // ── Advanced AI Drawer Code ──
+        function openChatDrawer(lineText) {
+            const drawer = document.getElementById('chat-drawer');
+            drawer.classList.add('open');
+            
+            const inputBox = document.getElementById('chat-input-box');
+            inputBox.value = `Explain the following clause: "${lineText.trim()}"`;
+            
+            // Automatically fire the explanation
+            runClauseExplanationQuery();
+        }
+
+        function closeChatDrawer() {
+            document.getElementById('chat-drawer').classList.remove('open');
+            document.querySelectorAll('.ocr-line').forEach(l => l.classList.remove('selected'));
+        }
+
+        async function runClauseExplanationQuery() {
+            const inputBox = document.getElementById('chat-input-box');
+            const query = inputBox.value.trim();
+            if (!query) return;
+
+            const sendBtn = document.getElementById('chat-send-btn');
+            const chatBody = document.getElementById('chat-conversation-body');
+            
+            // Render user query bubble
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-message';
+            userBubble.style.background = 'rgba(255,255,255,0.05)';
+            userBubble.style.alignSelf = 'flex-end';
+            userBubble.style.color = 'white';
+            userBubble.style.maxWidth = '90%';
+            userBubble.textContent = query;
+            chatBody.appendChild(userBubble);
+            
+            // Render loading bubble
+            const loadingBubble = document.createElement('div');
+            loadingBubble.className = 'chat-message assistant';
+            loadingBubble.innerHTML = `<span class="spinner" style="width:14px;height:14px;margin-right:8px;vertical-align:middle;"></span> Analyzing clause structure & matching GFR policies...`;
+            chatBody.appendChild(loadingBubble);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            inputBox.value = '';
+            inputBox.disabled = true;
+            sendBtn.disabled = true;
+
+            try {
+                const response = await ApiClient.request('/reports/explain-clause', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        clause_text: query,
+                        context: `Tender Ref: ${fetchedConfig.tender_ref_no || ''}`
+                    })
+                });
+
+                // Compute risk colors
+                const rScore = response.risk_score || 0;
+                const rColor = rScore >= 70 ? '#ef4444' : rScore >= 40 ? '#f59e0b' : '#10b981';
+                
+                loadingBubble.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px;">
+                        <span style="font-weight:700;color:#c084fc;text-transform:uppercase;font-size:0.7rem;letter-spacing:0.5px;">Policy Guardian Γ Verdict</span>
+                        <span class="badge" style="background:${rColor}20; color:${rColor}; border:1px solid ${rColor}30; font-size:0.65rem;">Risk Index: ${rScore}/100</span>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <strong style="color:white;font-size:0.75rem;display:block;margin-bottom:4px;">Explanation:</strong>
+                        <p style="color:#e2e8f0;font-size:0.78rem;">${response.explanation || 'No explanation generated.'}</p>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <strong style="color:white;font-size:0.75rem;display:block;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><i data-lucide="shield" style="width:12px;height:12px;color:#3b82f6;"></i> Government Citations:</strong>
+                        <p style="color:#94a3b8;font-size:0.75rem;font-family:monospace;">${response.citations || 'No citations provided.'}</p>
+                    </div>
+                    <div>
+                        <strong style="color:white;font-size:0.75rem;display:block;margin-bottom:4px;">Anticompetitive Audit:</strong>
+                        <p style="color:${rColor};font-weight:600;font-size:0.75rem;">${response.risk_verdict || 'N/A'}</p>
+                    </div>
+                `;
+                lucide.createIcons();
+
+            } catch (e) {
+                loadingBubble.innerHTML = `<span style="color:var(--danger);font-weight:700;">⚠️ Connection Error</span><br><span style="color:var(--text-muted);font-size:0.72rem;">${e.message}</span>`;
+            } finally {
+                inputBox.disabled = false;
+                sendBtn.disabled = false;
+                chatBody.scrollTop = chatBody.scrollHeight;
+                inputBox.focus();
+            }
+        }
+
+        // ── Advanced AI Structured Extractor ──
+        async function triggerLlmRuleExtraction() {
+            const btn = document.getElementById('btn-run-extraction');
+            const originalHtml = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner" style="margin-right:6px;vertical-align:middle;"></span> Extracting via Swarm...`;
+
+            try {
+                const response = await ApiClient.request('/reports/pqc-rules-extract', {
+                    method: 'POST'
+                });
+
+                proposedProposal = response;
+
+                // Render Diff Table
+                const tbody = document.getElementById('diff-table-body');
+                tbody.innerHTML = '';
+
+                const fields = [
+                    { key: 'tender_ref_no', label: 'Tender Ref No', section: 'Context', parser: v => v || 'Not set' },
+                    { key: 'relaxation_applicable', label: 'Relaxation Policy', section: 'Context', parser: v => v ? 'APPLICABLE' : 'NOT APPLICABLE' },
+                    { key: 'turnover_lakhs', label: 'Min Turnover (INR Lakhs)', section: 'Commercial', parser: v => v > 0 ? `${v.toFixed(2)} L` : 'Not Applicable (0.00L)' },
+                    { key: 'exp_3_orders_lakhs', label: '3 PO Threshold (INR Lakhs)', section: 'Commercial', parser: v => `${(v || 0).toFixed(2)} L` },
+                    { key: 'exp_2_orders_lakhs', label: '2 PO Threshold (INR Lakhs)', section: 'Commercial', parser: v => `${(v || 0).toFixed(2)} L` },
+                    { key: 'exp_1_order_lakhs', label: '1 PO Threshold (INR Lakhs)', section: 'Commercial', parser: v => `${(v || 0).toFixed(2)} L` },
+                    { key: 'annexure_a.size_inch', label: 'LED Wall Size (Inch)', section: 'Technical A', parser: (v, obj) => obj.annexure_a?.size_inch || '-' },
+                    { key: 'annexure_a.pixel_pitch_mm', label: 'LED Max Pitch (mm)', section: 'Technical A', parser: (v, obj) => obj.annexure_a?.pixel_pitch_mm ? `${obj.annexure_a.pixel_pitch_mm} mm` : '-' },
+                    { key: 'annexure_a.resolution', label: 'LED Resolution', section: 'Technical A', parser: (v, obj) => obj.annexure_a?.resolution || '-' },
+                    { key: 'annexure_a.contrast_ratio_min', label: 'LED Contrast Ratio', section: 'Technical A', parser: (v, obj) => obj.annexure_a?.contrast_ratio_min ? `1:${obj.annexure_a.contrast_ratio_min}` : '-' },
+                    { key: 'annexure_a.brightness_peak_nit', label: 'LED Brightness (Nits)', section: 'Technical A', parser: (v, obj) => obj.annexure_a?.brightness_peak_nit ? `${obj.annexure_a.brightness_peak_nit} nits` : '-' },
+                    { key: 'annexure_a.warranty_years', label: 'LED Warranty (Years)', section: 'Technical A', parser: (v, obj) => obj.annexure_a?.warranty_years ? `${obj.annexure_a.warranty_years} Y` : '-' },
+                    { key: 'annexure_b.size_inch', label: 'LFD Screen Size (Inch)', section: 'Technical B', parser: (v, obj) => obj.annexure_b?.size_inch || '-' },
+                    { key: 'annexure_b.resolution', label: 'LFD Resolution', section: 'Technical B', parser: (v, obj) => obj.annexure_b?.resolution || '-' },
+                    { key: 'annexure_b.brightness_nit', label: 'LFD Brightness (Nits)', section: 'Technical B', parser: (v, obj) => obj.annexure_b?.brightness_nit ? `${obj.annexure_b.brightness_nit} nits` : '-' },
+                    { key: 'annexure_b.contrast_ratio_min', label: 'LFD Contrast Ratio', section: 'Technical B', parser: (v, obj) => obj.annexure_b?.contrast_ratio_min ? `1:${obj.annexure_b.contrast_ratio_min}` : '-' },
+                    { key: 'annexure_b.warranty_years', label: 'LFD Warranty (Years)', section: 'Technical B', parser: (v, obj) => obj.annexure_b?.warranty_years ? `${obj.annexure_b.warranty_years} Y` : '-' }
+                ];
+
+                fields.forEach(field => {
+                    const activeValRaw = getNestedValue(fetchedConfig, field.key);
+                    const proposedValRaw = getNestedValue(proposedProposal, field.key);
+                    
+                    const activeValStr = field.parser(activeValRaw, fetchedConfig);
+                    const proposedValStr = field.parser(proposedValRaw, proposedProposal);
+                    
+                    const isChanged = activeValStr !== proposedValStr;
+
+                    const proposedMeta = proposedProposal.citations_metadata || {};
+                    const fieldStatus = proposedMeta[field.key];
+                    let statusBadgeHtml = '';
+                    if (fieldStatus) {
+                        if (fieldStatus.verified) {
+                            statusBadgeHtml = `<br><span class="badge badge-success" style="font-size:0.58rem;padding:1px 4px;margin-top:4px;display:inline-flex;align-items:center;gap:2px;" title="Verbatim Citation: ${fieldStatus.quote || ''}"><i data-lucide="shield-check" style="width:8px;height:8px;"></i> Grounded</span>`;
+                        } else {
+                            statusBadgeHtml = `<br><span class="badge badge-warning" style="font-size:0.58rem;padding:1px 4px;margin-top:4px;display:inline-flex;align-items:center;gap:2px;" title="${fieldStatus.reason || 'Citation failed verification'}"><i data-lucide="alert-triangle" style="width:8px;height:8px;"></i> Unverified</span>`;
+                        }
+                    }
+                    
+                    const activeMeta = fetchedConfig.citations_metadata || {};
+                    const activeFieldStatus = activeMeta[field.key];
+                    let activeStatusBadgeHtml = '';
+                    if (activeFieldStatus) {
+                        if (activeFieldStatus.verified) {
+                            activeStatusBadgeHtml = `<br><span class="badge badge-success" style="font-size:0.58rem;padding:1px 4px;margin-top:4px;display:inline-flex;align-items:center;gap:2px;" title="Verbatim Citation: ${activeFieldStatus.quote || ''}"><i data-lucide="shield-check" style="width:8px;height:8px;"></i> Grounded</span>`;
+                        } else {
+                            activeStatusBadgeHtml = `<br><span class="badge badge-warning" style="font-size:0.58rem;padding:1px 4px;margin-top:4px;display:inline-flex;align-items:center;gap:2px;" title="${activeFieldStatus.reason || 'Citation failed'}"><i data-lucide="alert-triangle" style="width:8px;height:8px;"></i> Unverified</span>`;
+                        }
+                    }
+
+                    const tr = document.createElement('tr');
+                    if (isChanged) tr.className = 'changed';
+                    
+                    tr.innerHTML = `
+                        <td>
+                            <strong style="color:white;font-size:0.78rem;display:block;">${field.label}</strong>
+                            <span style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;">${field.section}</span>
+                        </td>
+                        <td style="font-family:monospace;color:#94a3b8;vertical-align:top;">${activeValStr}${activeStatusBadgeHtml}</td>
+                        <td style="font-family:monospace;color:${isChanged ? '#fbbf24' : '#34d399'};font-weight:${isChanged ? 'bold' : 'normal'};vertical-align:top;">${proposedValStr}${statusBadgeHtml}</td>
+                        <td>
+                            <span class="diff-badge ${isChanged ? 'modified' : 'equal'}">${isChanged ? 'MODIFIED PROPOSAL' : 'MATCHED'}</span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Open Modal
+                document.getElementById('modal-overlay').classList.add('open');
+                
+                // Re-render Lucide Icons for dynamic badges in modal
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert("AI Swarm rules extraction failed: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        function getNestedValue(obj, path) {
+            return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('open');
+        }
+
+        async function applyProposal() {
+            const btn = document.getElementById('btn-save-proposal');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner" style="margin-right:6px;vertical-align:middle;"></span> Syncing...`;
+
+            try {
+                // Ingest proposal to database rules config
+                await ApiClient.request('/reports/pqc-rules', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        thresholds: proposedProposal
+                    })
+                });
+
+                closeModal();
+                alert("Proposal successfully synchronized and saved to active procurement database!");
+                
+                // Reload dashboard cards
+                initialize();
+
+            } catch (e) {
+                console.error(e);
+                alert("Failed to sync proposed rules to database: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `Accept & Sync to DB`;
+            }
+        }
+
+        // Initialize on DOM load
+        window.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>

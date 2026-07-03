@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOCL Delivery & Inspection - Procurement Ecosystem</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .iocl-header {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.15), rgba(249, 115, 22, 0.05));
+            border: 1px solid rgba(234, 88, 12, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .iocl-logo {
+            width: 64px; height: 64px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ea580c, #f59e0b);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.1rem; color: white;
+            letter-spacing: 1px;
+        }
+        .iocl-header h2 { color: #fb923c; margin: 0 0 4px 0; }
+        .iocl-header p { color: var(--text-muted); margin: 0; font-size: 0.85rem; }
+
+        .pipeline {
+            display: flex; align-items: center; gap: 0;
+            margin-bottom: 32px; overflow-x: auto; padding: 10px 0;
+        }
+        .pipeline-step {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600;
+            white-space: nowrap; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02); color: var(--text-muted);
+        }
+        .pipeline-step.active {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.2), rgba(249, 115, 22, 0.1));
+            border-color: #ea580c; color: #fb923c;
+            box-shadow: 0 0 15px rgba(234, 88, 12, 0.15);
+        }
+        .pipeline-step.done {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3); color: #10b981;
+        }
+        .pipeline-arrow { color: var(--text-muted); font-size: 1.2rem; padding: 0 4px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-grid .full-width { grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Delivery & Inspection</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Stage 8 — Goods Receipt (GRN) & Material Receipt Note (MRN)</p>
+                </div>
+            </header>
+
+            <div class="iocl-header">
+                <div class="iocl-logo">IOCL</div>
+                <div>
+                    <h2>Indian Oil Corporation Limited</h2>
+                    <p>Central Stores & Inspection | SAP Logistics Module Sync</p>
+                </div>
+            </div>
+
+            <div class="pipeline" id="pipeline-tracker">
+                <div class="pipeline-step done" data-stage="1"><i data-lucide="clipboard-list" style="width:14px;height:14px;"></i> 1. Indent</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="2"><i data-lucide="megaphone" style="width:14px;height:14px;"></i> 2. NIT</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="3"><i data-lucide="inbox" style="width:14px;height:14px;"></i> 3. Bid Submission</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="4"><i data-lucide="scan-search" style="width:14px;height:14px;"></i> 4. TCE</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="5"><i data-lucide="indian-rupee" style="width:14px;height:14px;"></i> 5. Price Bid</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="6"><i data-lucide="handshake" style="width:14px;height:14px;"></i> 6. PAC</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="7"><i data-lucide="file-check" style="width:14px;height:14px;"></i> 7. PO</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step active" data-stage="8"><i data-lucide="truck" style="width:14px;height:14px;"></i> 8. Delivery</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="9"><i data-lucide="banknote" style="width:14px;height:14px;"></i> 9. Payment</div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="d-flex justify-between align-center">
+                    <h3 style="margin:0;">Inward Material Receipts</h3>
+                    <button class="btn btn-primary" onclick="openCreateDeliveryModal()" style="background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                        <i data-lucide="log-in"></i> Receive Material (GRN)
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>GRN Number</th>
+                                <th>Purchase Order</th>
+                                <th>Delivery Date</th>
+                                <th>Received Qty</th>
+                                <th>Inspection Status</th>
+                                <th>MRN Number</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delivery-tbody">
+                            <tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-muted);">Loading Deliveries...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Delivery Modal -->
+    <div class="modal-overlay" id="createDeliveryModal">
+        <div class="card modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 style="display:flex; align-items:center; gap:10px;">
+                    <i data-lucide="truck" style="color: #10b981;"></i> Material Inward & Inspection
+                </h2>
+                <button class="btn btn-outline" style="padding: 4px; border: none;" onclick="closeCreateDeliveryModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form id="delivery-form" onsubmit="submitDelivery(event)">
+                <div class="form-group">
+                    <label class="form-label">Purchase Order</label>
+                    <select class="form-control" id="f-po" required>
+                        <option value="">Select a PO...</option>
+                    </select>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Received Quantity</label>
+                        <input type="number" step="any" class="form-control" id="f-qty" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">TPI Required?</label>
+                        <select class="form-control" id="f-tpi">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Inspection Status</label>
+                        <select class="form-control" id="f-status" required>
+                            <option value="Pending">Pending Inspection</option>
+                            <option value="Passed">Passed (Generates MRN)</option>
+                            <option value="Failed">Failed (Rejected Material)</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Quality Inspector Remarks</label>
+                        <textarea class="form-control" id="f-remarks" rows="2" placeholder="Visual inspection OK..."></textarea>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; justify-content:flex-end; margin-top: 24px;">
+                    <button type="button" class="btn btn-outline" onclick="closeCreateDeliveryModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                        <i data-lucide="save"></i> Save Delivery Record
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+
+        async function loadData() {
+            try {
+                // Load POs
+                const pos = await ApiClient.getPurchaseOrders();
+                const sel = document.getElementById('f-po');
+                pos.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = `${p.po_number} - ${p.vendor_name}`;
+                    sel.appendChild(opt);
+                });
+
+                // Load Deliveries
+                const dels = await ApiClient.getDeliveries();
+                const tbody = document.getElementById('delivery-tbody');
+                if(dels.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-muted);">No deliveries recorded.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = dels.map(d => {
+                    const dt = new Date(d.delivery_date).toLocaleDateString();
+                    const statusBadge = d.inspection_status === 'Passed' ? 'badge-success' : d.inspection_status === 'Failed' ? 'badge-danger' : 'badge-warning';
+                    return `<tr>
+                        <td style="font-weight:600; color:#10b981;">${d.grn_number}</td>
+                        <td style="font-family:monospace;">${d.po_number}</td>
+                        <td>${dt}</td>
+                        <td>${d.received_quantity}</td>
+                        <td><span class="badge ${statusBadge}">${d.inspection_status}</span></td>
+                        <td style="font-family:monospace; color:var(--text-muted);">${d.mrn_number || '-'}</td>
+                    </tr>`;
+                }).join('');
+                
+            } catch(e) { console.error(e); }
+        }
+
+        function openCreateDeliveryModal() { document.getElementById('createDeliveryModal').classList.add('active'); }
+        function closeCreateDeliveryModal() { document.getElementById('createDeliveryModal').classList.remove('active'); document.getElementById('delivery-form').reset(); }
+
+        async function submitDelivery(e) {
+            e.preventDefault();
+            const data = {
+                po_id: parseInt(document.getElementById('f-po').value),
+                received_quantity: parseFloat(document.getElementById('f-qty').value),
+                tpi_required: document.getElementById('f-tpi').value === 'true',
+                inspection_status: document.getElementById('f-status').value,
+                quality_remarks: document.getElementById('f-remarks').value
+            };
+            
+            try {
+                const res = await ApiClient.createDelivery(data);
+                showToast(`GRN ${res.grn_number} generated. MRN: ${res.mrn_number || 'Pending'}`, 'success');
+                closeCreateDeliveryModal();
+                loadData();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        loadData();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security & Audit Forensics | GEM Platform</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-panel: rgba(15, 23, 42, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-warning: #f59e0b;
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+        }
+
+        /* Top Navigation */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(2, 6, 23, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+        .nav-links a:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+
+        .dashboard-container {
+            padding: 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--accent-primary);
+        }
+        .metric-card.secure::before { background: var(--accent-green); }
+        .metric-card.danger::before { background: var(--accent-red); }
+
+        .metric-title { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+        .metric-value { font-size: 2.5rem; font-weight: 800; font-family: var(--font-mono); }
+
+        /* Blockchain Visualizer */
+        .blockchain-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .btn-verify {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-verify:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+
+        /* Block Chain Nodes */
+        .chain-wrapper {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 20px 0;
+            scroll-behavior: smooth;
+        }
+
+        .block-node {
+            min-width: 300px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        /* Link line between blocks */
+        .block-node:not(:last-child)::after {
+            content: '🔗';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            font-size: 1rem;
+            opacity: 0.5;
+        }
+
+        .block-node.tampered {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 15px rgba(239,68,68,0.2);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .block-header {
+            display: flex; justify-content: space-between;
+            margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 8px;
+        }
+
+        .block-id { font-family: var(--font-mono); font-weight: 700; color: var(--accent-primary); }
+        .block-time { font-size: 0.7rem; color: var(--text-muted); }
+
+        .block-hash {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            background: rgba(255,255,255,0.05);
+            padding: 6px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            word-break: break-all;
+        }
+        .hash-label { color: var(--text-muted); display: block; margin-bottom: 2px; font-size: 0.65rem; text-transform: uppercase;}
+
+        .block-action {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 12px;
+            color: #e2e8f0;
+        }
+
+        .block-details {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        /* Utilities */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        
+        .mono { font-family: var(--font-mono); }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="brand">
+            <i data-lucide="shield" style="color: var(--accent-primary);"></i>
+            <h1>Security & Blockchain Forensics</h1>
+        </div>
+        <div class="nav-links">
+            <a href="command_center.html"><i data-lucide="layout-dashboard"></i> Command Center</a>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        
+        <!-- Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card secure" id="status-card">
+                <div class="metric-title"><i data-lucide="shield-check"></i> System Integrity</div>
+                <div class="metric-value" id="system-status" style="color: var(--accent-green);">SECURE</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title"><i data-lucide="box"></i> Total Blocks</div>
+                <div class="metric-value" id="total-blocks">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title"><i data-lucide="activity"></i> Integrity Score</div>
+                <div class="metric-value" id="integrity-score">100%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title"><i data-lucide="alert-triangle"></i> Tampered Blocks</div>
+                <div class="metric-value" id="tampered-blocks">0</div>
+            </div>
+        </div>
+
+        <!-- Visualizer -->
+        <div class="blockchain-container">
+            <div class="section-header">
+                <div>
+                    <h2 style="font-size: 1.2rem; margin-bottom: 4px;">Immutable Audit Ledger</h2>
+                    <p class="text-muted text-sm mono">SHA-256 Cryptographic Hash Chain</p>
+                </div>
+                <button class="btn-verify" id="verify-btn" onclick="verifyChain()">
+                    <i data-lucide="refresh-cw"></i> VERIFY LEDGER INTEGRITY
+                </button>
+            </div>
+            
+            <div class="chain-wrapper" id="chain-container">
+                <div style="padding: 40px; color: var(--text-muted); font-family: var(--font-mono);">
+                    Loading cryptographic ledger blocks...
+                </div>
+            </div>
+        </div>
+
+        <!-- Database and System Status -->
+        <div class="blockchain-container" style="margin-top: 32px;">
+            <div class="section-header">
+                <div>
+                    <h2 style="font-size: 1.2rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="database" style="color: var(--accent-primary);"></i>
+                        MongoDB Cluster Integration Status
+                    </h2>
+                    <p class="text-muted text-sm mono">NoSQL Document Store Connectivity & Telemetry</p>
+                </div>
+                <button class="btn-verify" id="db-refresh-btn" onclick="checkMongoStatus()">
+                    <i data-lucide="refresh-cw"></i> REFRESH TELEMETRY
+                </button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 16px;">
+                <!-- Mongo Status Details Card -->
+                <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; color: #fff;">Connection Status</span>
+                        <span id="mongo-status-badge" style="padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">CONNECTED</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <span>Cluster Version</span>
+                            <span id="mongo-version" class="mono" style="color: #fff;">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <span>Database Node</span>
+                            <span id="mongo-host" class="mono" style="color: #fff;">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <span>Ping Latency</span>
+                            <span id="mongo-latency" class="mono" style="color: var(--accent-green); font-weight: 600;">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-bottom: 4px;">
+                            <span>Total Storage Size</span>
+                            <span id="mongo-size" class="mono" style="color: #fff;">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collections Details Card -->
+                <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                        <span style="font-weight: 700; color: #fff;">MongoDB Collections Stats</span>
+                        <span id="mongo-total-docs" style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--accent-primary);">0 Docs Total</span>
+                    </div>
+                    <div id="mongo-collections-list" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+                        <!-- Collections stats dynamically populated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        lucide.createIcons();
+        let corruptedIds = [];
+
+        async function initDashboard() {
+            try {
+                // We need admin token. Assuming login sets token in ApiClient.
+                // For demo, we just fetch assuming token exists.
+                const logs = await ApiClient.request('/security/audit-logs');
+                renderChain(logs.reverse()); // Reverse to show oldest to newest left-to-right
+                await verifyChain(); // Auto verify on load
+                await checkMongoStatus(); // Auto check MongoDB on load
+            } catch (error) {
+                console.error(error);
+                document.getElementById('chain-container').innerHTML = `
+                    <div style="color: var(--accent-red); padding: 20px;">
+                        Unauthorized or Error loading blockchain: ${error.message}. Please login as Admin.
+                    </div>`;
+            }
+        }
+
+
+        async function verifyChain() {
+            const btn = document.getElementById('verify-btn');
+            btn.innerHTML = `<i data-lucide="loader" style="animation: spin 1s linear infinite;"></i> VERIFYING...`;
+            btn.style.opacity = '0.7';
+            lucide.createIcons();
+
+            try {
+                const res = await ApiClient.request('/security/blockchain/verify');
+                
+                document.getElementById('system-status').textContent = res.status;
+                document.getElementById('total-blocks').textContent = res.total_blocks;
+                document.getElementById('integrity-score').textContent = res.integrity_score.toFixed(1) + '%';
+                document.getElementById('tampered-blocks').textContent = res.corrupted_blocks_count;
+
+                const statusCard = document.getElementById('status-card');
+                if (res.status === 'COMPROMISED') {
+                    statusCard.className = 'metric-card danger';
+                    document.getElementById('system-status').style.color = 'var(--accent-red)';
+                    document.getElementById('tampered-blocks').style.color = 'var(--accent-red)';
+                } else {
+                    statusCard.className = 'metric-card secure';
+                    document.getElementById('system-status').style.color = 'var(--accent-green)';
+                }
+
+                corruptedIds = res.corrupted_block_ids.map(c => c.id);
+                
+                // Refresh visual blocks if already rendered to highlight tampered ones
+                const blocks = document.querySelectorAll('.block-node');
+                blocks.forEach(block => {
+                    const id = parseInt(block.dataset.id);
+                    if (corruptedIds.includes(id)) {
+                        block.classList.add('tampered');
+                    } else {
+                        block.classList.remove('tampered');
+                    }
+                });
+
+            } catch (error) {
+                console.error("Verification failed", error);
+                alert("Verification failed. Make sure you are logged in as Admin.");
+            } finally {
+                btn.innerHTML = `<i data-lucide="shield-check"></i> VERIFY LEDGER INTEGRITY`;
+                btn.style.opacity = '1';
+                lucide.createIcons();
+            }
+        }
+
+        function renderChain(logs) {
+            const container = document.getElementById('chain-container');
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-muted">No audit logs found.</div>`;
+                return;
+            }
+
+            container.innerHTML = logs.map(log => `
+                <div class="block-node ${corruptedIds.includes(log.id) ? 'tampered' : ''}" data-id="${log.id}">
+                    <div class="block-header">
+                        <span class="block-id">Block #${log.id}</span>
+                        <span class="block-time">${new Date(log.timestamp).toLocaleString()}</span>
+                    </div>
+                    
+                    <div class="hash-label">PREVIOUS HASH</div>
+                    <div class="block-hash" style="color: var(--text-muted)">
+                        ${log.prev_hash || 'GENESIS_BLOCK_00000'}
+                    </div>
+
+                    <div class="hash-label">CURRENT HASH</div>
+                    <div class="block-hash" style="color: var(--accent-primary)">
+                        ${log.curr_hash}
+                    </div>
+
+                    <div class="block-action">
+                        ${log.action.replace(/_/g, ' ')}
+                    </div>
+                    <div class="block-details">
+                        Target: ${log.entity}<br>
+                        ${log.details}
+                    </div>
+                </div>
+            `).join('');
+
+            // Scroll to end (newest)
+            container.scrollLeft = container.scrollWidth;
+        }
+
+        async function checkMongoStatus() {
+            const btn = document.getElementById('db-refresh-btn');
+            if (btn) {
+                btn.innerHTML = `<i data-lucide="loader" style="animation: spin 1s linear infinite;"></i> TELEMETRY FETCHING...`;
+                btn.style.opacity = '0.7';
+                lucide.createIcons();
+            }
+
+            try {
+                const stats = await ApiClient.request('/security/mongodb/status');
+                
+                const statusBadge = document.getElementById('mongo-status-badge');
+                if (stats.status === 'CONNECTED') {
+                    statusBadge.textContent = 'CONNECTED';
+                    statusBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+                    statusBadge.style.color = 'var(--accent-green)';
+                    
+                    document.getElementById('mongo-version').textContent = 'v' + stats.version;
+                    document.getElementById('mongo-host').textContent = `${stats.host}:${stats.port}`;
+                    document.getElementById('mongo-latency').textContent = `${stats.latency_ms} ms`;
+                    document.getElementById('mongo-size').textContent = stats.storage_size;
+                    document.getElementById('mongo-total-docs').textContent = `${stats.total_documents} Document(s)`;
+                    
+                    // Render collection details
+                    const colList = document.getElementById('mongo-collections-list');
+                    if (stats.collections && stats.collections.length > 0) {
+                        colList.innerHTML = stats.collections.map(c => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.02); margin-bottom: 4px;">
+                                <span style="font-weight: 600; color: #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="file-text" style="width: 14px; height: 14px; color: var(--accent-primary);"></i>
+                                    ${c.collection}
+                                </span>
+                                <span class="mono" style="color: var(--text-muted); font-size: 0.75rem;">${c.document_count} docs</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        colList.innerHTML = `<div style="color: var(--text-muted); font-style: italic;">No collections seeded yet.</div>`;
+                    }
+                } else {
+                    statusBadge.textContent = 'OFFLINE';
+                    statusBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+                    statusBadge.style.color = 'var(--accent-red)';
+                    
+                    document.getElementById('mongo-version').textContent = 'N/A';
+                    document.getElementById('mongo-host').textContent = 'N/A';
+                    document.getElementById('mongo-latency').textContent = 'N/A';
+                    document.getElementById('mongo-latency').style.color = 'var(--accent-red)';
+                    document.getElementById('mongo-size').textContent = '0 B';
+                    document.getElementById('mongo-total-docs').textContent = '0 Document(s)';
+                    document.getElementById('mongo-collections-list').innerHTML = `
+                        <div style="color: var(--accent-red); font-size: 0.75rem;">
+                            Error: ${stats.error || 'Connection Timeout.'}
+                        </div>`;
+                }
+                lucide.createIcons();
+            } catch (error) {
+                console.error("MongoDB telemetry failed", error);
+                const statusBadge = document.getElementById('mongo-status-badge');
+                if (statusBadge) {
+                    statusBadge.textContent = 'OFFLINE';
+                    statusBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+                    statusBadge.style.color = 'var(--accent-red)';
+                }
+            } finally {
+                if (btn) {
+                    btn.innerHTML = `<i data-lucide="refresh-cw"></i> REFRESH TELEMETRY`;
+                    btn.style.opacity = '1';
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>

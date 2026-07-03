@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cartel Network Graph - GEM Tender</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script type="text/javascript" src="vendor/js/vis-network.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        #mynetwork {
+            width: 100%;
+            height: 600px;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>AI Cartel Network Intelligence</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Visual Data Science tool to detect bidding rings and vendor collusion</p>
+                </div>
+            </header>
+
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+                            <div id="graph-legend" class="legend" style="margin-top: 0; justify-content: flex-start; flex-wrap: wrap; gap: 12px;">
+                                <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div> Normal Vendor</div>
+                                <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div> Suspicious</div>
+                                <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div> Blacklisted</div>
+                                <div class="legend-item" style="margin-left: 12px;"><div class="legend-color" style="background: #475569; height: 4px; border-radius: 0;"></div> Normal Co-bids</div>
+                                <div class="legend-item"><div class="legend-color" style="background: #fbbf24; height: 4px; border-radius: 0;"></div> Med Risk</div>
+                                <div class="legend-item"><div class="legend-color" style="background: #ef4444; height: 4px; border-radius: 0;"></div> Critical Collusion</div>
+                            </div>
+                            <div style="display: flex; gap: 4px; background: rgba(0, 0, 0, 0.4); padding: 4px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); flex-shrink: 0;">
+                                <button id="btn-color-risk" class="active" style="background: #3b82f6; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">Color: Risk Status</button>
+                                <button id="btn-color-community" style="background: transparent; border: none; color: #94a3b8; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">Color: Louvain Rings</button>
+                            </div>
+                        </div>
+                        <div id="mynetwork"></div>
+                    </div>
+                    
+                    <!-- Collusion Scanner Detail Panel -->
+                    <div class="card" id="scanner-panel" style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; max-height: 600px;">
+                        <h3 style="color: white; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; margin: 0;">
+                            <i data-lucide="shield-alert" style="color: #ef4444;"></i> Collusion Telemetry
+                        </h3>
+                        <div id="scanner-content" style="color: var(--text-muted); font-size: 0.88rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 12px;">
+                            <i data-lucide="radar" style="width: 48px; height: 48px; opacity: 0.25; animation: pulse 2s infinite;"></i>
+                            <p>Select any vendor node or network connection line to run a real-time overlap analysis.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+
+    <style>
+        @keyframes pulse { 0% { opacity: 0.25; } 50% { opacity: 0.8; transform: scale(1.1); } 100% { opacity: 0.25; } }
+        .meta-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.8rem; }
+        .meta-label { color: #64748b; font-weight: 500; }
+        .meta-val { color: #f8fafc; text-align: right; word-break: break-all; }
+        .signal-tag { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; border-radius: 6px; padding: 6px 10px; font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    </style>
+
+    <script src="js/api.js"></script>
+    <script>
+        lucide.createIcons();
+        requireAuth();
+
+        let rawNodes = [];
+        let rawEdges = [];
+        let network = null;
+        let nodesDataSet = null;
+        let edgesDataSet = null;
+        let currentColorMode = 'risk';
+
+        const communityColors = [
+            "#ec4899", // pink
+            "#8b5cf6", // purple
+            "#06b6d4", // cyan
+            "#10b981", // green
+            "#f59e0b", // amber
+            "#3b82f6", // blue
+            "#a855f7", // light purple
+            "#f43f5e", // rose
+            "#14b8a6", // teal
+            "#e11d48"  // deep rose
+        ];
+
+        async function initNetwork() {
+            try {
+                const data = await ApiClient.request('/reports/cartel-graph');
+                rawNodes = data.nodes;
+                rawEdges = data.edges;
+
+                // Format visual properties for vis.js nodes
+                const formattedNodes = data.nodes.map(n => {
+                    let color = "#3b82f6"; // normal
+                    if(n.group === "suspicious") color = "#f59e0b";
+                    if(n.group === "blacklisted") color = "#ef4444";
+                    
+                    return {
+                        id: n.id,
+                        label: n.label,
+                        title: n.title,
+                        color: {
+                            background: color,
+                            border: "#ffffff",
+                            highlight: { background: color, border: "#ffffff" }
+                        },
+                        font: { color: "#ffffff", face: "Inter", size: 12 },
+                        shape: "dot",
+                        size: n.value || 20
+                    };
+                });
+
+                // Format edges with unique IDs
+                const formattedEdges = data.edges.map((e, idx) => {
+                    return {
+                        id: `${e.from}-${e.to}`,
+                        from: e.from,
+                        to: e.to,
+                        value: e.value,
+                        color: e.color,
+                        width: e.width,
+                        title: e.title
+                    };
+                });
+
+                const container = document.getElementById('mynetwork');
+                nodesDataSet = new vis.DataSet(formattedNodes);
+                edgesDataSet = new vis.DataSet(formattedEdges);
+                const graphData = {
+                    nodes: nodesDataSet,
+                    edges: edgesDataSet
+                };
+                
+                const options = {
+                    physics: {
+                        forceAtlas2Based: {
+                            gravitationalConstant: -50,
+                            centralGravity: 0.01,
+                            springLength: 120,
+                            springConstant: 0.08
+                        },
+                        maxVelocity: 40,
+                        solver: 'forceAtlas2Based',
+                        timestep: 0.35,
+                        stabilization: {iterations: 150}
+                    },
+                    edges: {
+                        smooth: false,
+                        scaling: { min: 1, max: 10 }
+                    },
+                    interaction: {
+                        hover: true,
+                        tooltipDelay: 200,
+                        selectConnectedEdges: false
+                    }
+                };
+                
+                network = new vis.Network(container, graphData, options);
+
+                // Add selectNode click handler
+                network.on("selectNode", function(params) {
+                    const nodeId = params.nodes[0];
+                    const node = rawNodes.find(n => n.id === nodeId);
+                    if (node) {
+                        displayNodeDetails(node);
+                    }
+                });
+
+                // Add selectEdge click handler
+                network.on("selectEdge", function(params) {
+                    const edgeId = params.edges[0];
+                    const edge = rawEdges.find(e => `${e.from}-${e.to}` === edgeId);
+                    if (edge) {
+                        displayEdgeDetails(edge);
+                    }
+                });
+
+                // Add deselect click handler
+                network.on("deselectNode", resetPanel);
+                network.on("deselectEdge", resetPanel);
+
+                setupColorToggleListeners();
+
+            } catch(e) {
+                console.error(e);
+                alert("Failed to load cartel graph. Are you an Admin?");
+            }
+        }
+
+        function setupColorToggleListeners() {
+            document.getElementById('btn-color-risk').addEventListener('click', function() {
+                if (currentColorMode === 'risk') return;
+                currentColorMode = 'risk';
+                this.style.background = '#3b82f6';
+                this.style.color = 'white';
+                document.getElementById('btn-color-community').style.background = 'transparent';
+                document.getElementById('btn-color-community').style.color = '#94a3b8';
+                updateNodeColors('risk');
+                updateLegend('risk');
+            });
+
+            document.getElementById('btn-color-community').addEventListener('click', function() {
+                if (currentColorMode === 'community') return;
+                currentColorMode = 'community';
+                this.style.background = '#3b82f6';
+                this.style.color = 'white';
+                document.getElementById('btn-color-risk').style.background = 'transparent';
+                document.getElementById('btn-color-risk').style.color = '#94a3b8';
+                updateNodeColors('community');
+                updateLegend('community');
+            });
+        }
+
+        function updateNodeColors(mode) {
+            const updated = rawNodes.map(n => {
+                let color = "#3b82f6"; // normal
+                if (mode === 'risk') {
+                    if(n.group === "suspicious") color = "#f59e0b";
+                    if(n.group === "blacklisted") color = "#ef4444";
+                } else {
+                    const cId = n.metadata.community_id !== undefined ? n.metadata.community_id : 0;
+                    color = communityColors[cId % communityColors.length];
+                }
+                return {
+                    id: n.id,
+                    color: {
+                        background: color,
+                        border: "#ffffff",
+                        highlight: { background: color, border: "#ffffff" }
+                    }
+                };
+            });
+            nodesDataSet.update(updated);
+        }
+
+        function updateLegend(mode) {
+            const legendDiv = document.getElementById('graph-legend');
+            if (mode === 'risk') {
+                legendDiv.innerHTML = `
+                    <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div> Normal Vendor</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div> Suspicious</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div> Blacklisted</div>
+                    <div class="legend-item" style="margin-left: 12px;"><div class="legend-color" style="background: #475569; height: 4px; border-radius: 0;"></div> Normal Co-bids</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #fbbf24; height: 4px; border-radius: 0;"></div> Med Risk</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #ef4444; height: 4px; border-radius: 0;"></div> Critical Collusion</div>
+                `;
+            } else {
+                const uniqueCommunities = [...new Set(rawNodes.map(n => n.metadata.community_id !== undefined ? n.metadata.community_id : 0))].sort((a,b)=>a-b);
+                let legendHtml = '';
+                uniqueCommunities.forEach(cId => {
+                    const color = communityColors[cId % communityColors.length];
+                    legendHtml += `<div class="legend-item"><div class="legend-color" style="background: ${color};"></div> Louvain Ring ${cId}</div>`;
+                });
+                legendHtml += `
+                    <div class="legend-item" style="margin-left: 12px;"><div class="legend-color" style="background: #475569; height: 4px; border-radius: 0;"></div> Normal Co-bids</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #fbbf24; height: 4px; border-radius: 0;"></div> Med Risk</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #ef4444; height: 4px; border-radius: 0;"></div> Critical Collusion</div>
+                `;
+                legendDiv.innerHTML = legendHtml;
+            }
+        }
+
+        function displayNodeDetails(node) {
+            const panel = document.getElementById('scanner-content');
+            let badgeColor = "#3b82f6";
+            let statusText = "Normal Entity";
+            if (node.group === "suspicious") { badgeColor = "#f59e0b"; statusText = "Suspicious Profile"; }
+            if (node.group === "blacklisted") { badgeColor = "#ef4444"; statusText = "Blacklisted Entity"; }
+
+            // Build community members HTML tags
+            let membersHtml = '';
+            if (node.metadata.community_members && node.metadata.community_members.length > 0) {
+                membersHtml = node.metadata.community_members.map(m => {
+                    return `<a href="predictive_risk.html?search=${encodeURIComponent(m)}" style="text-decoration:none;"><span class="badge" style="background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 8px; font-size: 0.72rem; display: inline-block; margin-right: 4px; margin-bottom: 4px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.06)';">${m}</span></a>`;
+                }).join('');
+            } else {
+                membersHtml = '<span style="color: #64748b; font-style: italic;">No community members</span>';
+            }
+
+            panel.innerHTML = `
+                <div style="width:100%; text-align:left; display:flex; flex-direction:column; gap:14px;">
+                    <div>
+                        <h4 style="font-size: 1.15rem; color: white; margin-bottom: 6px;">${node.label}</h4>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <span class="badge" style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}40; padding: 4px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; display: inline-block;">
+                                ${statusText}
+                            </span>
+                            <span class="badge" style="background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); padding: 4px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; display: inline-block;">
+                                Louvain Ring: ${node.metadata.community_id !== undefined ? node.metadata.community_id : 0}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 5px;">
+                        <label style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Network Centrality Metrics</label>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px;">
+                            <div style="background: rgba(0,0,0,0.25); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.03);">
+                                <span style="font-size: 0.62rem; color: #64748b; font-weight:700; display:block;">DEGREE</span>
+                                <span style="font-size: 1rem; color: #60a5fa; font-weight: 700; font-family: monospace;">${node.metadata.degree_centrality !== undefined ? node.metadata.degree_centrality : '0.000'}</span>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.25); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.03);">
+                                <span style="font-size: 0.62rem; color: #64748b; font-weight:700; display:block;">BETWEEN</span>
+                                <span style="font-size: 1rem; color: #f59e0b; font-weight: 700; font-family: monospace;">${node.metadata.betweenness_centrality !== undefined ? node.metadata.betweenness_centrality : '0.000'}</span>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.25); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.03);">
+                                <span style="font-size: 0.62rem; color: #64748b; font-weight:700; display:block;">EIGEN</span>
+                                <span style="font-size: 1rem; color: #ec4899; font-weight: 700; font-family: monospace;">${node.metadata.eigenvector_centrality !== undefined ? node.metadata.eigenvector_centrality : '0.000'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 5px;">
+                        <label style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Bidding Ring Members</label>
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); margin-top: 6px;">
+                            ${membersHtml}
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 5px;">
+                        <label style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Network Telemetry</label>
+                        <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); margin-top: 6px;">
+                            <div class="meta-row"><span class="meta-label">GEM Reg No</span><span class="meta-val">${node.metadata.ip ? node.title.split(" | ")[0].replace("GEM: ", "") : "N/A"}</span></div>
+                            <div class="meta-row"><span class="meta-label">Submission IP</span><span class="meta-val" style="font-family: monospace; color:#3b82f6;">${node.metadata.ip}</span></div>
+                            <div class="meta-row"><span class="meta-label">Email Address</span><span class="meta-val">${node.metadata.email}</span></div>
+                            <div class="meta-row" style="border:none;"><span class="meta-label">Location (Lat, Lon)</span><span class="meta-val" style="font-family: monospace;">${node.metadata.location}</span></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 5px;">
+                        <label style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Submission Hardware</label>
+                        <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); margin-top: 6px; font-size: 0.78rem; color: #cbd5e1; font-family: monospace;">
+                            ${node.metadata.full_device}
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="btn-coi-scan" style="width: 100%; margin-top: 10px; background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                        <i data-lucide="scan-face"></i> Run Kinship Sentinel X Scan
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+
+            // Set up click handler for the Kinship Sentinel X scan button
+            document.getElementById('btn-coi-scan').addEventListener('click', function() {
+                runKinshipSentinelScan(node);
+            });
+        }
+
+        async function runKinshipSentinelScan(node) {
+            const panel = document.getElementById('scanner-content');
+            
+            // Get all vendors in this community
+            const communityId = node.metadata.community_id !== undefined ? node.metadata.community_id : 0;
+            const communityNodes = rawNodes.filter(n => (n.metadata.community_id !== undefined ? n.metadata.community_id : 0) === communityId);
+            
+            // Format bidders data for endpoint
+            const bidsData = communityNodes.map(n => {
+                const directorsList = n.metadata.directors ? n.metadata.directors.split(',').map(d => d.trim()).filter(Boolean) : [];
+                return {
+                    vendor_name: n.label,
+                    company_name: n.label,
+                    ip: n.metadata.ip,
+                    email: n.metadata.email,
+                    directors: directorsList,
+                    address: n.metadata.address,
+                    phone: n.metadata.phone
+                };
+            });
+
+            // Show loading animation in panel
+            panel.innerHTML = `
+                <div style="width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; gap: 16px; text-align: center;">
+                    <i data-lucide="shield-alert" style="width: 48px; height: 48px; color: #ec4899; animation: pulse 1.5s infinite;"></i>
+                    <h4 style="color: white; margin: 0; font-size: 1.1rem;">Deploying Kinship Sentinel X...</h4>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 250px;">Swarm agent scanning bidding ring metadata overlaps and director histories.</p>
+                    <div style="width: 150px; background: rgba(255,255,255,0.06); height: 4px; border-radius: 99px; overflow: hidden;">
+                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #ec4899, #8b5cf6); transform: translateX(-100%); animation: loadbar 2s infinite ease-in-out;"></div>
+                    </div>
+                </div>
+                <style>
+                    @keyframes loadbar {
+                        0% { transform: translateX(-100%); }
+                        50% { transform: translateX(0%); }
+                        100% { transform: translateX(100%); }
+                    }
+                </style>
+            `;
+            lucide.createIcons();
+
+            try {
+                const result = await ApiClient.request('/ai-ops/conflict-scan', {
+                    method: 'POST',
+                    body: JSON.stringify({ bids_data: bidsData })
+                });
+                
+                // RENDER SCAN RESULTS
+                let statusColor = "#10b981";
+                if (result.overall_status === "CRITICAL") statusColor = "#ef4444";
+                else if (result.overall_status === "WARNING") statusColor = "#f59e0b";
+
+                let overlapsHtml = "";
+                if (result.overlaps && result.overlaps.length > 0) {
+                    overlapsHtml = result.overlaps.map(o => `
+                        <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border-left: 3px solid ${o.level === 'HIGH' ? '#ef4444' : '#f59e0b'}; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="font-weight: 700; color: white; font-size: 0.85rem;">
+                                ${o.vendor_a} <span style="color:#64748b; font-weight:normal;">&</span> ${o.vendor_b}
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
+                                ${o.links.map(link => `
+                                    <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color: #fda4af;">
+                                        <div style="width:5px; height:5px; border-radius:50%; background:#ef4444;"></div>
+                                        ${link}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div style="text-align: right; font-size: 0.7rem; color: var(--text-muted); font-family: monospace;">
+                                COLLUSION SCORE: <span style="font-weight:bold; color: ${o.level === 'HIGH' ? '#ef4444' : '#f59e0b'};">${o.score}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    overlapsHtml = `
+                        <div style="text-align:center; padding: 16px; color:#64748b; font-style:italic; font-size:0.85rem;">
+                            No structural metadata overlaps found.
+                        </div>
+                    `;
+                }
+
+                panel.innerHTML = `
+                    <div style="width:100%; text-align:left; display:flex; flex-direction:column; gap:16px;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+                                <h3 style="color: white; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; margin: 0;">
+                                    <i data-lucide="scan-face" style="color: #ec4899;"></i> Kinship Audit
+                                </h3>
+                                <span class="badge" style="background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}40; padding: 4px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700;">
+                                    ${result.overall_status} RISK
+                                </span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Swarm Forensic Narrative</label>
+                            <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); margin: 0;">
+                                ${result.narrative}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Metadata Relationship Links</label>
+                            <div style="display:flex; flex-direction:column; gap:10px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                                ${overlapsHtml}
+                            </div>
+                        </div>
+
+                        <button class="btn btn-outline" id="btn-coi-back" style="width: 100%; border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.8rem; font-weight: 600; background: transparent; transition: all 0.2s;">
+                            <i data-lucide="arrow-left" style="width:14px; height:14px;"></i> Back to Vendor Details
+                        </button>
+                    </div>
+                `;
+                lucide.createIcons();
+
+                document.getElementById('btn-coi-back').addEventListener('click', function() {
+                    displayNodeDetails(node);
+                });
+
+            } catch (e) {
+                console.error(e);
+                panel.innerHTML = `
+                    <div style="width:100%; text-align:center; padding:24px 0; color:#ef4444; font-family:monospace; display:flex; flex-direction:column; align-items:center; gap:12px;">
+                        <i data-lucide="x-circle" style="width:40px; height:40px;"></i>
+                        <span>Scan Failed: ${e.message}</span>
+                        <button class="btn btn-outline" id="btn-coi-error-back" style="margin-top:12px; font-size:0.8rem;">
+                            Go Back
+                        </button>
+                    </div>
+                `;
+                lucide.createIcons();
+                document.getElementById('btn-coi-error-back').addEventListener('click', function() {
+                    displayNodeDetails(node);
+                });
+            }
+        }
+
+        function displayEdgeDetails(edge) {
+            const panel = document.getElementById('scanner-content');
+            const v1Node = rawNodes.find(n => n.id === edge.from);
+            const v2Node = rawNodes.find(n => n.id === edge.to);
+            
+            const v1Name = v1Node ? v1Node.label : "Vendor A";
+            const v2Name = v2Node ? v2Node.label : "Vendor B";
+
+            const score = edge.collusion_level || 0;
+            let riskText = "Clean Link";
+            let riskColor = "#10b981";
+            if (score >= 6) { riskText = "CRITICAL RISK"; riskColor = "#ef4444"; }
+            else if (score >= 2) { riskText = "MEDIUM RISK"; riskColor = "#f59e0b"; }
+
+            let signalsHtml = "<p style='color: #64748b; font-size: 0.8rem; font-style: italic;'>No fingerprint overlaps detected.</p>";
+            if (edge.signals && edge.signals.length > 0) {
+                signalsHtml = edge.signals.map(sig => `
+                    <div class="signal-tag" style="background: ${riskColor}10; border-color: ${riskColor}25; color: ${riskColor};">
+                        <i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i>
+                        ${sig}
+                    </div>
+                `).join('');
+            }
+
+            panel.innerHTML = `
+                <div style="width:100%; text-align:left; display:flex; flex-direction:column; gap:16px;">
+                    <div>
+                        <span class="badge" style="background: ${riskColor}20; color: ${riskColor}; border: 1px solid ${riskColor}40; padding: 4px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; display: inline-block;">
+                            ${riskText}
+                        </span>
+                        <h4 style="font-size: 1.05rem; color: white; margin-top: 10px; line-height: 1.4;">
+                            ${v1Name} <br><span style="color:#64748b; font-size:0.8rem; font-weight:normal;">and</span><br> ${v2Name}
+                        </h4>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.03);">
+                            <span style="font-size: 0.7rem; color: #64748b; font-weight:700;">CO-BID COUNT</span>
+                            <h3 style="font-size: 1.6rem; color: white; margin-top: 4px;">${edge.value}</h3>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.03);">
+                            <span style="font-size: 0.7rem; color: #64748b; font-weight:700;">COLLUSION SCORE</span>
+                            <h3 style="font-size: 1.6rem; color: ${riskColor}; margin-top: 4px;">${score}<span style="font-size:0.8rem; color:#64748b;">/15</span></h3>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Overlapping Indicators</label>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            ${signalsHtml}
+                        </div>
+                    </div>
+
+                    <div class="meta-row" style="border:none; margin-top:5px;">
+                        <span class="meta-label">Physical Proximity</span>
+                        <span class="meta-val" style="font-weight: 600; color: ${edge.distance_m < 100 ? '#ef4444' : '#cbd5e1'};">
+                            ${edge.distance_m ? edge.distance_m + " meters" : "N/A"}
+                        </span>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function resetPanel() {
+            const panel = document.getElementById('scanner-content');
+            panel.innerHTML = `
+                <i data-lucide="radar" style="width: 48px; height: 48px; opacity: 0.25; animation: pulse 2s infinite;"></i>
+                <p>Select any vendor node or network connection line to run a real-time overlap analysis.</p>
+            `;
+            lucide.createIcons();
+        }
+
+        initNetwork();
+    </script>
+</body>
+</html>

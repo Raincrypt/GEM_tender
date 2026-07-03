@@ -1,0 +1,4 @@
+1772:                 "Hydrostatic and pneumatic testing reports are mandatory.",
+1790:                 "Static load capacity of at least 1000 kg.",
+1812:         # If no documents, fallback to realistic mock text based on bid status
+1828:                     bid_text = f"Technical proposal by {vendor_name}. 42U Enterprise Server Racks, 600x1000mm. Fully perforated front and rear doors with key locks. 2x integrated PDUs are included. Static load capacity certified up to 1200 kg conforming to EIA-310-E."

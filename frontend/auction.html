@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Reverse Auction - GEM Tender</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .auction-room {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        .pulse {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #10b981;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse-anim 1.5s infinite;
+        }
+        @keyframes pulse-anim {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .timer {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #f59e0b;
+            font-variant-numeric: tabular-nums;
+            margin: 20px 0;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+        
+        .l1-display {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        
+        .l1-amount {
+            font-size: 5rem;
+            font-weight: 800;
+            color: #10b981;
+            margin: 10px 0;
+            text-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+        }
+        
+        .bid-input-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .bid-input-group input {
+            font-size: 1.5rem;
+            padding: 15px 25px;
+            width: 300px;
+            border-radius: 8px;
+            border: 2px solid #3b82f6;
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            text-align: center;
+        }
+        
+        .bid-input-group button {
+            font-size: 1.2rem;
+            padding: 0 40px;
+            border-radius: 8px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .bid-input-group button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.5);
+        }
+        
+        .gavel-icon {
+            color: #8b5cf6;
+            width: 48px;
+            height: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auction-room" id="auction-room">
+        <div class="pulse">
+            <div class="pulse-dot"></div> Live Connection
+        </div>
+        
+        <i data-lucide="gavel" class="gavel-icon"></i>
+        <h1 style="margin:0; font-size: 2rem;">Reverse e-Auction Room</h1>
+        <p style="color: #94a3b8; font-size: 1.1rem;" id="tender-title">Tender Details Loading...</p>
+        
+        <div class="timer" id="timer">00:00:00</div>
+        <p style="color: #f59e0b; margin-top:-15px;">Remaining Time (Auto-extends by 2 mins if bid placed in last 2 mins)</p>
+        
+        <div class="l1-display">
+            <div style="font-size: 1.2rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">Current Lowest Bid (L1)</div>
+            <div class="l1-amount" id="l1-amount">₹--</div>
+        </div>
+        
+        <div class="bid-input-group">
+            <input type="number" id="bid-amount" placeholder="Enter lower amount...">
+            <button onclick="placeBid()" id="btn-submit">Submit Counter-Offer</button>
+        </div>
+        
+        <div id="status-message" style="margin-top: 20px; font-weight: 500;"></div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        lucide.createIcons();
+        requireAuth();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const tenderId = urlParams.get('tender_id');
+        
+        if(!tenderId) {
+            alert("No tender specified.");
+            window.location.href = "dashboard.html";
+        }
+        
+        let endTime = null;
+        let ws = null;
+        let currentL1 = 0;
+        
+        async function loadAuctionState() {
+            try {
+                const state = await ApiClient.getAuctionState(tenderId);
+                
+                if(!state.is_active) {
+                    document.getElementById('auction-room').innerHTML = `
+                        <i data-lucide="stop-circle" style="width:64px;height:64px;color:#ef4444;margin-bottom:20px;"></i>
+                        <h1>Auction has Ended</h1>
+                        <p>The reverse auction for this tender is complete.</p>
+                        <a href="dashboard.html" class="btn btn-primary mt-4">Return to Dashboard</a>
+                    `;
+                    lucide.createIcons();
+                    return;
+                }
+                
+                endTime = new Date(state.end_time + 'Z'); // UTC
+                currentL1 = state.current_l1;
+                
+                document.getElementById('l1-amount').textContent = `₹${currentL1.toLocaleString('en-IN')}`;
+                document.getElementById('tender-title').textContent = `Tender ID: ${tenderId}`;
+                
+            } catch(e) {
+                alert(e.message);
+            }
+        }
+        
+        function updateTimer() {
+            if(!endTime) return;
+            
+            const now = new Date();
+            const diff = endTime - now;
+            
+            if(diff <= 0) {
+                document.getElementById('timer').textContent = "00:00:00";
+                document.getElementById('timer').style.color = "#ef4444";
+                loadAuctionState(); // Refresh to show ended screen
+                return;
+            }
+            
+            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            
+            document.getElementById('timer').textContent = `${h}:${m}:${s}`;
+        }
+        
+        async function placeBid() {
+            const amount = parseFloat(document.getElementById('bid-amount').value);
+            const btn = document.getElementById('btn-submit');
+            const msg = document.getElementById('status-message');
+            
+            if(!amount || amount >= currentL1) {
+                msg.textContent = `Bid must be less than ₹${currentL1.toLocaleString('en-IN')}`;
+                msg.style.color = "#ef4444";
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = "Submitting...";
+            
+            try {
+                const res = await ApiClient.placeAuctionBid(tenderId, amount);
+                msg.textContent = "Bid placed successfully! You are now L1.";
+                msg.style.color = "#10b981";
+                document.getElementById('bid-amount').value = '';
+                
+                // Trigger WebSocket sync to update all other screens
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send('BID_PLACED');
+                }
+                
+                loadAuctionState();
+            } catch(e) {
+                msg.textContent = e.message;
+                msg.style.color = "#ef4444";
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Submit Counter-Offer";
+            }
+        }
+        
+        function connectWebSocket() {
+            ws = new WebSocket(API_BASE_URL.replace('http', 'ws') + `/ws/auction/${tenderId}`);
+            ws.onmessage = (event) => {
+                console.log("Auction WebSocket Update");
+                // Refresh data because someone else placed a bid
+                loadAuctionState();
+                
+                // Flash the screen
+                const l1 = document.getElementById('l1-amount');
+                l1.style.color = "#ef4444";
+                l1.style.transform = "scale(1.1)";
+                setTimeout(() => {
+                    l1.style.color = "#10b981";
+                    l1.style.transform = "scale(1)";
+                }, 500);
+            };
+            ws.onclose = () => {
+                setTimeout(connectWebSocket, 1000); // Reconnect
+            };
+        }
+        
+        loadAuctionState();
+        setInterval(updateTimer, 1000);
+        connectWebSocket();
+        
+    </script>
+</body>
+</html>

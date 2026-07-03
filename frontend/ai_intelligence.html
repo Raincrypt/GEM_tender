@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Intelligence Command Center | GEM Tender</title>
+    <meta name="description" content="GEM Tender AI Intelligence Command Center — RAG Knowledge Base, Accuracy Monitor, Anomaly Detection, Document Forensics, Decision Feed, Threat Intel">
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <style>
+        /* ─── RESET & BASE ─── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-deepest: #0a0a1a;
+            --bg-deep: #0f0f23;
+            --bg-panel: rgba(255,255,255,0.03);
+            --bg-panel-hover: rgba(255,255,255,0.06);
+            --border-subtle: rgba(255,255,255,0.06);
+            --border-glow: rgba(139,92,246,0.3);
+            --purple: #8b5cf6; --purple-light: #a78bfa; --purple-dark: #6366f1;
+            --green: #4ade80; --green-dark: #10b981;
+            --red: #ef4444; --red-light: #f87171;
+            --amber: #f59e0b; --amber-light: #fbbf24;
+            --blue: #3b82f6; --blue-light: #60a5fa;
+            --cyan: #06b6d4;
+            --pink: #ec4899;
+            --text: #e2e8f0; --text-muted: #94a3b8; --text-dim: #475569; --text-faint: #334155;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--bg-deepest);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(139,92,246,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(59,130,246,0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.02) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+
+        /* ─── LAYOUT ─── */
+        .app-shell { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+        /* ─── SIDEBAR ─── */
+        .sidebar {
+            width: 260px; flex-shrink: 0;
+            background: linear-gradient(180deg, rgba(10,10,26,0.98) 0%, rgba(15,15,35,0.95) 100%);
+            border-right: 1px solid var(--border-subtle);
+            padding: 24px 16px;
+            display: flex; flex-direction: column;
+            backdrop-filter: blur(20px);
+            position: fixed; top: 0; left: 0; bottom: 0;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 8px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            font-weight: 700; font-size: 1rem; color: var(--text);
+        }
+        .sidebar-brand i { color: var(--purple); width: 22px; height: 22px; }
+        .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+        .nav-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 10px;
+            color: var(--text-muted); text-decoration: none;
+            font-size: 0.82rem; font-weight: 500;
+            transition: all 0.25s ease;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .nav-link.active {
+            background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(99,102,241,0.1));
+            color: var(--purple-light); font-weight: 600;
+            border: 1px solid rgba(139,92,246,0.2);
+        }
+        .nav-link i { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* ─── MAIN AREA ─── */
+        .main-area { flex: 1; margin-left: 260px; padding: 0; }
+
+        /* ─── TOP HEADER ─── */
+        .page-header {
+            padding: 28px 40px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(10,10,26,0.7);
+            backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .page-header h1 {
+            font-size: 1.6rem; font-weight: 800;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+        .page-header p { font-size: 0.82rem; color: var(--text-dim); font-family: var(--mono); }
+
+        /* ─── CONTENT GRID ─── */
+        .content { padding: 28px 40px; max-width: 1700px; }
+        .section-title {
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 2.5px;
+            color: var(--text-dim); margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title i { width: 14px; height: 14px; }
+
+        /* ─── CARDS ─── */
+        .glass-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.35s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent);
+            opacity: 0; transition: opacity 0.35s;
+        }
+        .glass-card:hover {
+            border-color: var(--border-glow);
+            box-shadow: 0 8px 40px rgba(139,92,246,0.08);
+        }
+        .glass-card:hover::before { opacity: 1; }
+
+        /* ─── KPI CARDS ─── */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        .kpi-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+            border-radius: 3px 0 0 3px;
+        }
+        .kpi-card.purple::after { background: var(--purple); }
+        .kpi-card.green::after { background: var(--green); }
+        .kpi-card.blue::after { background: var(--blue); }
+        .kpi-card.amber::after { background: var(--amber); }
+        .kpi-card:hover { transform: translateY(-2px); border-color: var(--border-glow); }
+        .kpi-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 8px; }
+        .kpi-value { font-size: 2rem; font-weight: 800; font-family: var(--mono); }
+        .kpi-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; }
+
+        /* ─── GRID LAYOUTS ─── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+        .grid-full { margin-bottom: 28px; }
+
+        /* ─── CHARTS ─── */
+        .chart-wrap { position: relative; height: 240px; }
+
+        /* ─── BADGES ─── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .badge-green { background: rgba(74,222,128,0.12); color: var(--green); }
+        .badge-red { background: rgba(239,68,68,0.12); color: var(--red); }
+        .badge-amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+        .badge-purple { background: rgba(139,92,246,0.12); color: var(--purple-light); }
+        .badge-blue { background: rgba(59,130,246,0.12); color: var(--blue-light); }
+
+        /* ─── TABLE ─── */
+        table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        th { text-align: left; padding: 10px 10px; color: var(--text-dim); border-bottom: 1px solid var(--border-subtle); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.025); }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        /* ─── DROPZONE ─── */
+        .dropzone {
+            border: 2px dashed rgba(139,92,246,0.25);
+            border-radius: 14px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(139,92,246,0.03);
+        }
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--purple);
+            background: rgba(139,92,246,0.08);
+            box-shadow: 0 0 30px rgba(139,92,246,0.1);
+        }
+        .dropzone i { color: var(--purple-light); margin-bottom: 10px; }
+
+        /* ─── BUTTONS ─── */
+        .btn {
+            padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 0.82rem;
+            border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.25s; font-family: var(--font);
+        }
+        .btn-purple { background: linear-gradient(135deg, var(--purple), var(--purple-dark)); color: #fff; }
+        .btn-purple:hover { box-shadow: 0 6px 25px rgba(139,92,246,0.35); transform: translateY(-1px); }
+        .btn-blue { background: linear-gradient(135deg, var(--blue), #2563eb); color: #fff; }
+        .btn-blue:hover { box-shadow: 0 6px 25px rgba(59,130,246,0.35); transform: translateY(-1px); }
+        .btn-outline {
+            background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted);
+        }
+        .btn-outline:hover { border-color: var(--purple); color: var(--purple-light); }
+        .btn-sm { padding: 6px 14px; font-size: 0.75rem; border-radius: 8px; }
+
+        /* ─── INPUTS ─── */
+        .input {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text); padding: 10px 14px;
+            border-radius: 10px; font-size: 0.85rem; font-family: var(--font);
+            outline: none; width: 100%;
+            transition: border-color 0.25s;
+        }
+        .input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
+        .input::placeholder { color: var(--text-faint); }
+        select.input { cursor: pointer; }
+
+        /* ─── CHAT ─── */
+        .chat-container {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            display: flex; flex-direction: column;
+            min-height: 300px; max-height: 400px;
+        }
+        .chat-log { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .chat-input-bar { padding: 12px; border-top: 1px solid var(--border-subtle); display: flex; gap: 10px; }
+        .msg-user {
+            align-self: flex-end; max-width: 75%;
+            background: rgba(59,130,246,0.18); border: 1px solid rgba(59,130,246,0.3);
+            padding: 10px 14px; border-radius: 14px 14px 2px 14px;
+            font-size: 0.84rem; line-height: 1.5;
+        }
+        .msg-ai {
+            align-self: flex-start; max-width: 80%;
+            background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.15);
+            padding: 12px 16px; border-radius: 14px 14px 14px 2px;
+            font-size: 0.84rem; line-height: 1.6;
+        }
+        .msg-sources { font-size: 0.65rem; color: var(--text-dim); margin-top: 8px; border-top: 1px solid var(--border-subtle); padding-top: 6px; }
+
+        /* ─── TERMINAL ─── */
+        .terminal {
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(16,185,129,0.15);
+            border-radius: 12px; padding: 16px;
+            font-family: var(--mono); font-size: 0.78rem; color: var(--green-dark);
+            max-height: 380px; overflow-y: auto;
+            position: relative;
+        }
+        .terminal-line { margin-bottom: 4px; display: flex; gap: 8px; align-items: flex-start; }
+        .terminal-line .ts { color: var(--text-faint); font-size: 0.68rem; flex-shrink: 0; }
+        .terminal::after { content: '█'; animation: blink 1s step-end infinite; color: var(--green); }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* ─── TIMELINE / FEED ─── */
+        .feed-item {
+            padding: 16px; border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 10px;
+            transition: all 0.25s;
+            cursor: pointer;
+        }
+        .feed-item:hover { background: rgba(255,255,255,0.04); border-color: var(--border-glow); }
+        .feed-item .feed-details { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+        .feed-item.expanded .feed-details { max-height: 500px; }
+
+        /* ─── GAUGE ─── */
+        .arc-gauge {
+            width: 140px; height: 70px;
+            position: relative; margin: 0 auto;
+            overflow: hidden;
+        }
+        .arc-gauge-bg, .arc-gauge-fill {
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            position: absolute; top: 0; left: 0;
+            border: 14px solid transparent;
+        }
+        .arc-gauge-bg { border-top-color: rgba(255,255,255,0.06); border-left-color: rgba(255,255,255,0.06); transform: rotate(-45deg); }
+        .arc-gauge-fill { border-top-color: var(--purple); border-left-color: var(--purple); transform: rotate(-45deg); transition: all 1s ease; }
+
+        /* ─── LOADING / EMPTY STATES ─── */
+        .loading-state { text-align: center; padding: 40px; color: var(--text-dim); }
+        .loading-state .spinner {
+            width: 28px; height: 28px;
+            border: 3px solid rgba(139,92,246,0.15);
+            border-top-color: var(--purple);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state {
+            text-align: center; padding: 40px; color: var(--text-dim);
+        }
+        .empty-state i { color: var(--purple-light); margin-bottom: 12px; opacity: 0.5; }
+        .empty-state h4 { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 6px; }
+        .empty-state p { font-size: 0.78rem; }
+        .error-state { text-align: center; padding: 30px; color: var(--red-light); font-size: 0.82rem; }
+        .pulse-icon { animation: pulse-glow 2s ease-in-out infinite; }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+
+        /* ─── SCAN LINE ─── */
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--purple), transparent);
+            animation: scanDown 4s linear infinite;
+            opacity: 0.4; pointer-events: none; z-index: 2;
+        }
+        @keyframes scanDown { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* ─── SEVERITY COLORS ─── */
+        .sev-critical { color: var(--red); }
+        .sev-high { color: var(--amber); }
+        .sev-moderate { color: var(--purple-light); }
+        .sev-low { color: var(--blue-light); }
+        .sev-info { color: var(--text-muted); }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 1200px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-area { margin-left: 0; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .content { padding: 20px; }
+        }
+
+        /* ─── SCROLLBAR ─── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 3px; }
+
+        /* ─── CUSTOM SWITCH ─── */
+        .switch-container input:checked + .slider { background-color: var(--purple); }
+        .switch-container input:checked + .slider::before { transform: translateX(20px); background-color: #fff; }
+        .slider::before {
+            position: absolute; content: "";
+            height: 16px; width: 16px;
+            left: 4px; bottom: 4px;
+            background-color: #94a3b8;
+            transition: 0.3s; border-radius: 50%;
+        }
+        .provider-config-card.active-card {
+            border-color: var(--purple) !important;
+            box-shadow: 0 0 15px rgba(139,92,246,0.15);
+            background: rgba(139,92,246,0.02) !important;
+        }
+
+        /* ─── AUTO-REFRESH INDICATOR ─── */
+        .refresh-dot {
+            width: 6px; height: 6px; background: var(--green);
+            border-radius: 50%; display: inline-block;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,0.4); } 50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(74,222,128,0); } }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+
+    <!-- ═══════ SIDEBAR ═══════ -->
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+    <!-- ═══════ MAIN ═══════ -->
+    <div class="main-area">
+
+        <!-- ─── PAGE HEADER ─── -->
+        <div class="page-header">
+            <h1>AI Intelligence Command Center</h1>
+            <p>RAG Knowledge Base • Accuracy Monitor • Anomaly Detection • Forensics Lab • Decision Feed • Threat Intel</p>
+        </div>
+
+        <div class="content">
+
+            <!-- ═══════ SECTION 0: AI MODEL CONFIGURATION ═══════ -->
+            <div class="section-title"><i data-lucide="cpu"></i> AI MODEL & CONFIGURATION SETTINGS</div>
+            <div class="grid-full">
+                <div class="glass-card" style="border-color: rgba(139,92,246,0.25); background: linear-gradient(180deg, rgba(20,20,45,0.4) 0%, rgba(10,10,30,0.4) 100%)">
+                    <div class="scan-line" style="background: linear-gradient(90deg, transparent, var(--cyan), transparent)"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px; flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <h3 style="font-size:1.1rem; font-weight:700; color:var(--purple-light); display:flex; align-items:center; gap:8px">
+                                <i data-lucide="settings"></i> AI Cognitive Engine Cockpit
+                            </h3>
+                            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Select AI models, update connection parameters, toggle compliance policies, and test latency.</p>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:0.72rem; color:var(--text-muted); font-family:var(--mono);">STRICT COMPLIANCE</span>
+                                <label class="switch-container" style="position:relative; display:inline-block; width:44px; height:24px;">
+                                    <input type="checkbox" id="settings-strict-mode" style="opacity:0; width:0; height:0;" onchange="toggleStrictCompliance(this)">
+                                    <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#334155; transition:0.3s; border-radius:24px;"></span>
+                                </label>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:0.72rem; color:var(--purple-light); font-family:var(--mono); font-weight:600;">ZERO HALLUCINATION</span>
+                                <label class="switch-container" style="position:relative; display:inline-block; width:44px; height:24px;">
+                                    <input type="checkbox" id="settings-strict-accuracy" style="opacity:0; width:0; height:0;">
+                                    <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#334155; transition:0.3s; border-radius:24px;"></span>
+                                </label>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:0.72rem; color:var(--text-muted); font-family:var(--mono);">RAG RELEVANCE THRESHOLD</span>
+                                <input type="number" id="settings-rag-min-relevance" min="0" max="100" style="width:55px; font-size:0.75rem; padding:4px 6px; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); color:var(--text); border-radius:6px; font-family:var(--mono);" value="40">%
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:0.72rem; color:var(--text-muted); font-family:var(--mono);">RAG SEMANTIC WEIGHT</span>
+                                <input type="range" id="settings-rag-semantic-weight" min="0.0" max="1.0" step="0.05" style="width:80px; vertical-align:middle;" oninput="document.getElementById('settings-rag-semantic-weight-val').textContent = (this.value * 100).toFixed(0) + '%'">
+                                <span id="settings-rag-semantic-weight-val" style="font-size:0.72rem; color:var(--text-dim); font-family:var(--mono); width:35px; display:inline-block; text-align:right;">70%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
+                        <!-- Provider Card 1: Ollama -->
+                        <div class="provider-config-card" id="card-ollama" style="background:rgba(255,255,255,0.015); border:1px solid var(--border-subtle); border-radius:12px; padding:16px; transition:all 0.3s;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+                                <div style="display:flex; align-items:center; gap:8px">
+                                    <i data-lucide="server" style="color:var(--cyan); width:18px; height:18px"></i>
+                                    <span style="font-weight:600; font-size:0.85rem">Ollama (Local)</span>
+                                </div>
+                                <span class="badge" id="badge-status-ollama" style="background:rgba(100,116,139,0.12); color:#94a3b8">UNKNOWN</span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:10px">
+                                <div>
+                                    <label style="font-size:0.68rem; color:var(--text-dim); display:block; margin-bottom:4px">OLLAMA SERVICE URL</label>
+                                    <input class="input" id="settings-ollama-url" placeholder="http://localhost:11434/api/generate" style="font-size:0.75rem; padding:8px 12px; font-family:var(--mono)">
+                                </div>
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
+                                        <label style="font-size:0.68rem; color:var(--text-dim)">ACTIVE MODEL</label>
+                                        <button class="btn btn-outline btn-xs" style="padding:2px 6px; font-size:0.6rem; display:flex; align-items:center; gap:4px" onclick="discoverOllamaModels()"><i data-lucide="refresh-cw" style="width:10px; height:10px"></i> Discover</button>
+                                    </div>
+                                    <select class="input" id="settings-ollama-model" style="font-size:0.75rem; padding:8px 12px">
+                                        <option value="llama3">Llama 3 (8B)</option>
+                                        <option value="llama3.1">Llama 3.1 (8B)</option>
+                                        <option value="deepseek-r1">DeepSeek R1 (Reasoning)</option>
+                                        <option value="deepseek-r1:8b">DeepSeek R1 (8B)</option>
+                                        <option value="deepseek-r1:14b">DeepSeek R1 (14B)</option>
+                                        <option value="mistral">Mistral (7B)</option>
+                                        <option value="phi3">Phi 3 (3.8B)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.68rem; color:var(--text-dim); display:block; margin-bottom:4px">FAST MODEL (EXTRACTION)</label>
+                                    <select class="input" id="settings-ollama-model-fast" style="font-size:0.75rem; padding:8px 12px">
+                                        <option value="">Default (Active Model)</option>
+                                        <option value="llama3">Llama 3 (8B)</option>
+                                        <option value="llama3.1">Llama 3.1 (8B)</option>
+                                        <option value="deepseek-r1">DeepSeek R1 (Reasoning)</option>
+                                        <option value="deepseek-r1:8b">DeepSeek R1 (8B)</option>
+                                        <option value="mistral">Mistral (7B)</option>
+                                        <option value="phi3">Phi 3 (3.8B)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.68rem; color:var(--text-dim); display:block; margin-bottom:4px">REASONING MODEL (SWARM & SCANS)</label>
+                                    <select class="input" id="settings-ollama-model-reasoning" style="font-size:0.75rem; padding:8px 12px">
+                                        <option value="">Default (Active Model)</option>
+                                        <option value="llama3">Llama 3 (8B)</option>
+                                        <option value="llama3.1">Llama 3.1 (8B)</option>
+                                        <option value="deepseek-r1">DeepSeek R1 (Reasoning)</option>
+                                        <option value="deepseek-r1:8b">DeepSeek R1 (8B)</option>
+                                        <option value="deepseek-r1:14b">DeepSeek R1 (14B)</option>
+                                        <option value="mistral">Mistral (7B)</option>
+                                        <option value="phi3">Phi 3 (3.8B)</option>
+                                    </select>
+                                </div>
+                                <div style="display:flex; gap:8px; margin-top:8px">
+                                    <button class="btn btn-outline btn-sm" style="flex:1; justify-content:center" onclick="testProviderConnection('ollama')"><i data-lucide="zap" style="width:12px; height:12px"></i> Test</button>
+                                    <button class="btn btn-blue btn-sm" id="btn-select-ollama" style="flex:1; justify-content:center" onclick="selectProvider('ollama')">Activate</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Provider Card 2: Google Gemini -->
+                        <div class="provider-config-card" id="card-gemini" style="background:rgba(255,255,255,0.015); border:1px solid var(--border-subtle); border-radius:12px; padding:16px; transition:all 0.3s;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+                                <div style="display:flex; align-items:center; gap:8px">
+                                    <i data-lucide="sparkles" style="color:var(--purple-light); width:18px; height:18px"></i>
+                                    <span style="font-weight:600; font-size:0.85rem">Google Gemini</span>
+                                </div>
+                                <span class="badge" id="badge-status-gemini" style="background:rgba(100,116,139,0.12); color:#94a3b8">UNKNOWN</span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:10px">
+                                <div>
+                                    <label style="font-size:0.68rem; color:var(--text-dim); display:block; margin-bottom:4px">GEMINI API KEY</label>
+                                    <input type="password" class="input" id="settings-gemini-key" placeholder="••••••••••••••••" style="font-size:0.75rem; padding:8px 12px; font-family:var(--mono)">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.68rem; color:var(--text-dim); display:block; margin-bottom:4px">ACTIVE MODEL</label>
+                                    <select class="input" id="settings-gemini-model" style="font-size:0.75rem; padding:8px 12px">
+                                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
+                                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Powerful)</option>
+                                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                    </select>
+                                </div>
+                                <div style="display:flex; gap:8px; margin-top:8px">
+                                    <button class="btn btn-outline btn-sm" id="btn-test-gemini" style="flex:1; justify-content:center" onclick="testProviderConnection('gemini')"><i data-lucide="zap" style="width:12px; height:12px"></i> Test</button>
+                                    <button class="btn btn-purple btn-sm" id="btn-select-gemini" style="flex:1; justify-content:center" onclick="selectProvider('gemini')">Activate</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Provider Card 3: OpenAI -->
+                        <div class="provider-config-card" id="card-openai" style="background:rgba(255,255,255,0.015); border:1px solid var(--border-subtle); border-radius:12px; padding:16px; transition:all 0.3s;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+                                <div style="display:flex; align-items:center; gap:8px">
+                                    <i data-lucide="bot" style="color:var(--green); width:18px; height:18px"></i>
+                                    <span style="font-weight:600; font-size:0.85rem">OpenAI GPT</span>
+                                </div>
+                                <span class="badge" id="badge-status-openai" style="background:rgba(100,116,139,0.12); color:#94a3b8">UNKNOWN</span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:10px">
+                                <div>
+                                    <label style="font-size:0.68rem; color:var(--text-dim); display:block; margin-bottom:4px">OPENAI API KEY</label>
+                                    <input type="password" class="input" id="settings-openai-key" placeholder="••••••••••••••••" style="font-size:0.75rem; padding:8px 12px; font-family:var(--mono)">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.68rem; color:var(--text-dim); display:block; margin-bottom:4px">ACTIVE MODEL</label>
+                                    <select class="input" id="settings-openai-model" style="font-size:0.75rem; padding:8px 12px">
+                                        <option value="gpt-4o-mini">GPT-4o Mini (Fast)</option>
+                                        <option value="gpt-4o">GPT-4o (High Intelligence)</option>
+                                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                    </select>
+                                </div>
+                                <div style="display:flex; gap:8px; margin-top:8px">
+                                    <button class="btn btn-outline btn-sm" id="btn-test-openai" style="flex:1; justify-content:center" onclick="testProviderConnection('openai')"><i data-lucide="zap" style="width:12px; height:12px"></i> Test</button>
+                                    <button class="btn btn-green btn-sm" id="btn-select-openai" style="flex:1; justify-content:center; background:linear-gradient(135deg, var(--green), var(--green-dark))" onclick="selectProvider('openai')">Activate</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px; border-top:1px solid var(--border-subtle); padding-top:14px">
+                        <span id="settings-save-status" style="align-self:center; font-size:0.75rem; margin-right:auto"></span>
+                        <button class="btn btn-outline btn-sm" onclick="loadLlmConfigStatus()"><i data-lucide="refresh-cw" style="width:12px; height:12px"></i> Reset</button>
+                        <button class="btn btn-purple btn-sm" style="padding:8px 24px" onclick="saveFullLlmConfig()"><i data-lucide="save" style="width:14px; height:14px"></i> Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════ SECTION 1: AI ACCURACY MONITOR ═══════ -->
+            <div class="section-title"><i data-lucide="activity"></i> AI ACCURACY MONITOR</div>
+            <div id="accuracy-kpis" class="kpi-grid">
+                <div class="kpi-card purple"><div class="kpi-label">Total Decisions</div><div class="kpi-value" id="kpi-total-decisions">—</div><div class="kpi-sub" id="kpi-total-sub">Loading...</div></div>
+                <div class="kpi-card green"><div class="kpi-label">Acceptance Rate</div><div class="kpi-value" id="kpi-acceptance-rate" style="color:var(--green)">—</div><div class="kpi-sub" id="kpi-accept-sub">Loading...</div></div>
+                <div class="kpi-card amber"><div class="kpi-label">Avg Deviation</div><div class="kpi-value" id="kpi-avg-deviation" style="color:var(--amber)">—</div><div class="kpi-sub">AI vs Human Score</div></div>
+                <div class="kpi-card blue"><div class="kpi-label">Avg Confidence</div><div class="kpi-value" id="kpi-avg-confidence" style="color:var(--blue-light)">—</div><div class="kpi-sub">Model Certainty</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="glass-card">
+                    <div class="section-title"><i data-lucide="pie-chart"></i> Decision Distribution</div>
+                    <div class="chart-wrap"><canvas id="chartAccuracyDoughnut"></canvas></div>
+                </div>
+                <div class="glass-card">
+                    <div class="scan-line"></div>
+                    <div class="section-title"><i data-lucide="trending-up"></i> Accuracy Trend (Monthly)</div>
+                    <div class="chart-wrap"><canvas id="chartAccuracyTrend"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ═══════ SECTION 2: RAG KNOWLEDGE BASE ═══════ -->
+            <div class="section-title"><i data-lucide="database"></i> RAG KNOWLEDGE BASE</div>
+            <div class="grid-2">
+                <!-- Upload & Status -->
+                <div class="glass-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                        <span style="font-size:0.82rem;font-weight:600;color:var(--purple-light)">Document Ingest</span>
+                        <div id="rag-status-strip" style="display:flex;gap:16px;font-size:0.7rem;font-family:var(--mono);color:var(--text-dim)">
+                            <span>Docs: <span id="rag-doc-count" style="color:var(--green)">—</span></span>
+                            <span>Chunks: <span id="rag-chunk-count" style="color:var(--blue-light)">—</span></span>
+                            <span>Index: <span id="rag-index-size" style="color:var(--amber)">—</span></span>
+                        </div>
+                    </div>
+                    <div class="dropzone" id="rag-dropzone" onclick="document.getElementById('rag-file-input').click()">
+                        <i data-lucide="upload-cloud" style="width:36px;height:36px"></i>
+                        <p style="font-size:0.85rem;color:var(--text-muted);margin-top:8px">Drag & drop PDF/TXT documents or <span style="color:var(--purple-light);text-decoration:underline">click to browse</span></p>
+                        <p style="font-size:0.68rem;color:var(--text-faint);margin-top:4px">Supports PDF, TXT — Documents will be chunked and vectorized</p>
+                        <input type="file" id="rag-file-input" accept=".pdf,.txt" style="display:none" onchange="handleRagUpload(this)">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px">
+                        <div><label style="font-size:0.68rem;color:var(--text-dim);display:block;margin-bottom:4px">Vendor ID</label><input class="input" id="rag-vendor-id" placeholder="Optional" style="font-size:0.78rem"></div>
+                        <div><label style="font-size:0.68rem;color:var(--text-dim);display:block;margin-bottom:4px">Tender ID</label><input class="input" id="rag-tender-id" placeholder="Optional" style="font-size:0.78rem"></div>
+                        <div><label style="font-size:0.68rem;color:var(--text-dim);display:block;margin-bottom:4px">Doc Type</label>
+                            <select class="input" id="rag-doc-type" style="font-size:0.78rem">
+                                <option value="general">General</option>
+                                <option value="technical">Technical Spec</option>
+                                <option value="financial">Financial</option>
+                                <option value="compliance">Compliance</option>
+                                <option value="contract">Contract</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="rag-upload-status" style="margin-top:12px;font-size:0.78rem;display:none"></div>
+                </div>
+                <!-- Chat Q&A -->
+                <div class="glass-card" style="padding:0;overflow:hidden">
+                    <div style="padding:16px 20px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:10px">
+                        <i data-lucide="message-square" style="width:16px;height:16px;color:var(--purple-light)"></i>
+                        <span style="font-size:0.82rem;font-weight:600">Ask the Knowledge Base</span>
+                    </div>
+                    <div class="chat-log" id="rag-chat-log">
+                        <div class="empty-state" id="rag-chat-empty">
+                            <i data-lucide="search" style="width:28px;height:28px" class="pulse-icon"></i>
+                            <h4>Query Your Documents</h4>
+                            <p>Upload a document and ask questions. The FAISS vector index will retrieve relevant chunks.</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-bar">
+                        <input class="input" id="rag-query-input" placeholder="Ask: 'Does the vendor meet ISO 9001?'" style="flex:1" onkeypress="if(event.key==='Enter') sendRagQuery()">
+                        <button class="btn btn-purple btn-sm" id="rag-send-btn" onclick="sendRagQuery()"><i data-lucide="send" style="width:14px;height:14px"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════ SECTION 3: ANOMALY ALERT CENTER ═══════ -->
+            <div class="section-title"><i data-lucide="alert-triangle"></i> ANOMALY ALERT CENTER</div>
+            <div class="grid-2">
+                <div class="glass-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                        <span style="font-size:0.82rem;font-weight:600">Anomaly Scan & Cartel Detection</span>
+                        <span class="badge badge-red" id="anomaly-count-badge" style="display:none">0 ALERTS</span>
+                    </div>
+                    <div id="anomaly-cards-container">
+                        <div class="loading-state"><div class="spinner"></div><p>Scanning for anomalies...</p></div>
+                    </div>
+                </div>
+                <div class="glass-card">
+                    <div class="section-title"><i data-lucide="scatter-chart"></i> Anomaly Distribution</div>
+                    <div class="chart-wrap" style="height:280px"><canvas id="chartAnomalyScatter"></canvas></div>
+                    <div id="bid-timing-strip" style="margin-top:14px;font-size:0.75rem;color:var(--text-dim)">
+                        <div style="font-weight:600;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="clock" style="width:12px;height:12px"></i> Bid Timing Coordination</div>
+                        <div id="bid-timing-content">Loading timing analysis...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════ SECTION 4: DOCUMENT FORENSICS LAB ═══════ -->
+            <div class="section-title"><i data-lucide="scan"></i> DOCUMENT FORENSICS LAB</div>
+            <div class="grid-full">
+                <div class="glass-card">
+                    <div style="display:flex;gap:24px;align-items:flex-start">
+                        <!-- Upload Zone -->
+                        <div style="flex:1">
+                            <div class="dropzone" id="forensic-dropzone" onclick="document.getElementById('forensic-file-input').click()">
+                                <i data-lucide="file-search" style="width:32px;height:32px"></i>
+                                <p style="font-size:0.82rem;color:var(--text-muted);margin-top:8px">Upload image (JPG/PNG) for ELA Forensics</p>
+                                <p style="font-size:0.65rem;color:var(--text-faint);margin-top:4px">Error Level Analysis • EXIF Extraction • Copy-Move Detection</p>
+                                <input type="file" id="forensic-file-input" accept="image/*" style="display:none" onchange="runForensicScan(this)">
+                            </div>
+                            <div id="forensic-metrics" style="display:none;margin-top:16px">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                                    <div style="padding:14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border-subtle)">
+                                        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Verdict</div>
+                                        <div id="forensic-verdict" style="font-size:1.1rem;font-weight:700;margin-top:4px">—</div>
+                                    </div>
+                                    <div style="padding:14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border-subtle)">
+                                        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Risk Score</div>
+                                        <div id="forensic-risk-score" style="font-size:1.1rem;font-weight:700;margin-top:4px;font-family:var(--mono)">—</div>
+                                    </div>
+                                    <div style="padding:14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border-subtle)">
+                                        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">ELA Std Dev</div>
+                                        <div id="forensic-stddev" style="font-size:1.1rem;font-weight:700;margin-top:4px;font-family:var(--mono)">—</div>
+                                    </div>
+                                    <div style="padding:14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border-subtle)">
+                                        <div style="font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Analysis</div>
+                                        <div id="forensic-analysis" style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ELA Heatmap Preview -->
+                        <div style="flex:1.5;text-align:center;border:1px dashed rgba(255,255,255,0.08);border-radius:14px;padding:16px;min-height:260px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2)">
+                            <img id="ela-preview-img" style="max-width:100%;max-height:300px;display:none;border-radius:10px;box-shadow:0 0 30px rgba(239,68,68,0.15)" alt="ELA Heatmap">
+                            <div id="ela-placeholder" class="empty-state">
+                                <i data-lucide="image" style="width:36px;height:36px" class="pulse-icon"></i>
+                                <h4>ELA Heatmap Preview</h4>
+                                <p>Upload an image to see Error Level Analysis visualization</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════ SECTION 5: AI DECISION FEED ═══════ -->
+            <div class="section-title"><i data-lucide="git-branch"></i> AI DECISION FEED</div>
+            <div class="grid-full">
+                <div class="glass-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+                        <div style="display:flex;align-items:center;gap:12px">
+                            <span style="font-size:0.82rem;font-weight:600">Decision Timeline</span>
+                            <span class="badge badge-purple" id="decisions-total-badge">0 decisions</span>
+                        </div>
+                        <div style="display:flex;gap:10px">
+                            <select class="input" id="filter-action" style="width:140px;font-size:0.75rem" onchange="filterDecisions()">
+                                <option value="">All Actions</option>
+                                <option value="accepted">Accepted</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="modified">Modified</option>
+                            </select>
+                            <input class="input" id="filter-tender" placeholder="Filter by Tender ID" style="width:160px;font-size:0.75rem" onkeypress="if(event.key==='Enter') filterDecisions()">
+                        </div>
+                    </div>
+                    <div id="decision-feed-container" style="max-height:450px;overflow-y:auto">
+                        <div class="loading-state"><div class="spinner"></div><p>Loading AI decisions...</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════ SECTION 6: THREAT INTELLIGENCE TERMINAL ═══════ -->
+            <div class="section-title">
+                <i data-lucide="radio-tower"></i> THREAT INTELLIGENCE TERMINAL
+                <span class="refresh-dot" style="margin-left:6px"></span>
+                <span style="font-size:0.58rem;color:var(--green);margin-left:4px;font-family:var(--mono)">LIVE — auto-refresh 30s</span>
+                <span class="badge badge-red" id="threat-total-badge" style="margin-left:auto">0 THREATS</span>
+            </div>
+            <div class="grid-full" style="margin-bottom:60px">
+                <div class="glass-card" style="padding:0;overflow:hidden">
+                    <div class="scan-line"></div>
+                    <div class="terminal" id="threat-terminal">
+                        <div class="loading-state" style="padding:30px"><div class="spinner"></div><p>Connecting to threat intelligence feed...</p></div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- .content -->
+    </div><!-- .main-area -->
+</div><!-- .app-shell -->
+
+<script src="js/api.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   AI INTELLIGENCE COMMAND CENTER — Controller
+   ═══════════════════════════════════════════════════════ */
+
+// ─── AUTH & INIT ───
+requireAuth();
+lucide.createIcons();
+
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = 'Inter';
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+
+let allDecisions = [];
+let threatRefreshTimer = null;
+let auditWS = null;
+
+function connectAuditWebSocket() {
+    const terminal = document.getElementById('threat-terminal');
+    try {
+        if (auditWS) {
+            auditWS.close();
+        }
+        auditWS = ApiClient.connectAuditWS(
+            (logs) => {
+                if (!logs || !Array.isArray(logs)) return;
+                
+                // Clear initial placeholder or loading if present
+                const loader = terminal.querySelector('.empty-state, .loading-state');
+                if (loader) terminal.innerHTML = '';
+                
+                logs.forEach(l => {
+                    const ts = l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+                    const action = l.action || 'AUDIT';
+                    
+                    // Determine color/severity based on action type
+                    let sev = 'INFO';
+                    let sevColor = 'var(--blue-light)';
+                    
+                    if (action.includes('ALERT') || action.includes('CRITICAL') || action.includes('FRAUD') || action.includes('THREAT') || action.includes('RISK')) {
+                        sev = 'CRITICAL';
+                        sevColor = 'var(--red)';
+                    } else if (action.includes('WARN') || action.includes('POTENTIAL') || action.includes('SUSPICIOUS')) {
+                        sev = 'HIGH';
+                        sevColor = 'var(--amber)';
+                    } else if (action.includes('AI_') || action.includes('DECISION')) {
+                        sev = 'AI-OPS';
+                        sevColor = 'var(--purple-light)';
+                    }
+                    
+                    const line = document.createElement('div');
+                    line.className = 'terminal-line';
+                    line.style.animation = 'fadeIn 0.3s ease-out';
+                    line.innerHTML = `
+                        <span class="ts">[${ts}]</span>
+                        <span style="color:${sevColor};font-weight:600;min-width:70px">${sev}</span>
+                        <span style="color:var(--text)">${action.replace(/_/g, ' ')}: ${l.details || ''}</span>
+                        ${l.current_hash ? `<span style="color:var(--text-dim);margin-left:auto;font-family:var(--mono);font-size:0.6rem" title="Cryptographic Hash: ${l.current_hash}">${l.current_hash.substring(0, 10)}...</span>` : ''}
+                    `;
+                    terminal.prepend(line);
+                });
+                
+                // Keep only last 50 lines in terminal
+                while (terminal.children.length > 50) {
+                    terminal.removeChild(terminal.lastChild);
+                }
+                
+                // Update badge with count
+                document.getElementById('threat-total-badge').textContent = `${terminal.children.length} ALERTS`;
+            },
+            (err) => {
+                console.warn('[Audit WS] Error, using HTTP polling fallback');
+            }
+        );
+    } catch (e) {
+        console.warn('[Audit WS] Connection failed:', e);
+    }
+}
+
+// ─── BOOT SEQUENCE ───
+async function init() {
+    await Promise.allSettled([
+        loadLlmConfigStatus(),
+        loadAccuracyMonitor(),
+        loadRagStatus(),
+        loadAnomalyCenter(),
+        loadDecisionFeed(),
+        loadThreatIntel()
+    ]);
+    lucide.createIcons();
+    
+    // Connect to WebSocket audit stream
+    connectAuditWebSocket();
+    
+    // Start threat auto-refresh (as backup/fallback)
+    threatRefreshTimer = setInterval(loadThreatIntel, 30000);
+}
+
+// ═══════ SECTION 0: LLM CONFIGURATION CONTROLLERS ═══════
+let currentLlmConfig = {};
+
+async function discoverOllamaModelsQuietly(activeVal, fastVal, reasoningVal) {
+    try {
+        const resp = await ApiClient.request('/ai-ops/ollama-local-models');
+        if (resp.success && resp.models && resp.models.length > 0) {
+            const models = resp.models;
+            const selectActive = document.getElementById('settings-ollama-model');
+            const selectFast = document.getElementById('settings-ollama-model-fast');
+            const selectReasoning = document.getElementById('settings-ollama-model-reasoning');
+            
+            selectActive.innerHTML = '';
+            selectFast.innerHTML = '<option value="">Default (Active Model)</option>';
+            selectReasoning.innerHTML = '<option value="">Default (Active Model)</option>';
+            
+            models.forEach(m => {
+                const name = m.name;
+                const sizeGB = m.size ? (m.size / (1024*1024*1024)).toFixed(1) + " GB" : "unknown size";
+                const label = `${name} (${sizeGB})`;
+                
+                selectActive.appendChild(new Option(label, name));
+                selectFast.appendChild(new Option(label, name));
+                selectReasoning.appendChild(new Option(label, name));
+            });
+            
+            if (activeVal) selectActive.value = activeVal;
+            if (fastVal !== undefined) selectFast.value = fastVal;
+            if (reasoningVal !== undefined) selectReasoning.value = reasoningVal;
+        }
+    } catch (e) {
+        console.warn('Ollama model auto-discovery failed:', e);
+    }
+}
+
+async function discoverOllamaModels() {
+    showToast("Querying local Ollama service...", "info");
+    try {
+        const resp = await ApiClient.request('/ai-ops/ollama-local-models');
+        if (resp.success && resp.models && resp.models.length > 0) {
+            const models = resp.models;
+            showToast(`Found ${models.length} local Ollama models!`, "success");
+            
+            const selectActive = document.getElementById('settings-ollama-model');
+            const selectFast = document.getElementById('settings-ollama-model-fast');
+            const selectReasoning = document.getElementById('settings-ollama-model-reasoning');
+            
+            const currActive = selectActive.value;
+            const currFast = selectFast.value;
+            const currReasoning = selectReasoning.value;
+            
+            selectActive.innerHTML = '';
+            selectFast.innerHTML = '<option value="">Default (Active Model)</option>';
+            selectReasoning.innerHTML = '<option value="">Default (Active Model)</option>';
+            
+            models.forEach(m => {
+                const name = m.name;
+                const sizeGB = m.size ? (m.size / (1024*1024*1024)).toFixed(1) + " GB" : "unknown size";
+                const label = `${name} (${sizeGB})`;
+                
+                selectActive.appendChild(new Option(label, name));
+                selectFast.appendChild(new Option(label, name));
+                selectReasoning.appendChild(new Option(label, name));
+            });
+            
+            if ([...selectActive.options].some(o => o.value === currActive)) {
+                selectActive.value = currActive;
+            }
+            if ([...selectFast.options].some(o => o.value === currFast)) {
+                selectFast.value = currFast;
+            }
+            if ([...selectReasoning.options].some(o => o.value === currReasoning)) {
+                selectReasoning.value = currReasoning;
+            }
+        } else {
+            showToast("No models returned by local Ollama. Ensure Ollama is running and has downloaded models.", "warning");
+        }
+    } catch (e) {
+        showToast(`Discovery failed: ${e.message}`, "error");
+    }
+}
+
+async function loadLlmConfigStatus() {
+    const statusEl = document.getElementById('settings-save-status');
+    try {
+        const resp = await ApiClient.request('/ai-ops/llm-status');
+        currentLlmConfig = resp;
+        
+        // Populate inputs
+        document.getElementById('settings-strict-mode').checked = resp.strict_open_source;
+        document.getElementById('settings-ollama-url').value = resp.ollama_url || '';
+        document.getElementById('settings-gemini-model').value = resp.gemini_model || 'gemini-1.5-flash';
+        document.getElementById('settings-openai-model').value = resp.openai_model || 'gpt-4o-mini';
+        document.getElementById('settings-strict-accuracy').checked = resp.strict_accuracy !== false;
+        document.getElementById('settings-rag-min-relevance').value = resp.rag_min_relevance || 40;
+        
+        const semanticWeight = resp.rag_semantic_weight !== undefined ? resp.rag_semantic_weight : 0.7;
+        document.getElementById('settings-rag-semantic-weight').value = semanticWeight;
+        document.getElementById('settings-rag-semantic-weight-val').textContent = (semanticWeight * 100).toFixed(0) + '%';
+        
+        // Mask API keys if they exist
+        document.getElementById('settings-gemini-key').value = resp.gemini_configured ? '••••••••••••••••' : '';
+        document.getElementById('settings-openai-key').value = resp.openai_configured ? '••••••••••••••••' : '';
+        
+        await discoverOllamaModelsQuietly(resp.ollama_model, resp.ollama_model_fast, resp.ollama_model_reasoning);
+        
+        updateProviderCardsUI(resp);
+    } catch (e) {
+        console.error('Failed to load LLM config status:', e);
+        if (statusEl) {
+            statusEl.innerHTML = `<span style="color:var(--red)">❌ Failed to load LLM configuration</span>`;
+        }
+    }
+}
+
+function updateProviderCardsUI(config) {
+    const active = config.active_provider;
+    const strict = config.strict_open_source;
+    
+    // Highlight active card
+    ['ollama', 'gemini', 'openai'].forEach(p => {
+        const card = document.getElementById(`card-${p}`);
+        const btn = document.getElementById(`btn-select-${p}`);
+        const statusBadge = document.getElementById(`badge-status-${p}`);
+        
+        if (card) {
+            if (p === active) {
+                card.classList.add('active-card');
+            } else {
+                card.classList.remove('active-card');
+            }
+        }
+        
+        if (btn) {
+            if (p === active) {
+                btn.innerHTML = 'Active';
+                btn.disabled = true;
+                btn.style.opacity = '1';
+            } else {
+                btn.innerHTML = 'Activate';
+                btn.disabled = false;
+                btn.style.opacity = '';
+            }
+        }
+    });
+    
+    // Handle strict compliance restrictions on UI controls
+    const geminiKey = document.getElementById('settings-gemini-key');
+    const geminiModel = document.getElementById('settings-gemini-model');
+    const btnSelectGemini = document.getElementById('btn-select-gemini');
+    const btnTestGemini = document.getElementById('btn-test-gemini');
+    
+    const openaiKey = document.getElementById('settings-openai-key');
+    const openaiModel = document.getElementById('settings-openai-model');
+    const btnSelectOpenai = document.getElementById('btn-select-openai');
+    const btnTestOpenai = document.getElementById('btn-test-openai');
+    
+    if (strict) {
+        [geminiKey, geminiModel, btnSelectGemini, btnTestGemini, openaiKey, openaiModel, btnSelectOpenai, btnTestOpenai].forEach(el => {
+            if (el) el.disabled = true;
+        });
+        [geminiKey, openaiKey].forEach(el => {
+            if (el) el.placeholder = 'DISABLED IN COMPLIANCE MODE';
+        });
+        document.getElementById('badge-status-gemini').textContent = 'DISABLED';
+        document.getElementById('badge-status-gemini').className = 'badge badge-red';
+        document.getElementById('badge-status-openai').textContent = 'DISABLED';
+        document.getElementById('badge-status-openai').className = 'badge badge-red';
+    } else {
+        [geminiKey, geminiModel, btnSelectGemini, btnTestGemini, openaiKey, openaiModel, btnSelectOpenai, btnTestOpenai].forEach(el => {
+            if (el) el.disabled = false;
+        });
+        geminiKey.placeholder = 'Enter Google Gemini API Key';
+        openaiKey.placeholder = 'Enter OpenAI API Key';
+        
+        document.getElementById('badge-status-gemini').textContent = config.gemini_configured ? 'CONFIGURED' : 'MISSING KEY';
+        document.getElementById('badge-status-gemini').className = config.gemini_configured ? 'badge badge-purple' : 'badge badge-amber';
+        document.getElementById('badge-status-openai').textContent = config.openai_configured ? 'CONFIGURED' : 'MISSING KEY';
+        document.getElementById('badge-status-openai').className = config.openai_configured ? 'badge badge-green' : 'badge badge-amber';
+    }
+    
+    document.getElementById('badge-status-ollama').textContent = 'READY';
+    document.getElementById('badge-status-ollama').className = 'badge badge-blue';
+}
+
+async function toggleStrictCompliance(checkbox) {
+    const strict = checkbox.checked;
+    const statusEl = document.getElementById('settings-save-status');
+    statusEl.innerHTML = `<span style="color:var(--purple-light)"><span class="spinner" style="display:inline-block;width:12px;height:12px;border-width:2px;vertical-align:middle;margin-right:6px"></span> Toggling compliance...</span>`;
+    
+    try {
+        // If enabling strict mode and current provider is cloud, fallback to ollama
+        const payload = { strict_open_source: strict };
+        if (strict && (currentLlmConfig.active_provider === 'gemini' || currentLlmConfig.active_provider === 'openai')) {
+            payload.llm_provider = 'ollama';
+        }
+        
+        const resp = await ApiClient.request('/ai-ops/llm-select', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        
+        showToast(`Strict Open-Source Compliance is now ${strict ? 'ENABLED' : 'DISABLED'}`, 'success');
+        statusEl.innerHTML = '';
+        currentLlmConfig = resp.status;
+        updateProviderCardsUI(currentLlmConfig);
+    } catch (e) {
+        showToast(e.message, 'error');
+        statusEl.innerHTML = `<span style="color:var(--red)">❌ Failed: ${e.message}</span>`;
+        checkbox.checked = !strict; // Revert checkbox
+    }
+}
+
+async function selectProvider(provider) {
+    const statusEl = document.getElementById('settings-save-status');
+    statusEl.innerHTML = `<span style="color:var(--purple-light)"><span class="spinner" style="display:inline-block;width:12px;height:12px;border-width:2px;vertical-align:middle;margin-right:6px"></span> Activating ${provider.toUpperCase()}...</span>`;
+    
+    try {
+        const resp = await ApiClient.request('/ai-ops/llm-select', {
+            method: 'POST',
+            body: JSON.stringify({ llm_provider: provider })
+        });
+        showToast(`AI cognitive engine set to ${provider.toUpperCase()}`, 'success');
+        statusEl.innerHTML = ``;
+        currentLlmConfig = resp.status;
+        updateProviderCardsUI(currentLlmConfig);
+    } catch (e) {
+        showToast(e.message, 'error');
+        statusEl.innerHTML = `<span style="color:var(--red)">❌ Failed to switch: ${e.message}</span>`;
+    }
+}
+
+async function testProviderConnection(provider) {
+    const badge = document.getElementById(`badge-status-${provider}`);
+    const origText = badge.textContent;
+    const origClass = badge.className;
+    
+    badge.textContent = 'TESTING...';
+    badge.className = 'badge badge-purple pulse-icon';
+    
+    try {
+        // Prepare temporary API keys to test unsaved values in the UI inputs
+        const keyValGemini = document.getElementById('settings-gemini-key').value;
+        const keyValOpenai = document.getElementById('settings-openai-key').value;
+        const urlOllama = document.getElementById('settings-ollama-url').value;
+        const modelOllama = document.getElementById('settings-ollama-model').value;
+        const modelGemini = document.getElementById('settings-gemini-model').value;
+        const modelOpenai = document.getElementById('settings-openai-model').value;
+        
+        const updates = {};
+        if (keyValGemini && keyValGemini !== '••••••••••••••••') updates.gemini_api_key = keyValGemini;
+        if (keyValOpenai && keyValOpenai !== '••••••••••••••••') updates.openai_api_key = keyValOpenai;
+        updates.ollama_url = urlOllama;
+        updates.ollama_model = modelOllama;
+        updates.gemini_model = modelGemini;
+        updates.openai_model = modelOpenai;
+        
+        // Pre-save key changes dynamically to allow connection test to succeed
+        await ApiClient.request('/ai-ops/llm-select', {
+            method: 'POST',
+            body: JSON.stringify(updates)
+        });
+        
+        const resp = await ApiClient.request('/ai-ops/llm-test', {
+            method: 'POST',
+            body: JSON.stringify({ provider: provider })
+        });
+        
+        if (resp.status === 'success') {
+            showToast(`${provider.toUpperCase()} connection verified successfully!`, 'success');
+            badge.textContent = 'ONLINE';
+            badge.className = 'badge badge-green';
+        } else {
+            showToast(`${provider.toUpperCase()} test failed: ${resp.message}`, 'error');
+            badge.textContent = 'OFFLINE';
+            badge.className = 'badge badge-red';
+        }
+    } catch (e) {
+        showToast(`Connection test failed: ${e.message}`, 'error');
+        badge.textContent = 'ERROR';
+        badge.className = 'badge badge-red';
+    }
+}
+
+async function saveFullLlmConfig() {
+    const statusEl = document.getElementById('settings-save-status');
+    statusEl.innerHTML = `<span style="color:var(--purple-light)"><span class="spinner" style="display:inline-block;width:12px;height:12px;border-width:2px;vertical-align:middle;margin-right:6px"></span> Saving configuration...</span>`;
+    
+    try {
+        const keyValGemini = document.getElementById('settings-gemini-key').value;
+        const keyValOpenai = document.getElementById('settings-openai-key').value;
+        const urlOllama = document.getElementById('settings-ollama-url').value;
+        const modelOllama = document.getElementById('settings-ollama-model').value;
+        const modelOllamaFast = document.getElementById('settings-ollama-model-fast').value;
+        const modelOllamaReasoning = document.getElementById('settings-ollama-model-reasoning').value;
+        const modelGemini = document.getElementById('settings-gemini-model').value;
+        const modelOpenai = document.getElementById('settings-openai-model').value;
+        
+        const strictAccuracy = document.getElementById('settings-strict-accuracy').checked;
+        const ragMinRelevance = parseFloat(document.getElementById('settings-rag-min-relevance').value) || 40;
+        const ragSemanticWeight = parseFloat(document.getElementById('settings-rag-semantic-weight').value) || 0.7;
+        
+        const updates = {};
+        if (keyValGemini && keyValGemini !== '••••••••••••••••') updates.gemini_api_key = keyValGemini;
+        if (keyValOpenai && keyValOpenai !== '••••••••••••••••') updates.openai_api_key = keyValOpenai;
+        updates.ollama_url = urlOllama;
+        updates.ollama_model = modelOllama;
+        updates.ollama_model_fast = modelOllamaFast;
+        updates.ollama_model_reasoning = modelOllamaReasoning;
+        updates.gemini_model = modelGemini;
+        updates.openai_model = modelOpenai;
+        updates.strict_accuracy = strictAccuracy;
+        updates.rag_min_relevance = ragMinRelevance;
+        updates.rag_semantic_weight = ragSemanticWeight;
+        
+        const resp = await ApiClient.request('/ai-ops/llm-select', {
+            method: 'POST',
+            body: JSON.stringify(updates)
+        });
+        
+        showToast('AI Model Configuration saved successfully!', 'success');
+        statusEl.innerHTML = `<span style="color:var(--green)">✅ Settings saved</span>`;
+        setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
+        
+        currentLlmConfig = resp.status;
+        updateProviderCardsUI(currentLlmConfig);
+    } catch (e) {
+        showToast(`Save failed: ${e.message}`, 'error');
+        statusEl.innerHTML = `<span style="color:var(--red)">❌ Save failed</span>`;
+    }
+}
+
+// ═══════ SECTION 1: ACCURACY MONITOR ═══════
+async function loadAccuracyMonitor() {
+    try {
+        const report = await ApiClient.getAIAccuracyReport();
+        if (!report || typeof report !== 'object') throw new Error('Empty response');
+
+        const total = report.total_decisions || 0;
+        const accepted = report.accepted || 0;
+        const rejected = report.rejected || 0;
+        const modified = report.modified || 0;
+        const acceptRate = total > 0 ? ((accepted / total) * 100).toFixed(1) : 0;
+        const avgDev = report.avg_deviation != null ? report.avg_deviation : (report.average_deviation || '—');
+        const avgConf = report.avg_confidence != null ? report.avg_confidence : (report.average_confidence || '—');
+
+        document.getElementById('kpi-total-decisions').textContent = total;
+        document.getElementById('kpi-total-sub').textContent = `${accepted} accepted, ${rejected} rejected, ${modified} modified`;
+        document.getElementById('kpi-acceptance-rate').textContent = acceptRate + '%';
+        document.getElementById('kpi-accept-sub').textContent = `${accepted} of ${total} decisions accepted`;
+        document.getElementById('kpi-avg-deviation').textContent = typeof avgDev === 'number' ? avgDev.toFixed(2) : avgDev;
+        document.getElementById('kpi-avg-confidence').textContent = typeof avgConf === 'number' ? (avgConf * 100).toFixed(1) + '%' : avgConf;
+
+        // Doughnut Chart
+        new Chart(document.getElementById('chartAccuracyDoughnut').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Accepted', 'Rejected', 'Modified'],
+                datasets: [{
+                    data: [accepted, rejected, modified],
+                    backgroundColor: ['rgba(74,222,128,0.8)', 'rgba(239,68,68,0.8)', 'rgba(245,158,11,0.8)'],
+                    borderWidth: 0,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '68%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16, font: { size: 11 } } }
+                }
+            }
+        });
+
+        // Line Chart — accuracy trend
+        const trend = report.monthly_trend || report.trend || [];
+        if (trend.length > 0) {
+            new Chart(document.getElementById('chartAccuracyTrend').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: trend.map(t => t.month || t.period || t.label),
+                    datasets: [{
+                        label: 'Acceptance Rate %',
+                        data: trend.map(t => t.acceptance_rate || t.rate || t.value || 0),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139,92,246,0.08)',
+                        borderWidth: 3, fill: true, tension: 0.4,
+                        pointBackgroundColor: '#8b5cf6', pointRadius: 4, pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.04)' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        } else {
+            document.getElementById('chartAccuracyTrend').parentElement.innerHTML = `<div class="empty-state"><i data-lucide="trending-up" style="width:24px;height:24px" class="pulse-icon"></i><h4>No Trend Data Yet</h4><p>Monthly trends will appear as decisions are recorded</p></div>`;
+        }
+    } catch (e) {
+        console.warn('Accuracy monitor:', e);
+        document.getElementById('kpi-total-decisions').textContent = '0';
+        document.getElementById('kpi-total-sub').textContent = 'No accuracy data available';
+        document.getElementById('kpi-acceptance-rate').textContent = '—';
+        document.getElementById('kpi-avg-deviation').textContent = '—';
+        document.getElementById('kpi-avg-confidence').textContent = '—';
+        document.getElementById('chartAccuracyDoughnut').parentElement.innerHTML = `<div class="empty-state"><i data-lucide="pie-chart" style="width:28px;height:28px" class="pulse-icon"></i><h4>No Decision Data</h4><p>AI decisions will populate this chart</p></div>`;
+        document.getElementById('chartAccuracyTrend').parentElement.innerHTML = `<div class="empty-state"><i data-lucide="trending-up" style="width:24px;height:24px" class="pulse-icon"></i><h4>Awaiting Data</h4><p>Accuracy trends will appear here</p></div>`;
+    }
+}
+
+// ═══════ SECTION 2: RAG KNOWLEDGE BASE ═══════
+async function loadRagStatus() {
+    try {
+        const status = await ApiClient.ragStatus();
+        document.getElementById('rag-doc-count').textContent = status.document_count || status.documents || 0;
+        document.getElementById('rag-chunk-count').textContent = status.chunk_count || status.chunks || 0;
+        const size = status.index_size || status.size || 0;
+        document.getElementById('rag-index-size').textContent = typeof size === 'number' ? (size > 1024*1024 ? (size/1024/1024).toFixed(1)+'MB' : (size/1024).toFixed(1)+'KB') : size;
+    } catch (e) {
+        document.getElementById('rag-doc-count').textContent = '0';
+        document.getElementById('rag-chunk-count').textContent = '0';
+        document.getElementById('rag-index-size').textContent = '—';
+    }
+}
+
+// Drag & drop
+const ragDrop = document.getElementById('rag-dropzone');
+ragDrop.addEventListener('dragover', e => { e.preventDefault(); ragDrop.classList.add('dragover'); });
+ragDrop.addEventListener('dragleave', () => ragDrop.classList.remove('dragover'));
+ragDrop.addEventListener('drop', e => {
+    e.preventDefault(); ragDrop.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+        document.getElementById('rag-file-input').files = e.dataTransfer.files;
+        handleRagUpload(document.getElementById('rag-file-input'));
+    }
+});
+
+async function handleRagUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const statusEl = document.getElementById('rag-upload-status');
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = `<span style="color:var(--purple-light)"><span class="spinner" style="display:inline-block;width:12px;height:12px;border-width:2px;vertical-align:middle;margin-right:6px"></span> Vectorizing "${file.name}"...</span>`;
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const vendorId = document.getElementById('rag-vendor-id').value.trim();
+        const tenderId = document.getElementById('rag-tender-id').value.trim();
+        const docType = document.getElementById('rag-doc-type').value;
+        if (vendorId) formData.append('vendor_id', vendorId);
+        if (tenderId) formData.append('tender_id', tenderId);
+        if (docType) formData.append('doc_type', docType);
+
+        const result = await ApiClient.ragUpload(formData);
+        statusEl.innerHTML = `<span style="color:var(--green)">✅ ${result.message || 'Document ingested successfully'}</span>`;
+        loadRagStatus();
+        // Clear empty chat state
+        const chatEmpty = document.getElementById('rag-chat-empty');
+        if (chatEmpty) chatEmpty.innerHTML = '<div style="color:var(--purple-light);text-align:center;padding:20px">Document vectorized. Ask me anything!</div>';
+    } catch (e) {
+        statusEl.innerHTML = `<span style="color:var(--red)">❌ Upload failed: ${e.message}</span>`;
+    }
+    input.value = '';
+}
+
+async function sendRagQuery() {
+    const input = document.getElementById('rag-query-input');
+    const q = input.value.trim();
+    if (!q) return;
+
+    const log = document.getElementById('rag-chat-log');
+    const emptyEl = document.getElementById('rag-chat-empty');
+    if (emptyEl) emptyEl.remove();
+
+    // User message
+    log.innerHTML += `<div class="msg-user">${escHtml(q)}</div>`;
+    input.value = '';
+
+    const loadId = 'rag-load-' + Date.now();
+    log.innerHTML += `<div class="msg-ai" id="${loadId}" style="color:var(--purple-light)"><span class="spinner" style="display:inline-block;width:14px;height:14px;border-width:2px;vertical-align:middle;margin-right:6px"></span> Querying FAISS index...</div>`;
+    log.scrollTop = log.scrollHeight;
+
+    const btn = document.getElementById('rag-send-btn');
+    btn.disabled = true;
+
+    try {
+        const vendorId = document.getElementById('rag-vendor-id').value.trim();
+        const tenderId = document.getElementById('rag-tender-id').value.trim();
+        const filters = {};
+        if (vendorId) filters.vendor_id = vendorId;
+        if (tenderId) filters.tender_id = tenderId;
+
+        const resp = await ApiClient.ragQuery(q, filters);
+        document.getElementById(loadId)?.remove();
+
+        let sources = '';
+        const chunks = resp.source_chunks || resp.sources || resp.citations || [];
+        if (chunks.length > 0) {
+            sources = `<div class="msg-sources">📎 Sources: ${chunks.map(c => {
+                const score = c.relevance_score || c.score || c.similarity;
+                return `<span style="color:var(--purple-light)">${c.filename || c.source || 'chunk'}</span>${score ? ` (${(score*100).toFixed(0)}%)` : ''}`;
+            }).join(', ')}</div>`;
+        }
+
+        const answer = resp.answer || resp.response || resp.reply || 'No answer generated';
+        log.innerHTML += `<div class="msg-ai">${escHtml(answer)}${sources}</div>`;
+    } catch (e) {
+        document.getElementById(loadId)?.remove();
+        log.innerHTML += `<div class="msg-ai" style="border-color:rgba(239,68,68,0.2);color:var(--red-light)">Error: ${e.message}</div>`;
+    }
+    log.scrollTop = log.scrollHeight;
+    btn.disabled = false;
+}
+
+// ═══════ SECTION 3: ANOMALY ALERT CENTER ═══════
+async function loadAnomalyCenter() {
+    const container = document.getElementById('anomaly-cards-container');
+    try {
+        const [anomalyData, cartelData, timingData] = await Promise.allSettled([
+            ApiClient.getAnomalyScan(),
+            ApiClient.getCartelDetection(),
+            ApiClient.getBidTimingAnalysis()
+        ]);
+
+        let html = '';
+        let totalAlerts = 0;
+        let scatterNormal = [], scatterAnomaly = [];
+
+        // Anomalies
+        const anomalies = anomalyData.status === 'fulfilled' ? anomalyData.value : null;
+        if (anomalies) {
+            const aList = anomalies.anomalies || [];
+            const nList = anomalies.normal || [];
+            totalAlerts += aList.length;
+
+            // Build scatter data
+            nList.forEach((n, i) => scatterNormal.push({ x: i, y: n.amount || n.value || 0 }));
+            aList.forEach((a, i) => scatterAnomaly.push({ x: nList.length + i, y: a.amount || a.value || 0 }));
+
+            if (aList.length > 0) {
+                aList.forEach(a => {
+                    const sev = (a.severity || 'HIGH').toUpperCase();
+                    const sevClass = sev === 'CRITICAL' ? 'badge-red' : sev === 'HIGH' ? 'badge-amber' : 'badge-purple';
+                    html += `<div style="padding:12px;background:rgba(239,68,68,0.05);border-left:3px solid var(--red);border-radius:8px;margin-bottom:8px">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <span style="font-weight:600;font-size:0.82rem">${a.vendor || a.bid_id || 'Unknown'}</span>
+                            <span class="badge ${sevClass}">${sev}</span>
+                        </div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">${a.reason || a.detail || `Bid ₹${(a.amount||0).toLocaleString()}`}</div>
+                    </div>`;
+                });
+            }
+        }
+
+        // Cartel Detection
+        const cartels = cartelData.status === 'fulfilled' ? cartelData.value : null;
+        if (cartels) {
+            const clusters = cartels.clusters || cartels.cartel_groups || [];
+            if (clusters.length > 0) {
+                const clusterColors = ['var(--red)', 'var(--amber)', 'var(--purple)', 'var(--cyan)', 'var(--pink)'];
+                html += `<div style="margin-top:12px;font-weight:600;font-size:0.78rem;color:var(--text-muted);margin-bottom:8px">🕸 Cartel Clusters Detected: ${clusters.length}</div>`;
+                clusters.forEach((cl, idx) => {
+                    const col = clusterColors[idx % clusterColors.length];
+                    const vendors = cl.vendors || cl.members || [];
+                    html += `<div style="padding:10px;border-left:3px solid ${col};background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:6px">
+                        <div style="font-size:0.75rem;font-weight:600;color:${col}">Cluster ${idx+1} — Risk: ${cl.risk_score || cl.confidence || 'HIGH'}</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px">${vendors.join(', ')}</div>
+                    </div>`;
+                    totalAlerts++;
+                });
+            }
+        }
+
+        if (totalAlerts === 0) {
+            html = `<div class="empty-state" style="padding:30px">
+                <i data-lucide="shield-check" style="width:36px;height:36px;color:var(--green)" class="pulse-icon"></i>
+                <h4 style="color:var(--green)">System Secure</h4>
+                <p>No anomalies or cartel clusters detected</p>
+            </div>`;
+        }
+
+        const badge = document.getElementById('anomaly-count-badge');
+        badge.textContent = `${totalAlerts} ALERT${totalAlerts !== 1 ? 'S' : ''}`;
+        badge.style.display = totalAlerts > 0 ? 'inline-flex' : 'none';
+        container.innerHTML = html;
+
+        // Scatter Chart
+        new Chart(document.getElementById('chartAnomalyScatter').getContext('2d'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    { label: 'Normal', data: scatterNormal, backgroundColor: 'rgba(59,130,246,0.5)', pointRadius: 5 },
+                    { label: 'Anomaly', data: scatterAnomaly, backgroundColor: 'rgba(239,68,68,0.8)', pointRadius: 9, pointHoverRadius: 13 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: { display: false },
+                    y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => '₹' + (v/100000).toFixed(0) + 'L' } }
+                },
+                plugins: { legend: { position: 'bottom', labels: { padding: 14 } } }
+            }
+        });
+
+        // Bid Timing
+        const timing = timingData.status === 'fulfilled' ? timingData.value : null;
+        if (timing) {
+            const scores = timing.coordination_scores || timing.timing_scores || timing.results || [];
+            if (scores.length > 0) {
+                document.getElementById('bid-timing-content').innerHTML = scores.slice(0, 5).map(s => {
+                    const score = s.coordination_score || s.score || 0;
+                    const risk = score > 0.7 ? 'HIGH' : score > 0.4 ? 'MODERATE' : 'LOW';
+                    const riskCls = risk === 'HIGH' ? 'badge-red' : risk === 'MODERATE' ? 'badge-amber' : 'badge-green';
+                    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border-subtle)">
+                        <span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-muted)">${s.tender_id || s.tender || '—'}</span>
+                        <span class="badge ${riskCls}">${risk} — ${(score*100).toFixed(0)}%</span>
+                    </div>`;
+                }).join('');
+            } else {
+                document.getElementById('bid-timing-content').innerHTML = '<span style="color:var(--green)">No timing coordination detected</span>';
+            }
+        }
+
+    } catch (e) {
+        container.innerHTML = `<div class="error-state">Failed to load anomaly data: ${e.message}</div>`;
+    }
+}
+
+// ═══════ SECTION 4: DOCUMENT FORENSICS LAB ═══════
+// Drag & drop for forensic
+const forensicDrop = document.getElementById('forensic-dropzone');
+forensicDrop.addEventListener('dragover', e => { e.preventDefault(); forensicDrop.classList.add('dragover'); });
+forensicDrop.addEventListener('dragleave', () => forensicDrop.classList.remove('dragover'));
+forensicDrop.addEventListener('drop', e => {
+    e.preventDefault(); forensicDrop.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+        document.getElementById('forensic-file-input').files = e.dataTransfer.files;
+        runForensicScan(document.getElementById('forensic-file-input'));
+    }
+});
+
+async function runForensicScan(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+
+    const dropEl = document.getElementById('forensic-dropzone');
+    const origHTML = dropEl.innerHTML;
+    dropEl.innerHTML = `<div style="color:var(--purple-light)"><span class="spinner" style="display:inline-block;width:20px;height:20px;border-width:2px;vertical-align:middle;margin-right:8px"></span> Analyzing pixel variance...</div>`;
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const token = ApiClient.getToken();
+        const response = await fetch(`${API_BASE_URL}/reports/vision-scan`, {
+            method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Vision scan failed');
+        const data = await response.json();
+
+        // Show results
+        document.getElementById('forensic-metrics').style.display = 'block';
+        const riskScore = data.risk_score || 0;
+        const verdictColor = riskScore > 70 ? 'var(--red)' : riskScore > 40 ? 'var(--amber)' : 'var(--green)';
+        document.getElementById('forensic-verdict').textContent = data.verdict || 'Unknown';
+        document.getElementById('forensic-verdict').style.color = verdictColor;
+        document.getElementById('forensic-risk-score').textContent = `${riskScore}/100`;
+        document.getElementById('forensic-risk-score').style.color = verdictColor;
+        document.getElementById('forensic-stddev').textContent = data.std_dev || data.stddev || '—';
+        document.getElementById('forensic-analysis').textContent = data.analysis || data.detail || 'Compression artifact analysis complete';
+
+        // Show ELA heatmap
+        if (data.ela_base64) {
+            document.getElementById('ela-preview-img').src = 'data:image/jpeg;base64,' + data.ela_base64;
+            document.getElementById('ela-preview-img').style.display = 'block';
+            document.getElementById('ela-placeholder').style.display = 'none';
+        }
+
+    } catch (e) {
+        showToast('Forensic scan error: ' + e.message, 'error');
+    }
+
+    dropEl.innerHTML = origHTML;
+    lucide.createIcons();
+    input.value = '';
+}
+
+// ═══════ SECTION 5: AI DECISION FEED ═══════
+async function loadDecisionFeed() {
+    const container = document.getElementById('decision-feed-container');
+    try {
+        const resp = await ApiClient.getAIDecisions();
+        allDecisions = resp.decisions || resp || [];
+        if (!Array.isArray(allDecisions)) allDecisions = [];
+        renderDecisions(allDecisions);
+    } catch (e) {
+        container.innerHTML = `<div class="empty-state">
+            <i data-lucide="git-branch" style="width:28px;height:28px" class="pulse-icon"></i>
+            <h4>No AI Decisions Recorded</h4>
+            <p>Decisions will appear here as the AI evaluation system processes bids</p>
+        </div>`;
+    }
+}
+
+function renderDecisions(decisions) {
+    const container = document.getElementById('decision-feed-container');
+    document.getElementById('decisions-total-badge').textContent = `${decisions.length} decision${decisions.length !== 1 ? 's' : ''}`;
+
+    if (decisions.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="padding:30px">
+            <i data-lucide="inbox" style="width:28px;height:28px" class="pulse-icon"></i>
+            <h4>No Matching Decisions</h4>
+            <p>Try adjusting your filters</p>
+        </div>`;
+        return;
+    }
+
+    container.innerHTML = decisions.slice(0, 50).map((d, idx) => {
+        const action = (d.action || d.status || 'unknown').toLowerCase();
+        const acColor = action === 'accepted' || action === 'accept' ? 'var(--green)' : action === 'rejected' || action === 'reject' ? 'var(--red)' : 'var(--amber)';
+        const acBadge = action === 'accepted' || action === 'accept' ? 'badge-green' : action === 'rejected' || action === 'reject' ? 'badge-red' : 'badge-amber';
+        const aiScore = d.ai_score != null ? d.ai_score : '—';
+        const humanScore = d.human_score != null ? d.human_score : '—';
+        const ts = d.timestamp || d.created_at || '';
+        const tsFormatted = ts ? new Date(ts).toLocaleString() : '—';
+
+        return `<div class="feed-item" id="feed-item-${idx}" onclick="toggleFeedItem(${idx})" style="border-left:3px solid ${acColor}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <span class="badge ${acBadge}">${action}</span>
+                    <span style="font-size:0.82rem;font-weight:600">${d.vendor_name || d.vendor || d.bid_id || 'Bid #' + (d.bid_id || idx+1)}</span>
+                    <span style="font-size:0.7rem;font-family:var(--mono);color:var(--text-dim)">${d.tender_id || ''}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;font-size:0.75rem">
+                    <span>AI: <span style="color:var(--purple-light);font-weight:600">${aiScore}</span></span>
+                    <span>Human: <span style="color:var(--blue-light);font-weight:600">${humanScore}</span></span>
+                    <span style="color:var(--text-faint);font-family:var(--mono);font-size:0.68rem">${tsFormatted}</span>
+                    <i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--text-dim)"></i>
+                </div>
+            </div>
+            <div class="feed-details" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-subtle)">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:0.75rem">
+                    <div><span style="color:var(--text-dim)">Criteria:</span> ${d.criteria || d.evaluation_criteria || '—'}</div>
+                    <div><span style="color:var(--text-dim)">Confidence:</span> ${d.confidence != null ? (d.confidence*100).toFixed(1) + '%' : '—'}</div>
+                    <div><span style="color:var(--text-dim)">Deviation:</span> ${d.deviation != null ? d.deviation.toFixed(2) : '—'}</div>
+                </div>
+                ${d.rationale || d.reason ? `<div style="margin-top:10px;padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;font-size:0.75rem;color:var(--text-muted);line-height:1.5">${d.rationale || d.reason}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function toggleFeedItem(idx) {
+    const el = document.getElementById('feed-item-' + idx);
+    if (el) el.classList.toggle('expanded');
+}
+
+function filterDecisions() {
+    const action = document.getElementById('filter-action').value.toLowerCase();
+    const tender = document.getElementById('filter-tender').value.trim().toLowerCase();
+    let filtered = allDecisions;
+    if (action) filtered = filtered.filter(d => (d.action || d.status || '').toLowerCase().includes(action));
+    if (tender) filtered = filtered.filter(d => (d.tender_id || '').toLowerCase().includes(tender));
+    renderDecisions(filtered);
+    lucide.createIcons();
+}
+
+// ═══════ SECTION 6: THREAT INTELLIGENCE TERMINAL ═══════
+async function loadThreatIntel() {
+    try {
+        const data = await ApiClient.getThreatIntel();
+        const threats = data.threats || data.entries || data || [];
+        const threatArr = Array.isArray(threats) ? threats : [];
+
+        document.getElementById('threat-total-badge').textContent = `${threatArr.length} THREAT${threatArr.length !== 1 ? 'S' : ''}`;
+
+        const terminal = document.getElementById('threat-terminal');
+
+        if (threatArr.length === 0) {
+            terminal.innerHTML = `<div class="empty-state" style="padding:30px">
+                <i data-lucide="shield-check" style="width:28px;height:28px;color:var(--green)" class="pulse-icon"></i>
+                <h4 style="color:var(--green)">All Clear</h4>
+                <p>No active threats detected</p>
+            </div>`;
+            return;
+        }
+
+        terminal.innerHTML = threatArr.map(t => {
+            const sev = (t.severity || t.level || 'INFO').toUpperCase();
+            const sevColor = sev === 'CRITICAL' ? 'var(--red)' : sev === 'HIGH' ? 'var(--amber)' : sev === 'MODERATE' ? 'var(--purple-light)' : 'var(--blue-light)';
+            const ts = t.timestamp || t.detected_at || '';
+            const tsStr = ts ? new Date(ts).toLocaleTimeString() : '--:--:--';
+            return `<div class="terminal-line">
+                <span class="ts">[${tsStr}]</span>
+                <span style="color:${sevColor};font-weight:600;min-width:70px">${sev}</span>
+                <span style="color:var(--text)">${t.description || t.message || t.title || t.type || 'Unknown threat'}</span>
+                ${t.vendor ? `<span style="color:var(--text-dim);margin-left:auto;font-size:0.68rem">${t.vendor}</span>` : ''}
+            </div>`;
+        }).join('');
+
+    } catch (e) {
+        document.getElementById('threat-terminal').innerHTML = `<div class="error-state">Failed to connect: ${e.message}</div>`;
+    }
+}
+
+// ─── UTILITIES ───
+function escHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ─── BOOT ───
+window.onload = init;
+</script>
+</body>
+</html>

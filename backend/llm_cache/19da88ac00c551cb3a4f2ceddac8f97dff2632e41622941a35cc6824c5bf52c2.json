@@ -1,0 +1,4 @@
+{
+    "response": "Assign Analyst \u03a3 to review BHEL's technical capabilities and assess potential risks. Direct Negotiator \u0394 to engage with BHEL for price negotiations, targeting a minimum 10% reduction in L1 Bid Amount. Concurrently, instruct Auditor \u039b to conduct a thorough financial analysis of the estimated value, focusing on identifying areas for cost optimization.",
+    "prompt_preview": "Initiating swarm analysis for vendor: Bharat Heavy Electricals Ltd (BHEL). L1 Bid Amount: \u20b92,737,600. Estimated Value: \u20b92,400,000. Overall Delta: -14.1%. Write a concise swarm orchestration directive, allocating tasks to Analyst \u03a3, Negotiator \u0394, and Auditor \u039b. Keep it under 3 sentences."
+}

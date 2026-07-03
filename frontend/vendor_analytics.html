@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor 360° Analytics - GEM Procurement Ecosystem</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background-color: #050505; color: #f8fafc; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+        
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .chart-box {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        .radar-box {
+            position: relative;
+            height: 380px;
+            width: 100%;
+        }
+
+        .metric-summary-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .metric-icon-box {
+            width: 48px; height: 48px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .badge-cyan { background: rgba(6,182,212,0.1); color:#06b6d4; }
+        .badge-purple { background: rgba(139,92,246,0.1); color:#8b5cf6; }
+        .badge-emerald { background: rgba(16,185,129,0.1); color:#10b981; }
+        .badge-amber { background: rgba(245,158,11,0.1); color:#f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Vendor 360° Analytics</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Comprehensive Supplier History & AI Performance Metrics</p>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Left: Vendor Detail Profile -->
+                <div>
+                    <div class="card mb-4" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(6, 182, 212, 0.03)); border: 1px solid rgba(139, 92, 246, 0.2);">
+                        <h3 id="prof-company" style="color: #fff; margin-bottom: 5px;">Loading...</h3>
+                        <p id="prof-category" style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 15px 0;">Category: -</p>
+                        
+                        <div style="display:flex; flex-direction:column; gap:10px; border-top: 1px solid var(--border); padding-top: 15px;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="font-size:0.8rem; color:var(--text-muted);">Status</span>
+                                <span id="prof-status">-</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="font-size:0.8rem; color:var(--text-muted);">Performance Score</span>
+                                <strong id="prof-score" style="color:#10b981;">0.0</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side Grid of Stats -->
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div class="metric-summary-card">
+                            <div class="metric-icon-box badge-cyan"><i data-lucide="award"></i></div>
+                            <div>
+                                <span style="font-size:0.75rem; color:var(--text-muted); display:block; text-transform:uppercase;">Bid Win Rate</span>
+                                <strong id="stat-win-rate" style="font-size:1.2rem;">0%</strong>
+                            </div>
+                        </div>
+
+                        <div class="metric-summary-card">
+                            <div class="metric-icon-box badge-emerald"><i data-lucide="check-square"></i></div>
+                            <div>
+                                <span style="font-size:0.75rem; color:var(--text-muted); display:block; text-transform:uppercase;">Inspection Pass Rate</span>
+                                <strong id="stat-pass-rate" style="font-size:1.2rem;">0%</strong>
+                            </div>
+                        </div>
+
+                        <div class="metric-summary-card">
+                            <div class="metric-icon-box badge-amber"><i data-lucide="clock"></i></div>
+                            <div>
+                                <span style="font-size:0.75rem; color:var(--text-muted); display:block; text-transform:uppercase;">Avg Delivery Delay</span>
+                                <strong id="stat-delay" style="font-size:1.2rem;">0.0 days</strong>
+                            </div>
+                        </div>
+
+                        <div class="metric-summary-card">
+                            <div class="metric-icon-box badge-purple"><i data-lucide="leaf"></i></div>
+                            <div>
+                                <span style="font-size:0.75rem; color:var(--text-muted); display:block; text-transform:uppercase;">ESG & ESG Score</span>
+                                <strong id="stat-esg" style="font-size:1.2rem;">0.0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Radar + Line/Bar Charts -->
+                <div>
+                    <!-- Radar Vector Chart -->
+                    <div class="card mb-4">
+                        <h3>360° Performance Vector (6 Dimensions)</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:15px;">Real-time composite compliance comparing price, speed, quality, and carbon footprints.</p>
+                        <div class="radar-box">
+                            <canvas id="chart-radar"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Split Monthly / Revenue Charts -->
+                    <div class="charts-row">
+                        <div class="card">
+                            <h3>Monthly Performance Index</h3>
+                            <div class="chart-box">
+                                <canvas id="chart-monthly"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Bidding Stats Analysis</h3>
+                            <div class="chart-box">
+                                <canvas id="chart-bids"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Get Vendor ID from Query Param
+        const urlParams = new URLSearchParams(window.location.search);
+        const vendorId = parseInt(urlParams.get('id'));
+
+        async function initPage() {
+            if(!vendorId) {
+                showToast("No vendor ID provided in URL", "error");
+                return;
+            }
+            
+            try {
+                // Fetch Analytics payload
+                const data = await ApiClient.request(`/vendors/${vendorId}/analytics`);
+                
+                // Populate Identity Card
+                document.getElementById('prof-company').textContent = data.company_name;
+                document.getElementById('prof-category').textContent = `Category: ${data.category || 'N/A'}`;
+                document.getElementById('prof-score').textContent = data.performance_score.toFixed(1);
+                
+                const statusBadge = data.is_blacklisted ? 
+                    '<span class="badge badge-danger">Blacklisted</span>' : 
+                    '<span class="badge badge-success">Active</span>';
+                document.getElementById('prof-status').innerHTML = statusBadge;
+
+                // Populate Key Metrics
+                document.getElementById('stat-win-rate').textContent = `${data.bid_stats.win_rate}% (${data.bid_stats.bids_won}/${data.bid_stats.total_bids})`;
+                document.getElementById('stat-pass-rate').textContent = `${data.delivery_stats.pass_rate}%`;
+                document.getElementById('stat-delay').textContent = `${data.delivery_stats.avg_delay_days} days`;
+                document.getElementById('stat-esg').textContent = data.esg_stats.composite_esg_score.toFixed(1);
+
+                // Build Radar Chart
+                renderRadar(data);
+
+                // Build Monthly score line chart
+                renderMonthly(data.monthly_performance);
+
+                // Build bidding bar chart
+                renderBidsChart(data.bid_stats);
+
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to load vendor analytics: " + err.message, "error");
+            }
+        }
+
+        function renderRadar(data) {
+            const ctx = document.getElementById('chart-radar').getContext('2d');
+            
+            // Map dimensions (0 to 100)
+            const winRate = data.bid_stats.win_rate;
+            // Delay timeliness mapping: 0 days delay = 100 score, 15+ days = 20 score
+            const delayScore = Math.max(20, 100 - (data.delivery_stats.avg_delay_days * 5.3));
+            const qualityScore = data.delivery_stats.pass_rate;
+            const esgScore = data.esg_stats.composite_esg_score;
+            const bidActivity = Math.min(100, data.bid_stats.total_bids * 10); // cap activity score at 10 bids
+            const trustScore = data.performance_score;
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Price Competitiveness (Win Rate)',
+                        'Delivery Timeliness (Delay Wave)',
+                        'Quality Compliance (Pass Rate)',
+                        'ESG & Carbon Score',
+                        'Bidding Activity (Bids Raised)',
+                        'Performance Trust Score'
+                    ],
+                    datasets: [{
+                        label: data.company_name + ' Profile',
+                        data: [winRate, delayScore, qualityScore, esgScore, bidActivity, trustScore],
+                        fill: true,
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                        borderColor: '#8b5cf6',
+                        pointBackgroundColor: '#8b5cf6',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#8b5cf6',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                            pointLabels: { color: '#94a3b8', font: { size: 11, weight: '500' } },
+                            ticks: { backdropColor: 'transparent', color: '#64748b', z: 10 },
+                            min: 0,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function renderMonthly(trend) {
+            const ctx = document.getElementById('chart-monthly').getContext('2d');
+            
+            const labels = trend.map(t => t.month);
+            const scores = trend.map(t => t.score);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Performance Score Index',
+                        data: scores,
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                        y: { min: 40, max: 100, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderBidsChart(stats) {
+            const ctx = document.getElementById('chart-bids').getContext('2d');
+            
+            const lost = stats.total_bids - stats.bids_won;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Total Submitted', 'Bids Won', 'Bids Lost'],
+                    datasets: [{
+                        data: [stats.total_bids, stats.bids_won, lost],
+                        backgroundColor: ['#8b5cf6', '#10b981', '#ef4444'],
+                        borderWidth: 0,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', stepSize: 1 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

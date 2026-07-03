@@ -1,0 +1,4 @@
+{
+    "response": "This tender document is non-compliant with the Government e-Marketplace (GeM) mandatory clauses, specifically lacking essential provisions related to Bid Security, Liquidated Damages, and Integrity Pact/ Anti-Corruption measures. Immediate revision of the tender document to incorporate these critical clauses is necessary to ensure compliance with GeM guidelines. Failure to rectify these deficiencies may result in the tender being rejected or invalidated by the procuring entity.",
+    "prompt_preview": "Compliance scan for tender 'Minimal Compliance Test'. Score: 0% (0 of 8 GEM mandatory clauses present). Missing: EMD / Bid Security, Liquidated Damages Clause, Integrity Pact / Anti-Corruption, Warranty / AMC Clause, MSME Preference Clause, Make in India Preference, GST Compliance Requirement, Debar"
+}

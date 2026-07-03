@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Rule & Compliance Analyzer | GEM Intelligence</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #050810; color: #e2e8f0; min-height: 100vh; padding-bottom: 60px; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .topbar { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.04); background: rgba(10,14,26,0.4); backdrop-filter: blur(10px); }
+        .topbar h1 { font-size: 1.4rem; background: linear-gradient(135deg, #f472b6, #a78bfa, #60a5fa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .topbar p { font-size: 0.75rem; color: #475569; margin-top: 2px; }
+        .links a { text-decoration: none; color: #94a3b8; background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s; }
+        .links a:hover { border-color: #f472b6; color: #f472b6; box-shadow: 0 0 15px rgba(244,114,182,0.15); }
+        
+        .g { display: grid; gap: 24px; padding: 24px 40px; max-width: 1700px; margin: 0 auto; }
+        .g2 { grid-template-columns: 1fr 1fr; }
+        .g1 { grid-template-columns: 1fr; }
+        
+        .c { background: rgba(10, 14, 26, 0.95); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px; transition: all 0.3s; position: relative; overflow: hidden; }
+        .c:hover { border-color: rgba(244,114,182,0.25); box-shadow: 0 0 40px rgba(244,114,182,0.04); }
+        .ct { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+        .ct i { width: 15px; height: 15px; }
+        
+        .upload-zone { border: 2px dashed rgba(255,255,255,0.08); padding: 24px; border-radius: 12px; text-align: center; background: rgba(255,255,255,0.01); transition: all 0.2s; cursor: pointer; margin-bottom: 16px; }
+        .upload-zone:hover { border-color: #a78bfa; background: rgba(167,139,250,0.03); }
+        
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.78rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
+        .form-control { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: white; padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; outline: none; transition: border-color 0.2s; font-family: inherit; }
+        .form-control:focus { border-color: #a78bfa; }
+        
+        .btn { border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #f472b6, #a78bfa); color: #020617; box-shadow: 0 4px 15px rgba(244,114,182,0.25); }
+        .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.04); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.08); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+        .btn-action { background: rgba(96,165,250,0.15); color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+        .btn-action:hover { background: rgba(96,165,250,0.25); }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { text-align: left; padding: 12px 10px; color: #64748b; border-bottom: 1px solid rgba(255,255,255,0.06); font-weight: 700; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px; }
+        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+        
+        .badge { padding: 3px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; display: inline-block; text-transform: uppercase; }
+        .bg-pass { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .bg-fail { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .bg-info { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        
+        .spinner { border: 2px solid rgba(255,255,255,0.1); border-left-color: #a78bfa; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .grid-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+        .kpi-card { background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 16px; text-align: center; }
+        .kpi-val { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
+        
+        .grn { color: #4ade80; } .red { color: #f87171; } .amb { color: #fbbf24; } .blu { color: #60a5fa; } .pur { color: #a78bfa; }
+        
+        .radial-progress { width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; position: relative; }
+        .radial-inner { width: 94px; height: 94px; border-radius: 50%; background: #0a0e1a; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .form-control-sm { padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; }
+
+        @media(max-width: 1024px) { .g2 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div>
+        <h1>Dynamic Rule & Compliance Analyzer</h1>
+        <p class="mono">Unified Dossier Check &bull; Dynamic Policy Engine &bull; Ollama-Powered Analysis</p>
+    </div>
+    <div class="links">
+        <a href="dashboard.html"><i data-lucide="arrow-left" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"></i> Dashboard</a>
+    </div>
+</div>
+
+<div class="g g2">
+    <!-- LEFT PANEL: Dynamic Rules Extraction -->
+    <div class="c" style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="ct"><i data-lucide="sliders" class="pur"></i> Phase 1: Rule Document ingestion (Tender Criteria)</div>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:5px;">Upload a tender document, specifications PDF, or rule sheet. Ollama will analyze the document, extract eligibility criteria, and populate the dynamic rules list.</p>
+        
+        <div class="form-group">
+            <label for="tender_title_input">Tender Context / Title</label>
+            <input type="text" id="tender_title_input" class="form-control" placeholder="e.g. HALDIA REFINERY LED VIDEO WALL PROJECT">
+        </div>
+
+        <div class="upload-zone" onclick="document.getElementById('rules-file-input').click()">
+            <i data-lucide="upload-cloud" style="width: 32px; height: 32px; color: #a78bfa; margin-bottom: 8px;"></i>
+            <p id="rules-upload-label" style="font-size:0.85rem; font-weight:600;">Click to upload Tender/PQC PDF or TXT</p>
+            <span style="font-size:0.7rem; color:#475569;">Max size 10MB &bull; Automated OCR Extraction</span>
+            <input type="file" id="rules-file-input" accept="application/pdf,text/plain" style="display:none;" onchange="handleRulesUpload(this)">
+        </div>
+
+        <div id="rules-loading" style="display:none; text-align:center; padding: 20px 0;">
+            <span class="spinner" style="width:30px; height:30px; margin-bottom:10px;"></span>
+            <p style="font-size:0.8rem; color:#94a3b8;">Ollama parsing rules from document (OCR + Schema Extraction)...</p>
+        </div>
+
+        <!-- Rules Table -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+            <h3 style="font-size:0.9rem; font-weight:700; color:white;">Active Rule Settings</h3>
+            <button onclick="addBlankRule()" class="btn btn-secondary" style="padding:6px 12px; font-size:0.75rem;"><i data-lucide="plus" style="width:12px;height:12px;"></i> Add Manual Rule</button>
+        </div>
+
+        <div style="overflow-x:auto; max-height: 400px; border:1px solid rgba(255,255,255,0.05); border-radius:8px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rule Name</th>
+                        <th>Type</th>
+                        <th style="width:40%;">Description</th>
+                        <th>Mandatory</th>
+                        <th>Max Score</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="rules-table-body">
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#475569; padding:30px;">No rules loaded. Upload a document or add one manually.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: Vendor Proposal Ingestion -->
+    <div class="c" style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="ct"><i data-lucide="file-check" class="blu"></i> Phase 2: Vendor Document Ingestion</div>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:5px;">Upload a vendor proposal, bid credential, financial certificate, or ISO audit copy. Ollama will extract a structured vendor profile to check compliance.</p>
+        
+        <div class="form-group">
+            <label for="vendor_name_input">Vendor Name</label>
+            <input type="text" id="vendor_name_input" class="form-control" placeholder="e.g. KAN UNIVERSAL PRIVATE LIMITED">
+        </div>
+
+        <div class="upload-zone" onclick="document.getElementById('vendor-file-input').click()">
+            <i data-lucide="upload-cloud" style="width: 32px; height: 32px; color: #60a5fa; margin-bottom: 8px;"></i>
+            <p id="vendor-upload-label" style="font-size:0.85rem; font-weight:600;">Click to upload Vendor PDF or TXT</p>
+            <span style="font-size:0.7rem; color:#475569;">Extracts Company Details, turnover, and certifications</span>
+            <input type="file" id="vendor-file-input" accept="application/pdf,text/plain" style="display:none;" onchange="handleVendorUpload(this)">
+        </div>
+
+        <div id="vendor-loading" style="display:none; text-align:center; padding: 20px 0;">
+            <span class="spinner" style="width:30px; height:30px; margin-bottom:10px;"></span>
+            <p style="font-size:0.8rem; color:#94a3b8;">Ollama extracting structured profile from proposal...</p>
+        </div>
+
+        <!-- Vendor Profile Fields -->
+        <h3 style="font-size:0.9rem; font-weight:700; color:white; margin-top:10px;">Extracted Vendor Profile</h3>
+        <div class="form-control" style="background:rgba(0,0,0,0.2); border-color:rgba(255,255,255,0.03); max-height:400px; overflow-y:auto; padding:16px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;" id="profile-container">
+                <div style="grid-column: span 2; text-align:center; color:#475569; padding:30px 0;">
+                    No profile loaded. Ingest vendor documents.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AUDIT ACTION BAR -->
+<div class="g g1" style="padding-top: 0; padding-bottom: 0;">
+    <div style="text-align: center; margin: 15px 0;">
+        <button id="btn-audit" onclick="runComplianceAudit()" class="btn btn-primary" style="padding: 16px 36px; font-size: 1.1rem; font-weight:bold; letter-spacing:0.5px;" disabled>
+            <i data-lucide="shield-check" style="width:20px; height:20px;"></i> Evaluate Compliance Scorecard
+        </button>
+    </div>
+</div>
+
+<!-- RESULTS SECTION: Scorecard Dashboard -->
+<div class="g g1" id="results-panel" style="display:none;">
+    <div class="c" style="border-color: rgba(244,114,182,0.3); background: linear-gradient(180deg, rgba(10,14,26,0.95) 0%, rgba(244,114,182,0.02) 100%);">
+        <div class="ct"><i data-lucide="award" class="pnk"></i> Evaluation Results Scorecard</div>
+        
+        <div style="display:flex; gap:30px; align-items:center; flex-wrap:wrap; margin-bottom:24px;">
+            <!-- Radial Gauge -->
+            <div style="text-align:center; flex-shrink:0;">
+                <div class="radial-progress" id="gauge-bg" style="background: conic-gradient(#ec4899 0%, rgba(255,255,255,0.06) 0%);">
+                    <div class="radial-inner">
+                        <span style="font-size:0.7rem; color:#64748b; font-weight:bold; text-transform:uppercase;">Score</span>
+                        <span style="font-size:1.8rem; font-weight:700; color:white;" id="score-text">0%</span>
+                        <span style="font-size:0.65rem; color:#475569;" id="score-fraction">0 / 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary KPI -->
+            <div style="flex:1;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                    <h2 id="summary-vendor-name" style="font-size:1.4rem; font-weight:700; color:white;">Vendor Name</h2>
+                    <span id="badge-verdict" class="badge bg-pass" style="font-size:0.8rem; padding: 4px 12px;">Qualified</span>
+                </div>
+                <p id="summary-text" style="font-size:0.9rem; color:#94a3b8; line-height:1.5; max-width:800px;">Summary evaluation statement populated by rule engine.</p>
+            </div>
+        </div>
+
+        <div class="grid-kpi">
+            <div class="kpi-card">
+                <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; font-weight:bold; letter-spacing:0.5px;">Mandatory Rules</div>
+                <div class="kpi-val" id="kpi-mandatory">0 / 0</div>
+            </div>
+            <div class="kpi-card">
+                <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; font-weight:bold; letter-spacing:0.5px;">MSME Waiver Applied</div>
+                <div class="kpi-val" id="kpi-msme">No</div>
+            </div>
+            <div class="kpi-card">
+                <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; font-weight:bold; letter-spacing:0.5px;">Extracted Evidence Points</div>
+                <div class="kpi-val grn" id="kpi-evidence">0</div>
+            </div>
+            <div class="kpi-card">
+                <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; font-weight:bold; letter-spacing:0.5px;">Non-Compliance Gaps</div>
+                <div class="kpi-val red" id="kpi-gaps">0</div>
+            </div>
+        </div>
+
+        <!-- Compliance Matrix Table -->
+        <h3 style="font-size:1rem; font-weight:700; color:white; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:10px;">Rule Verification Matrix</h3>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Criterion / Rule</th>
+                        <th>Mandatory</th>
+                        <th>Verdicts</th>
+                        <th>Score</th>
+                        <th>Extracted Evidence Citations & Gap Logs</th>
+                    </tr>
+                </thead>
+                <tbody id="matrix-table-body">
+                    <!-- Dynamic Rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    lucide.createIcons();
+    requireAuth();
+
+    let extractedRules = [];
+    let extractedProfile = {};
+
+    function addBlankRule() {
+        const newRule = {
+            criteria_name: "Manual Rule " + (extractedRules.length + 1),
+            criterion_type: "Technical",
+            description: "Custom requirement description",
+            is_mandatory: false,
+            max_score: 10,
+            min_years_experience: null,
+            min_turnover_cr: null,
+            required_certifications: [],
+            required_documents: []
+        };
+        if (extractedRules.length === 0) {
+            extractedRules = [];
+        }
+        extractedRules.push(newRule);
+        renderRulesTable();
+        checkReadyState();
+    }
+
+    function removeRule(idx) {
+        extractedRules.splice(idx, 1);
+        renderRulesTable();
+        checkReadyState();
+    }
+
+    function updateRuleField(idx, field, val) {
+        if (field === 'is_mandatory') {
+            extractedRules[idx][field] = val;
+        } else if (field === 'max_score' || field === 'min_years_experience' || field === 'min_turnover_cr') {
+            extractedRules[idx][field] = val ? parseFloat(val) : null;
+        } else {
+            extractedRules[idx][field] = val;
+        }
+    }
+
+    function renderRulesTable() {
+        const tbody = document.getElementById('rules-table-body');
+        if (extractedRules.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; color:#475569; padding:30px;">No rules loaded. Upload a document or add one manually.</td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = extractedRules.map((rule, idx) => `
+            <tr>
+                <td>
+                    <input type="text" class="form-control form-control-sm" value="${rule.criteria_name || ''}" onchange="updateRuleField(${idx}, 'criteria_name', this.value)">
+                </td>
+                <td>
+                    <select class="form-control form-control-sm" style="padding: 4px 6px;" onchange="updateRuleField(${idx}, 'criterion_type', this.value)">
+                        <option value="Technical" ${rule.criterion_type === 'Technical' ? 'selected' : ''}>Technical</option>
+                        <option value="Experience" ${rule.criterion_type === 'Experience' ? 'selected' : ''}>Experience</option>
+                        <option value="Financial" ${rule.criterion_type === 'Financial' ? 'selected' : ''}>Financial</option>
+                        <option value="Certification" ${rule.criterion_type === 'Certification' ? 'selected' : ''}>Certification</option>
+                        <option value="Compliance" ${rule.criterion_type === 'Compliance' ? 'selected' : ''}>Compliance</option>
+                    </select>
+                </td>
+                <td>
+                    <textarea class="form-control form-control-sm" rows="2" onchange="updateRuleField(${idx}, 'description', this.value)">${rule.description || ''}</textarea>
+                </td>
+                <td style="text-align:center;">
+                    <input type="checkbox" style="width:16px; height:16px; cursor:pointer;" ${rule.is_mandatory ? 'checked' : ''} onchange="updateRuleField(${idx}, 'is_mandatory', this.checked)">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" style="width: 70px;" value="${rule.max_score || 10}" onchange="updateRuleField(${idx}, 'max_score', this.value)">
+                </td>
+                <td>
+                    <button onclick="removeRule(${idx})" class="btn btn-secondary" style="padding: 6px; color:#f87171; border-color:rgba(239,68,68,0.1);"><i data-lucide="trash-2" style="width:14px; height:14px;"></i></button>
+                </td>
+            </tr>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    async function handleRulesUpload(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const title = document.getElementById('tender_title_input').value || file.name;
+        
+        document.getElementById('rules-upload-label').textContent = file.name;
+        document.getElementById('rules-loading').style.display = 'block';
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("tender_title", title);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/ai-ops/extract-rules-from-doc`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + ApiClient.getToken() },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            const data = await response.json();
+            
+            if (data.rules && data.rules.length > 0) {
+                extractedRules = data.rules;
+                showToast(`Extracted ${extractedRules.length} compliance rules!`, 'success');
+            } else {
+                showToast("Rules parsed, but list was empty. Try adjusting file or manual addition.", 'warning');
+            }
+            renderRulesTable();
+        } catch(e) {
+            console.error(e);
+            showToast("Failed to parse rules from file: " + e.message, 'error');
+        } finally {
+            document.getElementById('rules-loading').style.display = 'none';
+            checkReadyState();
+            input.value = '';
+        }
+    }
+
+    async function handleVendorUpload(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        
+        document.getElementById('vendor-upload-label').textContent = file.name;
+        document.getElementById('vendor-loading').style.display = 'block';
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("doc_type", "default");
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/ai-ops/extract-profile-from-doc`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + ApiClient.getToken() },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            const data = await response.json();
+            
+            if (data.profile) {
+                extractedProfile = data.profile;
+                if (extractedProfile.company_name) {
+                    document.getElementById('vendor_name_input').value = extractedProfile.company_name;
+                }
+                showToast("Structured vendor profile extracted!", 'success');
+                renderVendorProfile();
+            }
+        } catch(e) {
+            console.error(e);
+            showToast("Failed to extract vendor profile: " + e.message, 'error');
+        } finally {
+            document.getElementById('vendor-loading').style.display = 'none';
+            checkReadyState();
+            input.value = '';
+        }
+    }
+
+    function renderVendorProfile() {
+        const container = document.getElementById('profile-container');
+        if (!extractedProfile || Object.keys(extractedProfile).length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: span 2; text-align:center; color:#475569; padding:30px 0;">
+                    No profile loaded. Ingest vendor documents.
+                </div>
+            `;
+            return;
+        }
+
+        // Generate nice list of fields
+        const displayFields = [
+            { key: 'company_name', label: 'Company Identity', type: 'text' },
+            { key: 'gem_reg_no', label: 'GeM Reg Number', type: 'text' },
+            { key: 'gstin', label: 'GSTIN (15-char)', type: 'text' },
+            { key: 'pan_number', label: 'PAN Card No', type: 'text' },
+            { key: 'msme_registered', label: 'MSME Registered', type: 'bool' },
+            { key: 'msme_category', label: 'MSME Category', type: 'text' },
+            { key: 'make_in_india', label: 'Make In India Certified', type: 'bool' },
+            { key: 'annual_turnover_cr', label: 'Annual Turnover (Crores)', type: 'num' },
+            { key: 'net_worth_cr', label: 'Net Worth (Crores)', type: 'num' },
+            { key: 'years_in_business', label: 'Years in Business', type: 'num' },
+            { key: 'certifications', label: 'Quality Certifications', type: 'array' },
+            { key: 'authorized_dealer_of', label: 'Authorized Dealer Of', type: 'text' }
+        ];
+
+        container.innerHTML = displayFields.map(f => {
+            const val = extractedProfile[f.key];
+            let renderHtml = '';
+            
+            if (f.type === 'bool') {
+                const checkedStr = val === true ? 'checked' : '';
+                renderHtml = `
+                    <div class="form-group" style="display:flex; align-items:center; gap:8px; margin-top: 15px;">
+                        <input type="checkbox" id="prof_${f.key}" style="width:16px; height:16px; cursor:pointer;" ${checkedStr} onchange="updateProfileField('${f.key}', this.checked)">
+                        <label for="prof_${f.key}" style="margin:0; font-weight:600;">${f.label}</label>
+                    </div>
+                `;
+            } else if (f.type === 'array') {
+                const arrVal = Array.isArray(val) ? val.join(', ') : (val || '');
+                renderHtml = `
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>${f.label}</label>
+                        <input type="text" class="form-control" value="${arrVal}" placeholder="e.g. ISO 9001, BIS" onchange="updateProfileField('${f.key}', this.value.split(',').map(s=>s.trim()).filter(Boolean))">
+                    </div>
+                `;
+            } else {
+                const placeholder = f.key === 'company_name' ? 'e.g. KAN Universal' : '';
+                renderHtml = `
+                    <div class="form-group" style="${f.key === 'company_name' ? 'grid-column: span 2;' : ''}">
+                        <label>${f.label}</label>
+                        <input type="${f.type === 'num' ? 'number' : 'text'}" class="form-control" step="0.01" value="${val !== null ? val : ''}" placeholder="${placeholder}" onchange="updateProfileField('${f.key}', this.value)">
+                    </div>
+                `;
+            }
+            return renderHtml;
+        }).join('');
+    }
+
+    function updateProfileField(key, val) {
+        if (key === 'annual_turnover_cr' || key === 'net_worth_cr' || key === 'years_in_business') {
+            extractedProfile[key] = val ? parseFloat(val) : null;
+        } else {
+            extractedProfile[key] = val;
+        }
+        checkReadyState();
+    }
+
+    function checkReadyState() {
+        const btn = document.getElementById('btn-audit');
+        if (extractedRules.length > 0 && Object.keys(extractedProfile).length > 0) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    }
+
+    async function runComplianceAudit() {
+        const btn = document.getElementById('btn-audit');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span> Performing Audit Run...`;
+
+        const vName = document.getElementById('vendor_name_input').value || extractedProfile.company_name || "Extracted Vendor";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/ai-ops/evaluate-vendor-rules`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': 'Bearer ' + ApiClient.getToken(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    rules: extractedRules,
+                    profile: extractedProfile,
+                    vendor_name: vName
+                })
+            });
+
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            const data = await response.json();
+            
+            renderAuditResults(data.verdict, vName);
+            showToast("Evaluation complete! compliance metrics updated.", 'success');
+        } catch(e) {
+            console.error(e);
+            showToast("Evaluation run failed: " + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="shield-check" style="width:20px; height:20px;"></i> Evaluate Compliance Scorecard`;
+            lucide.createIcons();
+        }
+    }
+
+    function renderAuditResults(verdict, vendorName) {
+        document.getElementById('results-panel').style.display = 'block';
+
+        // Set Radial Gauge
+        const scorePct = verdict.score_pct || 0;
+        const totalScore = verdict.total_score || 0;
+        const maxScore = verdict.max_possible_score || 0;
+
+        document.getElementById('gauge-bg').style.background = `conic-gradient(#ec4899 ${scorePct}%, rgba(255,255,255,0.06) ${scorePct}%)`;
+        document.getElementById('score-text').textContent = scorePct + '%';
+        document.getElementById('score-fraction').textContent = `${totalScore} / ${maxScore}`;
+
+        document.getElementById('summary-vendor-name').textContent = vendorName;
+        
+        const verdictBadge = document.getElementById('badge-verdict');
+        if (verdict.overall_pass) {
+            verdictBadge.textContent = " Techno-Commercially Qualified ";
+            verdictBadge.className = "badge bg-pass";
+        } else {
+            verdictBadge.textContent = " Disqualified / Gaps Found ";
+            verdictBadge.className = "badge bg-fail";
+        }
+
+        document.getElementById('summary-text').innerHTML = `
+            <strong>Dynamic Assessment:</strong> ${verdict.summary || 'Audit complete.'} 
+            <br/><br/>
+            <span style="font-size:0.8rem; color:#64748b;">
+                Compliance validation checked ${verdict.verdicts ? verdict.verdicts.length : 0} criteria rules. 
+                Relaxations for MSEs / Startups were checked against MSME registration flag.
+            </span>
+        `;
+
+        // KPIs
+        const totalMandatory = extractedRules.filter(r => r.is_mandatory).length;
+        const failedMandatory = verdict.failed_mandatory ? verdict.failed_mandatory.length : 0;
+        document.getElementById('kpi-mandatory').textContent = `${totalMandatory - failedMandatory} / ${totalMandatory}`;
+        if (failedMandatory > 0) {
+            document.getElementById('kpi-mandatory').className = "kpi-val red";
+        } else {
+            document.getElementById('kpi-mandatory').className = "kpi-val grn";
+        }
+
+        const isMsme = extractedProfile.msme_registered === true;
+        document.getElementById('kpi-msme').textContent = isMsme ? "Yes" : "No";
+        document.getElementById('kpi-msme').className = isMsme ? "kpi-val blu" : "kpi-val";
+
+        // Count evidence / gaps
+        let evidenceCount = 0;
+        let gapCount = 0;
+        
+        if (verdict.verdicts) {
+            verdict.verdicts.forEach(v => {
+                if (v.evidence && v.evidence !== 'No direct evidence found') evidenceCount++;
+                if (v.gaps && v.gaps.length > 0) gapCount += v.gaps.length;
+            });
+        }
+
+        document.getElementById('kpi-evidence').textContent = evidenceCount;
+        document.getElementById('kpi-gaps').textContent = gapCount;
+
+        // Render Matrix Table Rows
+        const matrixBody = document.getElementById('matrix-table-body');
+        if (!verdict.verdicts || verdict.verdicts.length === 0) {
+            matrixBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:#475569;">No evaluation records returned.</td></tr>`;
+            return;
+        }
+
+        matrixBody.innerHTML = verdict.verdicts.map(v => {
+            const badgeClass = v.pass ? 'badge bg-pass' : 'badge bg-fail';
+            const statusLabel = v.pass ? 'Pass' : 'Fail';
+            
+            // Format Gaps and Evidence
+            let evidenceHtml = '';
+            if (v.evidence && v.evidence !== 'No direct evidence found') {
+                evidenceHtml += `
+                    <div style="background:rgba(34,197,94,0.03); border: 1px solid rgba(34,197,94,0.15); padding:8px 12px; border-radius:6px; margin-bottom:8px; font-size:0.75rem;">
+                        <strong class="grn">Extracted Evidence:</strong> <span class="mono">${v.evidence}</span>
+                    </div>
+                `;
+            }
+            
+            if (v.gaps && v.gaps.length > 0) {
+                evidenceHtml += v.gaps.map(g => `
+                    <div style="background:rgba(239,68,68,0.03); border: 1px solid rgba(239,68,68,0.15); padding:8px 12px; border-radius:6px; margin-bottom:6px; font-size:0.75rem;">
+                        <strong class="red">Compliance Gap:</strong> ${g}
+                    </div>
+                `).join('');
+            }
+
+            if (!evidenceHtml) {
+                evidenceHtml = `<span style="color:#475569;">No evidence or gaps recorded. Assessment neutral.</span>`;
+            }
+
+            return `
+                <tr>
+                    <td><strong>${v.criteria_name}</strong><br/><span style="font-size:0.7rem; color:#475569; font-weight:bold; text-transform:uppercase;">${v.criterion_type || 'TECHNICAL'}</span></td>
+                    <td style="text-align:center;">
+                        ${v.is_mandatory ? '<span class="badge bg-fail" style="font-size:0.6rem;">Mandatory</span>' : '<span style="color:#475569;">—</span>'}
+                    </td>
+                    <td>
+                        <span class="${badgeClass}">${statusLabel}</span>
+                    </td>
+                    <td>
+                        <strong>${v.score}</strong> <span style="color:#475569;">/ ${v.max_score}</span>
+                    </td>
+                    <td>
+                        ${evidenceHtml}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Smooth scroll to results
+        document.getElementById('results-panel').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>

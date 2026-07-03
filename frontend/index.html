@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEM Tender Evaluation System - Login</title>
+    <meta name="description" content="Secure login for the GEM Tender Evaluation System">
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .login-card {
+            max-width: 420px;
+            width: 100%;
+            padding: 40px;
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            text-shadow: 0 0 30px var(--glow-primary);
+        }
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .login-logo {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            box-shadow: 0 0 20px var(--glow-primary);
+            animation: pulse-glow 3s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); transform: scale(1); }
+            to { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-page">
+        <div class="card login-card">
+            <div class="login-header">
+                <div class="login-logo">
+                    <i data-lucide="shield-check" style="width: 32px; height: 32px;"></i>
+                </div>
+                <h1>GEM Tender Evaluation</h1>
+                <p>Sign in to your account</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" class="form-control" required autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-control" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px; padding: 14px; font-size: 1rem;">
+                    Sign In
+                    <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                </button>
+                
+                <div id="demo-creds" style="margin-top: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem; display: none;">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        // If already logged in, redirect to dashboard
+        if (ApiClient.getToken()) {
+            window.location.href = 'pqc_comparison.html';
+        }
+
+        // Load demo credentials from backend (hidden in production)
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/auth/demo-creds`);
+                const data = await res.json();
+                if (data.show && data.credentials.length) {
+                    const el = document.getElementById('demo-creds');
+                    el.style.display = 'block';
+                    el.innerHTML = data.credentials.map(c => `<p>${c.label}: ${c.username} / ${c.password}</p>`).join('');
+                }
+            } catch(e) {}
+        })();
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Signing in...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const user = await ApiClient.login(
+                    document.getElementById('username').value,
+                    document.getElementById('password').value
+                );
+                showToast('Login successful!');
+                setTimeout(() => {
+                    window.location.href = 'pqc_comparison.html';
+                }, 500);
+            } catch (error) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+                showToast(error.message, 'error');
+            }
+        });
+    </script>
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+    </style>
+</body>
+</html>

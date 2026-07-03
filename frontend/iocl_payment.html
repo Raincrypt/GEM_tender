@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOCL Payment & Closure - Procurement Ecosystem</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .iocl-header {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.15), rgba(249, 115, 22, 0.05));
+            border: 1px solid rgba(234, 88, 12, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .iocl-logo {
+            width: 64px; height: 64px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ea580c, #f59e0b);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.1rem; color: white;
+            letter-spacing: 1px;
+        }
+        .iocl-header h2 { color: #fb923c; margin: 0 0 4px 0; }
+        .iocl-header p { color: var(--text-muted); margin: 0; font-size: 0.85rem; }
+
+        .pipeline {
+            display: flex; align-items: center; gap: 0;
+            margin-bottom: 32px; overflow-x: auto; padding: 10px 0;
+        }
+        .pipeline-step {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600;
+            white-space: nowrap; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02); color: var(--text-muted);
+        }
+        .pipeline-step.active {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.2), rgba(249, 115, 22, 0.1));
+            border-color: #ea580c; color: #fb923c;
+            box-shadow: 0 0 15px rgba(234, 88, 12, 0.15);
+        }
+        .pipeline-step.done {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3); color: #10b981;
+        }
+        .pipeline-arrow { color: var(--text-muted); font-size: 1.2rem; padding: 0 4px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-grid .full-width { grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Payment Processing & Closure</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Stage 9 — SAP FICO Sync, 3-Way Match & TDS 194C Deductions</p>
+                </div>
+            </header>
+
+            <div class="iocl-header">
+                <div class="iocl-logo">IOCL</div>
+                <div>
+                    <h2>Indian Oil Corporation Limited</h2>
+                    <p>Finance & Accounts | Vendor Scorecard Update</p>
+                </div>
+            </div>
+
+            <div class="pipeline" id="pipeline-tracker">
+                <div class="pipeline-step done" data-stage="1"><i data-lucide="clipboard-list" style="width:14px;height:14px;"></i> 1. Indent</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="2"><i data-lucide="megaphone" style="width:14px;height:14px;"></i> 2. NIT</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="3"><i data-lucide="inbox" style="width:14px;height:14px;"></i> 3. Bid Submission</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="4"><i data-lucide="scan-search" style="width:14px;height:14px;"></i> 4. TCE</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="5"><i data-lucide="indian-rupee" style="width:14px;height:14px;"></i> 5. Price Bid</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="6"><i data-lucide="handshake" style="width:14px;height:14px;"></i> 6. PAC</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="7"><i data-lucide="file-check" style="width:14px;height:14px;"></i> 7. PO</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done" data-stage="8"><i data-lucide="truck" style="width:14px;height:14px;"></i> 8. Delivery</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step active" data-stage="9"><i data-lucide="banknote" style="width:14px;height:14px;"></i> 9. Payment</div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="d-flex justify-between align-center">
+                    <h3 style="margin:0;">Invoice Processing</h3>
+                    <button class="btn btn-primary" onclick="openPaymentModal()" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none;">
+                        <i data-lucide="file-text"></i> Process Vendor Invoice
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Invoice Number</th>
+                                <th>PO Number</th>
+                                <th>Invoice Amount (₹)</th>
+                                <th>TDS (Sec 194C)</th>
+                                <th>Net Payable (₹)</th>
+                                <th>3-Way Match</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-tbody">
+                            <tr><td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">Loading Payments...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Payment Modal -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="card modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 style="display:flex; align-items:center; gap:10px;">
+                    <i data-lucide="banknote" style="color: #8b5cf6;"></i> Process Vendor Payment
+                </h2>
+                <button class="btn btn-outline" style="padding: 4px; border: none;" onclick="closePaymentModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form id="payment-form" onsubmit="submitPayment(event)">
+                <div class="form-group">
+                    <label class="form-label">Purchase Order</label>
+                    <select class="form-control" id="f-po" required onchange="autoFillAmount()">
+                        <option value="">Select a PO...</option>
+                    </select>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Vendor Invoice Number</label>
+                        <input type="text" class="form-control" id="f-inv-num" placeholder="INV-2026-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Invoice Amount (₹)</label>
+                        <input type="number" step="any" class="form-control" id="f-inv-amt" required>
+                    </div>
+                </div>
+
+                <div class="card" style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); padding: 15px; margin-top: 20px;">
+                    <h4 style="margin-top:0; color: #a78bfa;">Automated SAP Checks</h4>
+                    <ul style="list-style:none; padding:0; margin:0; font-size:0.9rem; color: var(--text-muted);">
+                        <li><i data-lucide="check" style="width:14px;height:14px; color:#10b981;"></i> 3-Way Match Validation (PO vs GRN vs Invoice)</li>
+                        <li><i data-lucide="check" style="width:14px;height:14px; color:#10b981;"></i> Auto-deduction of 2% TDS under Income Tax Sec 194C</li>
+                        <li><i data-lucide="check" style="width:14px;height:14px; color:#10b981;"></i> Liquidated Damages (LD) check</li>
+                    </ul>
+                </div>
+
+                <div style="display:flex; gap:12px; justify-content:flex-end; margin-top: 24px;">
+                    <button type="button" class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none;">
+                        <i data-lucide="check-circle"></i> Verify & Release Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+        
+        let loadedPOs = [];
+
+        async function loadData() {
+            try {
+                // Load POs
+                loadedPOs = await ApiClient.getPurchaseOrders();
+                const sel = document.getElementById('f-po');
+                loadedPOs.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = `${p.po_number} (Val: ₹${p.total_po_value})`;
+                    sel.appendChild(opt);
+                });
+
+                // Load Payments
+                const pays = await ApiClient.getPayments();
+                const tbody = document.getElementById('payment-tbody');
+                if(pays.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">No payments processed.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = pays.map(p => {
+                    const matchBadge = p.three_way_match ? '<span class="badge badge-success">Passed</span>' : '<span class="badge badge-danger">Failed</span>';
+                    const statusBadge = p.payment_status === 'Released' ? 'badge-success' : 'badge-warning';
+                    return `<tr>
+                        <td style="font-weight:600; color:#8b5cf6;">${p.invoice_number}</td>
+                        <td style="font-family:monospace;">${p.po_number}</td>
+                        <td>₹${p.invoice_amount.toLocaleString('en-IN')}</td>
+                        <td style="color:#ef4444;">-₹${p.tds_deduction.toLocaleString('en-IN')}</td>
+                        <td style="font-weight:600; color:#10b981;">₹${p.net_payable.toLocaleString('en-IN')}</td>
+                        <td>${matchBadge}</td>
+                        <td><span class="badge ${statusBadge}">${p.payment_status}</span></td>
+                    </tr>`;
+                }).join('');
+                
+            } catch(e) { console.error(e); }
+        }
+        
+        function autoFillAmount() {
+            const id = document.getElementById('f-po').value;
+            if(!id) return;
+            const po = loadedPOs.find(p => p.id == id);
+            if(po) document.getElementById('f-inv-amt').value = po.total_po_value;
+        }
+
+        function openPaymentModal() { document.getElementById('paymentModal').classList.add('active'); }
+        function closePaymentModal() { document.getElementById('paymentModal').classList.remove('active'); document.getElementById('payment-form').reset(); }
+
+        async function submitPayment(e) {
+            e.preventDefault();
+            const poId = document.getElementById('f-po').value;
+            const invoiceNumber = document.getElementById('f-inv-num').value;
+            const invoiceAmount = parseFloat(document.getElementById('f-inv-amt').value);
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const origText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader"></i> Processing...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const res = await ApiClient.processPayment(poId, invoiceNumber, invoiceAmount);
+                if (res.three_way_match_passed) {
+                    showToast(`✅ Payment of ₹${(res.net_payable||0).toLocaleString('en-IN')} released! TDS Deducted: ₹${(res.tds_deduction||0).toLocaleString('en-IN')}`, 'success');
+                } else {
+                    showToast(`❌ 3-Way Match Failed! Invoice variance exceeds 5%. Payment held pending review.`, 'error');
+                }
+                closePaymentModal();
+                loadData();
+            } catch(e) { 
+                showToast(e.message, 'error'); 
+            } finally {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        loadData();
+
+    </script>
+</body>
+</html>

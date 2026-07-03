@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Arbitration Court - GEM Procurement Ecosystem</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background-color: #050505; color: #f8fafc; }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+        
+        .cyber-header {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05));
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px; padding: 24px; margin-bottom: 24px;
+            display: flex; align-items: center; gap: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .cyber-logo {
+            width: 64px; height: 64px; border-radius: 12px;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 2rem; color: white;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+        
+        .terminal {
+            background: #000; border: 1px solid #333; border-radius: 8px;
+            padding: 20px; font-family: 'Courier New', Courier, monospace; color: #ef4444;
+            height: 300px; overflow-y: auto; white-space: pre-wrap;
+            box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.1);
+            font-size: 0.9rem; line-height: 1.4;
+            margin-bottom: 20px;
+        }
+
+        .scroll-container {
+            perspective: 1000px;
+            margin-top: 20px;
+        }
+        
+        .legal-notice {
+            background: #fcfbf7; color: #1c1917; padding: 30px;
+            border-radius: 4px; font-family: 'Playfair Display', 'Times New Roman', serif;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.5); 
+            border: 1px solid #e7e5e4;
+            position: relative;
+            background-image: radial-gradient(rgba(0,0,0,0.03) 1px, transparent 0);
+            background-size: 24px 24px;
+            transition: transform 0.5s ease;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .legal-notice::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 2px solid #d6d3d1;
+            margin: 8px;
+            pointer-events: none;
+        }
+        .legal-notice h4 {
+            font-family: 'Playfair Display', serif;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: #78716c;
+            border-bottom: 1px solid #d6d3d1;
+            padding-bottom: 10px;
+        }
+
+        .refund-badge {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.1);
+            border: 4px solid #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+            margin: 20px auto;
+        }
+        .refund-badge.red {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .case-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+        .case-row:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        
+        .pulse-btn {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{ box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 50%{ box-shadow: 0 0 20px 10px rgba(239,68,68,0); } }
+
+        .pipeline {
+            display: flex; align-items: center; gap: 0;
+            margin-bottom: 32px; overflow-x: auto; padding: 10px 0;
+        }
+        .pipeline-step {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600;
+            white-space: nowrap; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02); color: var(--text-muted);
+        }
+        .pipeline-step.active {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.1));
+            border-color: #ef4444; color: #f87171;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+        }
+        .pipeline-step.done {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3); color: #10b981;
+        }
+        .pipeline-arrow { color: var(--text-muted); font-size: 1.2rem; padding: 0 4px; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>AI Arbitration Court</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Procurement Lifecycle Stage 10 — Dispute Resolution & Judicial Review</p>
+                </div>
+            </header>
+
+            <div class="cyber-header">
+                <div class="cyber-logo"><i data-lucide="gavel"></i></div>
+                <div>
+                    <h2 style="color: #ef4444; margin: 0 0 4px 0;">AI Legal Arbitration Courtroom</h2>
+                    <p style="color: #94a3b8; margin: 0;">Vendors can file dispute cases against Liquidated Damages (LD) / penalties. The AI Arbitrator evaluates weather anomalies, Force Majeure events, and PO contract clauses to issue legally binding waiving decisions.</p>
+                </div>
+            </div>
+
+            <!-- Pipeline Tracker -->
+            <div class="pipeline" id="pipeline-tracker">
+                <div class="pipeline-step done"><i data-lucide="clipboard-list" style="width:14px;height:14px;"></i> 1. Indent</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done"><i data-lucide="megaphone" style="width:14px;height:14px;"></i> 2. NIT</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done"><i data-lucide="inbox" style="width:14px;height:14px;"></i> 3. Submission</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done"><i data-lucide="scan-search" style="width:14px;height:14px;"></i> 4. TCE</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done"><i data-lucide="indian-rupee" style="width:14px;height:14px;"></i> 5. Pricing</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done"><i data-lucide="handshake" style="width:14px;height:14px;"></i> 6. PAC</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done"><i data-lucide="file-check" style="width:14px;height:14px;"></i> 7. PO</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done"><i data-lucide="truck" style="width:14px;height:14px;"></i> 8. Delivery</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step done"><i data-lucide="banknote" style="width:14px;height:14px;"></i> 9. Payment</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step active"><i data-lucide="gavel" style="width:14px;height:14px;"></i> 10. AI Court</div>
+            </div>
+
+            <div class="grid-container">
+                <!-- Left: File Dispute Appeal Form -->
+                <div>
+                    <div class="card mb-4">
+                        <h3 style="display:flex; align-items:center; gap:10px;"><i data-lucide="file-text" style="color:#ef4444;"></i> File Dispute Appeal</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 20px;">Submit an arbitration request if weather delays or anomalies impacted contract delivery timelines.</p>
+                        
+                        <form id="dispute-form" onsubmit="submitDispute(event)">
+                            <div class="form-group">
+                                <label class="form-label">Select Purchase Order (PO)</label>
+                                <select class="form-control" id="f-po" onchange="onPOChange()" required>
+                                    <option value="">Select a Purchase Order...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Vendor Company</label>
+                                <input type="text" class="form-control" id="f-vendor" readonly style="background: rgba(0,0,0,0.25);">
+                                <input type="hidden" id="f-vendor-id">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Disputed Amount / Penalty Levied (₹)</label>
+                                <input type="number" class="form-control" id="f-amount" placeholder="Enter penal amount, e.g. 50000" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Dispute Type</label>
+                                <select class="form-control" id="f-type">
+                                    <option value="LD Penalty">Liquidated Damages (LD) Penalty Waive</option>
+                                    <option value="Payment Delay">Interest on Delayed Payments</option>
+                                    <option value="Quality Rejection">Quality Rejection Dispute</option>
+                                    <option value="Scope Change">Contract Scope Variation</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Vendor Statement (Appeal Reason)</label>
+                                <textarea class="form-control" id="f-statement" rows="3" placeholder="Explain the delay circumstances (e.g., Heavy monsoon flooded the Haldia dispatch yard preventing transportation...)" required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Meteorological Context / Force Majeure telemetry</label>
+                                <textarea class="form-control" id="f-met-context" rows="2" placeholder="e.g., Haldia region recorded 320mm rain between July 12-16, causing local administration to halt commercial traffic."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Evidence Links (JSON Array of Doc URLs/Names)</label>
+                                <input type="text" class="form-control" id="f-evidence" value="['Haldia_Flood_Alert_Govt_Circular.pdf', 'Logistics_GPS_Delay_Logs.json']">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width:100%; font-size:1rem; padding:12px; background: linear-gradient(135deg, #ef4444, #b91c1c); border:none; margin-top: 10px;">
+                                <i data-lucide="scale"></i> File Appeal & Docket Case
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Registry & Active Cases / AI Tribunal Hearing -->
+                <div>
+                    <!-- Case Register List -->
+                    <div class="card mb-4">
+                        <h3 style="display:flex; align-items:center; gap:10px;"><i data-lucide="folder-git" style="color:#ef4444;"></i> Active Case Docket Registry</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 20px;">Review docket filings and trigger the AI Arbitrator Judicial hearings.</p>
+                        
+                        <div id="cases-list" style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                            <!-- Dynamic disputes cases -->
+                            <div style="padding:20px; text-align:center; color:var(--text-muted);">Loading dockets...</div>
+                        </div>
+                    </div>
+
+                    <!-- AI Courtroom Chamber Panel -->
+                    <div class="card" id="hearing-panel" style="display:none; border:1px solid rgba(239, 68, 68, 0.3); background: rgba(10, 10, 10, 0.8);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                            <h3 style="color:#ef4444; margin:0; display:flex; align-items:center; gap:10px;"><i data-lucide="cpu"></i> AI Judicial Hearing Chamber</h3>
+                            <span class="badge badge-warning" id="hearing-case-num">Case ARB-xxx</span>
+                        </div>
+                        
+                        <div class="terminal" id="ai-terminal">
+                            [SYS] Awaiting hearing initiation...
+                        </div>
+
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-danger pulse-btn" id="btn-start-hearing" style="flex:1; font-weight:600;" onclick="runAiArbitrator()">
+                                <i data-lucide="gavel"></i> Convene AI Court & Resolve Case
+                            </button>
+                            <button class="btn btn-outline" style="border-color:#333;" onclick="closeHearingPanel()">
+                                Close
+                            </button>
+                        </div>
+
+                        <!-- Formal Scroll Ruling Document -->
+                        <div class="scroll-container" id="scroll-container" style="display:none;">
+                            <div class="legal-notice">
+                                <h4>Official Judicial Decree & Ruling</h4>
+                                
+                                <div style="display:flex; justify-content:center; margin-bottom: 15px;">
+                                    <div class="refund-badge" id="decree-badge">
+                                        <span style="font-size:0.75rem; color:#6b7280; font-weight:600; text-transform:uppercase;">Refund</span>
+                                        <strong style="font-size:1.8rem; font-weight:bold; color:#10b981;" id="decree-refund-pct">0%</strong>
+                                    </div>
+                                </div>
+
+                                <p style="font-style: italic; color:#4b5563; font-size:0.95rem; text-align:center; margin-bottom: 20px;">
+                                    In the Matter of Arbitration between the Contractor and Indian Oil Corporation Ltd.
+                                </p>
+                                
+                                <div id="decree-ruling-text" style="font-size:1rem; line-height:1.6; color:#1c1917; text-align:justify; padding: 0 10px;">
+                                    Ruling document loading...
+                                </div>
+
+                                <div style="margin-top:30px; text-align:right; border-top:1px solid #e7e5e4; padding-top:15px; font-size:0.85rem; color:#78716c;">
+                                    <strong>GEM AUTONOMOUS LEGAL SWARM</strong><br>
+                                    Public Procurement Act Compliance Engine<br>
+                                    <span id="decree-date">2026-05-23</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+
+        let allPurchaseOrders = [];
+        let allDisputes = [];
+        let activeDispute = null;
+
+        async function initPage() {
+            await loadPurchaseOrders();
+            await loadDisputes();
+    </script>
+</body>
+</html>

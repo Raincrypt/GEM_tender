@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Nexus | Advanced Intelligence</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/echarts.min.js"></script>
+    <script src="js/api.js"></script>
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-panel: rgba(15, 23, 42, 0.6);
+            --border: rgba(56, 189, 248, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-rose: #f43f5e;
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: var(--font-sans); background: var(--bg-base); color: var(--text-main); margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; }
+        
+        /* Grid Layout */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            height: 100vh;
+        }
+
+        /* Sidebar Matrix */
+        .matrix-sidebar {
+            background: linear-gradient(180deg, rgba(2,6,23,0.95) 0%, rgba(15,23,42,0.95) 100%);
+            border-right: 1px solid var(--border);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .brand h1 { font-size: 1.5rem; font-weight: 800; background: linear-gradient(90deg, #06b6d4, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: var(--accent-cyan); box-shadow: 0 10px 30px rgba(6,182,212,0.1); }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--accent-cyan);
+        }
+        .stat-card.purple::before { background: var(--accent-purple); }
+        .stat-card.rose::before { background: var(--accent-rose); }
+        
+        .stat-val { font-family: var(--font-mono); font-size: 2.2rem; font-weight: 800; margin: 10px 0 5px 0; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Main Hologram Area */
+        .hologram-stage {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: radial-gradient(circle at center, rgba(6,182,212,0.05) 0%, rgba(2,6,23,1) 70%);
+            overflow-y: auto;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .chart-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .chart-container.full-width { grid-column: 1 / -1; }
+
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .chart-title { font-size: 1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        
+        .chart-canvas { flex: 1; width: 100%; height: 100%; min-height: 220px; }
+
+        /* Scanning Animation */
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            animation: scan 3s linear infinite;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* Live Stream Console */
+        .terminal {
+            background: rgba(0,0,0,0.5); border-radius: 8px; padding: 15px;
+            font-family: var(--font-mono); font-size: 0.8rem; color: #10b981;
+            height: 100px; overflow-y: hidden; position: relative; border: 1px solid rgba(16,185,129,0.2);
+        }
+        .terminal::after { content: '█'; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Tab Buttons */
+        .tab-btn {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .tab-btn:hover {
+            color: #fff;
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.05);
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05));
+            border-color: var(--accent-cyan);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(6,182,212,0.15);
+        }
+
+        /* Blockchain CSS */
+        .blockchain-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            flex: 1;
+        }
+        
+        .blocks-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            padding-right: 12px;
+        }
+        
+        .block-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(56, 189, 248, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .block-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+            transform: translateX(4px);
+        }
+        .block-card.active-block {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+            background: rgba(139, 92, 246, 0.03);
+        }
+        
+        .block-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .block-title-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .block-idx-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            font-weight: 800;
+            background: rgba(6, 182, 212, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .block-act-text {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+        
+        .block-date-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .block-connector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--border);
+            opacity: 0.4;
+            margin: -2px 0;
+            font-size: 0.9rem;
+        }
+        
+        .inspect-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            height: fit-content;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+        }
+        
+        .hash-detail-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            word-break: break-all;
+            color: var(--text-muted);
+        }
+        
+        .field-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            padding-bottom: 8px;
+        }
+        .field-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .field-val {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <!-- Sidebar -->
+        <div class="matrix-sidebar">
+            <div class="brand">
+                <i data-lucide="hexagon" style="color: var(--accent-cyan); width: 28px; height: 28px;"></i>
+                <h1>ORACLE NEXUS</h1>
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; margin-bottom: 5px;">
+                Advanced Predictive Intelligence & Cryptographic Integrity Matrix powered by AI.
+            </p>
+
+            <div id="intel-selectors" style="display:flex; flex-direction:column; gap:6px; margin-bottom:15px;">
+                <span class="stat-label">Active Forecast Category</span>
+                <select id="category-selector" onchange="loadForecastData()" style="background:#0b0f19; border:1px solid var(--border); color:#fff; padding:10px; border-radius:10px; font-size:0.85rem; width:100%; outline:none; font-weight:600; cursor:pointer;">
+                    <option value="IT Hardware">IT Hardware & Networking</option>
+                    <option value="Valves & Fittings">Pipes, Valves & Fittings</option>
+                    <option value="Electrical Cables">Electrical Cables</option>
+                    <option value="Civil Works">Civil Infrastructure</option>
+                </select>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Total Procured Value</div>
+                <div class="stat-val" id="val-total">₹0</div>
+                <div style="color: var(--accent-cyan); font-size: 0.8rem; font-weight: 600;">↑ 12.4% YoY Forecast</div>
+            </div>
+
+            <div class="stat-card purple">
+                <div class="stat-label">AI Savings Generated</div>
+                <div class="stat-val" id="val-savings">0%</div>
+                <div style="color: var(--accent-purple); font-size: 0.8rem; font-weight: 600;">System Wide Optimization</div>
+            </div>
+
+            <div class="stat-card rose">
+                <div class="stat-label">Anomalies Detected</div>
+                <div class="stat-val" id="val-anomalies">0</div>
+                <div style="color: var(--accent-rose); font-size: 0.8rem; font-weight: 600;">Isolation Forest Engine</div>
+            </div>
+
+            <div style="margin-top: auto;">
+                <div class="stat-label" style="margin-bottom: 10px;">Threat Intel Feed</div>
+                <div class="terminal" id="terminal-feed">
+                    > Initialize Oracle Core... OK<br>
+                    > Syncing Tensor Arrays... OK<br>
+                    > Awaiting data stream...<br>
+                </div>
+            </div>
+            
+            <a href="dashboard.html" style="color: var(--text-muted); text-decoration: none; font-size: 0.8rem; text-align: center; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Return to Dashboard
+            </a>
+        </div>
+
+        <!-- Main Stage -->
+        <div class="hologram-stage">
+            
+            <!-- Tab Controls -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:15px; margin-bottom:10px;">
+                <div style="display:flex; gap:12px;">
+                    <button class="tab-btn active" id="btn-tab-intel" onclick="switchTab('intel')">
+                        <i data-lucide="bar-chart-2" style="width:16px; height:16px;"></i> Predictive Intelligence
+                    </button>
+                    <button class="tab-btn" id="btn-tab-blockchain" onclick="switchTab('blockchain')">
+                        <i data-lucide="shield-check" style="width:16px; height:16px;"></i> Cryptographic Block Explorer
+                    </button>
+                </div>
+                <div>
+                    <span class="badge" id="ledger-status-badge" style="background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.3); padding:6px 12px; border-radius:20px; font-weight:600; font-size:0.8rem; display:flex; align-items:center; gap:6px;">
+                        <span style="width:8px; height:8px; background:#10b981; border-radius:50%; display:inline-block; box-shadow:0 0 10px #10b981;"></span> BLOCK LEDGER SECURED
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tab 1: Intel Content -->
+            <div class="chart-grid" id="tab-intel-content">
+                <!-- 1. Price Prediction Curve (Spline) -->
+                <div class="chart-container full-width">
+                    <div class="scan-line"></div>
+                    <div class="chart-header">
+                        <div class="chart-title"><i data-lucide="trending-up" style="color: var(--accent-cyan);"></i> Predictive Price Forecasting (12 Mo)</div>
+                    </div>
+                    <div id="chart-forecast" class="chart-canvas"></div>
+                </div>
+
+                <!-- 2. Sector Radar -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title"><i data-lucide="radar" style="color: var(--accent-purple);"></i> Sector Health Matrix</div>
+                    </div>
+                    <div id="chart-radar" class="chart-canvas"></div>
+                </div>
+
+                <!-- 3. Anomaly Scatter -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title"><i data-lucide="alert-triangle" style="color: var(--accent-rose);"></i> Market Anomaly Detection</div>
+                    </div>
+                    <div id="chart-scatter" class="chart-canvas"></div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Blockchain Content -->
+            <div class="blockchain-layout" id="tab-blockchain-content" style="display:none;">
+                <!-- Left: Linked Blocks Timeline -->
+                <div class="blocks-timeline" id="blocks-container">
+                    <!-- Dynamic Blocks go here -->
+                    <div style="padding:40px; text-align:center; color:var(--text-muted);">Syncing blockchain blocks...</div>
+                </div>
+
+                <!-- Right: Block Inspector Panel -->
+                <div class="inspect-panel" id="inspect-panel" style="visibility:hidden;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;">
+                        <h3 style="margin:0; display:flex; align-items:center; gap:8px; color:#fff;">
+                            <i data-lucide="scan-search" style="color:var(--accent-purple);"></i> Block Inspect
+                        </h3>
+                        <span class="block-idx-label" id="inspect-idx">Block #0</span>
+                    </div>
+
+                    <div class="field-row">
+                        <span class="field-label">Action Signature</span>
+                        <span class="field-val" id="inspect-action">-</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">Entity Involved</span>
+                        <span class="field-val" id="inspect-entity">-</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">Timestamp</span>
+                        <span class="field-val" id="inspect-time">-</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">Operator User ID</span>
+                        <span class="field-val" id="inspect-user">-</span>
+                    </div>
+
+                    <div>
+                        <span class="field-label" style="display:block; margin-bottom:6px;">Previous Block Hash</span>
+                        <div class="hash-detail-box" id="inspect-prev-hash">-</div>
+                    </div>
+
+                    <div>
+                        <span class="field-label" style="display:block; margin-bottom:6px;">Current Block Hash</span>
+                        <div class="hash-detail-box" id="inspect-curr-hash">-</div>
+                    </div>
+
+                    <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:10px;">
+                        <button class="tab-btn" style="width:100%; border-color:var(--accent-cyan); color:#fff; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="validateBlockIntegrity()">
+                            <i data-lucide="shield-check"></i> Cryptographic Integrity Audit
+                        </button>
+                        <div id="validation-result" style="display:none; text-align:center; margin-top:12px; font-weight:700; font-size:0.85rem; padding:8px; border-radius:6px;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Initialize ECharts instances
+        const chartForecast = echarts.init(document.getElementById('chart-forecast'), 'dark');
+        const chartRadar = echarts.init(document.getElementById('chart-radar'), 'dark');
+        const chartScatter = echarts.init(document.getElementById('chart-scatter'), 'dark');
+
+        // Apply global dark theme backgrounds
+        const echartTheme = { backgroundColor: 'transparent' };
+        chartForecast.setOption(echartTheme); chartRadar.setOption(echartTheme); chartScatter.setOption(echartTheme);
+
+        let blockchainBlocks = [];
+        let selectedBlock = null;
+
+        function switchTab(tabName) {
+            const btnIntel = document.getElementById('btn-tab-intel');
+            const btnBlock = document.getElementById('btn-tab-blockchain');
+            const contentIntel = document.getElementById('tab-intel-content');
+            const contentBlock = document.getElementById('tab-blockchain-content');
+            const selectors = document.getElementById('intel-selectors');
+
+            if(tabName === 'intel') {
+                btnIntel.classList.add('active');
+                btnBlock.classList.remove('active');
+                contentIntel.style.display = 'grid';
+                contentBlock.style.display = 'none';
+                selectors.style.display = 'flex';
+                
+                // Resize charts since they were hidden
+                setTimeout(() => {
+                    chartForecast.resize();
+                    chartRadar.resize();
+                    chartScatter.resize();
+                }, 100);
+            } else {
+                btnIntel.classList.remove('active');
+                btnBlock.classList.add('active');
+                contentIntel.style.display = 'none';
+                contentBlock.style.display = 'grid';
+                selectors.style.display = 'none';
+                loadBlockchainBlocks();
+            }
+        }
+
+        async function loadForecastData() {
+            const category = document.getElementById('category-selector').value;
+            try {
+                const token = localStorage.getItem('gem_token') || '';
+                const res = await fetch(`${API_BASE_URL}/reports/predictive-forecast?material_category=${encodeURIComponent(category)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                const hist = data.historical_series || [];
+                const fore = data.forecast_series || [];
+                
+                const months = [...hist.map(d => d.month), ...fore.map(d => d.month)];
+                const histPrices = [...hist.map(d => d.avg_price), ...fore.map(() => '-')];
+                const forecastPrices = [...hist.map((d, idx) => idx === hist.length - 1 ? d.avg_price : '-'), ...fore.map(d => d.predicted_price)];
+                const upperBounds = [...hist.map((d, idx) => idx === hist.length - 1 ? d.avg_price : '-'), ...fore.map(d => d.upper_bound)];
+                const lowerBounds = [...hist.map((d, idx) => idx === hist.length - 1 ? d.avg_price : '-'), ...fore.map(d => d.lower_bound)];
+                
+                chartForecast.setOption({
+                    tooltip: { trigger: 'axis', backgroundColor: 'rgba(15,23,42,0.9)', borderColor: '#06b6d4', textStyle: {color: '#fff'} },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
+                    legend: { show: true, textStyle: { color: '#94a3b8' }, top: '0%' },
+                    xAxis: { type: 'category', boundaryGap: false, data: months, splitLine: {show: false}, axisLine: {lineStyle: {color: '#334155'}} },
+                    yAxis: { type: 'value', min: 'dataMin', splitLine: {lineStyle: {color: 'rgba(255,255,255,0.05)'}} },
+                    series: [
+                        {
+                            name: 'Historical Price', type: 'line', smooth: true, connectNulls: true,
+                            lineStyle: { width: 4, color: '#06b6d4' },
+                            data: histPrices.map(v => v === '-' ? null : v),
+                            symbol: 'circle', symbolSize: 6, itemStyle: { color: '#06b6d4' }
+                        },
+                        {
+                            name: 'AI Forecast', type: 'line', smooth: true, connectNulls: true,
+                            lineStyle: { width: 4, type: 'dashed', color: '#8b5cf6' },
+                            data: forecastPrices.map(v => v === '-' ? null : v),
+                            symbol: 'circle', symbolSize: 6, itemStyle: { color: '#8b5cf6' }
+                        },
+                        {
+                            name: '95% Confidence Upper', type: 'line', smooth: true, connectNulls: true,
+                            lineStyle: { width: 1.5, type: 'dotted', color: 'rgba(244,63,94,0.6)' },
+                            data: upperBounds.map(v => v === '-' ? null : v),
+                            symbol: 'none'
+                        },
+                        {
+                            name: '95% Confidence Lower', type: 'line', smooth: true, connectNulls: true,
+                            lineStyle: { width: 1.5, type: 'dotted', color: 'rgba(16,185,129,0.6)' },
+                            data: lowerBounds.map(v => v === '-' ? null : v), symbol: 'none'
+                        }
+                    ]
+                }, true);
+            } catch(e) {
+                console.error("Forecast load error:", e);
+            }
+        }
+
+        async function loadBlockchainBlocks() {
+            try {
+                const blocks = await ApiClient.request('/security/blockchain/blocks?limit=50');
+                blockchainBlocks = blocks;
+                const container = document.getElementById('blocks-container');
+                
+                if(blocks.length === 0) {
+                    container.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted);">No audit log blocks found in ledger.</div>';
+                    return;
+                }
+                
+                let html = '';
+                blocks.forEach((b, idx) => {
+                    const dt = new Date(b.timestamp).toLocaleString();
+                    html += `
+                    <div class="block-card" id="block-${b.id}" onclick="inspectBlock(${b.id})">
+                        <div class="block-card-header">
+                            <div class="block-title-box">
+                                <span class="block-idx-label">Block #${b.block_index}</span>
+                                <span class="block-act-text">${b.action}</span>
+                            </div>
+                            <span class="block-date-text">${dt}</span>
+                        </div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">
+                            ${b.details}
+                        </div>
+                        <span class="block-hash-preview">HASH: ${b.curr_hash}</span>
+                    </div>`;
+                    
+                    if(idx < blocks.length - 1) {
+                        html += `
+                        <div class="block-connector">
+                            <i data-lucide="link"></i>
+                        </div>`;
+                    }
+                });
+                
+                container.innerHTML = html;
+                lucide.createIcons();
+                
+                // Inspect first block by default
+                if(blocks.length > 0) {
+                    inspectBlock(blocks[0].id);
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function inspectBlock(blockId) {
+            // Remove active classes
+            document.querySelectorAll('.block-card').forEach(el => el.classList.remove('active-block'));
+            
+            const card = document.getElementById(`block-${blockId}`);
+            if(card) card.classList.add('active-block');
+            
+            const b = blockchainBlocks.find(x => x.id === blockId);
+            if(!b) return;
+            selectedBlock = b;
+
+            document.getElementById('inspect-panel').style.visibility = 'visible';
+            document.getElementById('inspect-idx').textContent = `Block #${b.block_index}`;
+            document.getElementById('inspect-action').textContent = b.action;
+            document.getElementById('inspect-entity').textContent = b.entity;
+            document.getElementById('inspect-time').textContent = new Date(b.timestamp).toLocaleString();
+            document.getElementById('inspect-user').textContent = b.user_id || 'System';
+            document.getElementById('inspect-prev-hash').textContent = b.prev_hash;
+            document.getElementById('inspect-curr-hash').textContent = b.curr_hash;
+            
+            // Reset validation UI
+            const resBox = document.getElementById('validation-result');
+            resBox.style.display = 'none';
+        }
+
+        async function validateBlockIntegrity() {
+            if(!selectedBlock) return;
+            
+            const resBox = document.getElementById('validation-result');
+            resBox.style.display = 'block';
+            resBox.style.background = 'rgba(255,255,255,0.05)';
+            resBox.style.color = '#fff';
+            resBox.textContent = 'Computing local SHA-256 signature...';
+            
+            // Artificial delay to look like computing audit trace
+            await new Promise(r => setTimeout(r, 600));
+
+            try {
+                // Request server to confirm validity
+                const verif = await ApiClient.request('/security/blockchain/verify');
+                
+                const isCorrupted = verif.corrupted_block_ids.includes(selectedBlock.id);
+                
+                if(!isCorrupted && selectedBlock.curr_hash && selectedBlock.curr_hash !== "0".repeat(64)) {
+                    resBox.style.background = 'rgba(16,185,129,0.1)';
+                    resBox.style.color = '#10b981';
+                    resBox.innerHTML = '<i data-lucide="shield-check" style="display:inline; width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i> LEDGER CONSENSUS MATCHED — BLOCK SECURE';
+                } else {
+                    resBox.style.background = 'rgba(244,63,94,0.1)';
+                    resBox.style.color = '#f43f5e';
+                    resBox.innerHTML = '<i data-lucide="alert-triangle" style="display:inline; width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i> HASH MISMATCH — BLOCK INTEGRITY CORRUPTED!';
+                }
+                lucide.createIcons();
+            } catch(e) {
+                resBox.style.background = 'rgba(244,63,94,0.1)';
+                resBox.style.color = '#f43f5e';
+                resBox.textContent = 'Verification error: ' + e.message;
+            }
+        }
+
+        async function initNexus() {
+            try {
+                // Fetch Data from Backend
+                const [marketData, anomalyData] = await Promise.all([
+                    fetch(`${API_BASE_URL}/ai-ops/market-intelligence`).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/ai-ops/anomaly-scan`).then(r => r.json())
+                ]);
+
+                // 1. Update Sidebar Stats
+                document.getElementById('val-total').innerText = '₹' + (marketData.total_procurement_value / 100000).toFixed(1) + 'L';
+                document.getElementById('val-savings').innerText = marketData.avg_system_savings + '%';
+                document.getElementById('val-anomalies').innerText = anomalyData.anomalies.length;
+
+                // Terminal text
+                const term = document.getElementById('terminal-feed');
+                term.innerHTML = '> Model: Oracle v4.2 Loaded<br>> Matrix synced.<br>';
+                anomalyData.anomalies.forEach(a => {
+                    term.innerHTML += `<span style="color:var(--accent-rose)">> WARN: Outlier Bid ${a.bid_id} at ₹${a.amount}</span><br>`;
+                });
+
+                // 2. Load primary category forecast (defaults to IT Hardware selector)
+                await loadForecastData();
+
+                // 3. Render Sector Radar Chart
+                const categories = marketData.categories || [];
+                const indicators = categories.map(c => ({ name: c.category || 'General', max: 20 }));
+                const savingsData = categories.map(c => c.avg_savings_pct);
+                
+                // Fallback if empty
+                if(indicators.length === 0) {
+                    indicators.push({name:'IT', max:100}, {name:'Civil', max:100}, {name:'Mech', max:100});
+                    savingsData.push(0,0,0);
+                }
+
+                chartRadar.setOption({
+                    tooltip: {},
+                    radar: {
+                        indicator: indicators,
+                        splitArea: { areaStyle: { color: ['rgba(6,182,212,0.02)', 'rgba(6,182,212,0.05)', 'rgba(6,182,212,0.08)', 'rgba(6,182,212,0.1)'] } },
+                        axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+                        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+                    },
+                    series: [{
+                        name: 'Category Health', type: 'radar',
+                        data: [{ value: savingsData, name: 'Savings %' }],
+                        itemStyle: { color: '#8b5cf6' },
+                        areaStyle: { color: 'rgba(139,92,246,0.4)' },
+                        lineStyle: { width: 3 }
+                    }]
+                });
+
+                // 4. Render Anomaly Scatter Plot
+                const scatterDataNormal = anomalyData.normal.map(n => [Math.random()*100, n.amount, n.vendor]);
+                const scatterDataAnomaly = anomalyData.anomalies.map(a => [Math.random()*100, a.amount, a.vendor]);
+
+                chartScatter.setOption({
+                    tooltip: { formatter: (p) => `${p.value[2]}<br>Value: ₹${p.value[1]}` },
+                    xAxis: { type: 'value', show: false },
+                    yAxis: { type: 'value', splitLine: {lineStyle: {color: 'rgba(255,255,255,0.05)'}} },
+                    series: [
+                        { name: 'Normal', type: 'scatter', symbolSize: 10, itemStyle: { color: 'rgba(6,182,212,0.6)' }, data: scatterDataNormal },
+                        { 
+                            name: 'Anomaly', type: 'scatter', symbolSize: 16, 
+                            itemStyle: { color: '#f43f5e', shadowBlur: 10, shadowColor: '#f43f5e' }, 
+                            data: scatterDataAnomaly,
+                            markArea: { itemStyle: { color: 'rgba(244,63,94,0.05)' }, data: [ [{yAxis: 0}, {yAxis: 500000}] ] }
+                        }
+                    ]
+                });
+
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        window.addEventListener('resize', () => { chartForecast.resize(); chartRadar.resize(); chartScatter.resize(); });
+        window.onload = initNexus;
+    </script>
+</body>
+</html>

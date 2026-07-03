@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PQC Dynamic Rule Editor | GEM Intelligence</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0e1a; color: #e2e8f0; min-height: 100vh; padding-bottom: 60px; }
+        
+        .topbar { padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(15,23,42,0.4); }
+        .topbar h1 { font-size: 1.3rem; background: linear-gradient(135deg, #ec4899, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .topbar a { text-decoration: none; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.08); transition: all 0.2s; }
+        .topbar a:hover { border-color: #ec4899; color: #ec4899; }
+
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 24px; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        
+        .card { background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; }
+        .card-header { border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .card-header h3 { font-size: 1.05rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
+        
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #94a3b8; margin-bottom: 6px; }
+        .form-control { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; outline: none; transition: border-color 0.2s; font-family: inherit; }
+        .form-control:focus { border-color: #ec4899; }
+        
+        .form-row { display: flex; gap: 16px; }
+        .form-row .form-group { flex: 1; }
+        
+        .btn-panel { display: flex; justify-content: flex-end; gap: 16px; margin-top: 10px; }
+        .btn { border: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; box-shadow: 0 4px 15px rgba(236,72,153,0.25); }
+        .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.08); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+        
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #ec4899; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>Dynamic Pre-Qualification Rule Builder</h1>
+    <div>
+        <a href="tender_rules_understanding.html" style="margin-right:10px; border-color:#10b981; color:#34d399;"><i data-lucide="book-open" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"></i> Rules Understanding</a>
+        <a href="pqc_comparison.html"><i data-lucide="arrow-left" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;"></i> Back to Matrix</a>
+    </div>
+</div>
+
+<div class="container">
+    <div id="loader" style="text-align:center; padding: 50px 0;">
+        <div class="spinner" style="width: 40px; height: 40px;"></div>
+        <p style="margin-top:15px; color:#94a3b8; font-size:0.9rem;">Fetching active tender thresholds from database...</p>
+    </div>
+
+    <form id="rules-form" style="display:none;" onsubmit="saveRules(event)">
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+                <h3><i data-lucide="file-text" style="color:#ec4899;"></i> Tender Context</h3>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tender_ref_no">Tender Reference Number</label>
+                    <input type="text" id="tender_ref_no" class="form-control" placeholder="e.g. RHM25R8080" required>
+                </div>
+                <div class="form-group">
+                    <label for="relaxation_applicable">Startup & MSE Relaxation Policy</label>
+                    <select id="relaxation_applicable" class="form-control" style="cursor: pointer;">
+                        <option value="true">APPLICABLE (Allow qualification exemptions)</option>
+                        <option value="false">NOT APPLICABLE (Enforce strict baseline rules)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Commercial PQC Rules -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i data-lucide="shield" style="color:#a78bfa;"></i> Commercial Experience Requirements</h3>
+                </div>
+                
+                <div class="form-group">
+                    <label for="turnover_lakhs">Minimum Average Annual Turnover (INR Lakhs)</label>
+                    <input type="number" step="0.01" id="turnover_lakhs" class="form-control" required min="0">
+                    <span style="font-size:0.7rem; color:#64748b; margin-top:4px; display:block;">Set to 0.0 to completely disable financial PQC checking.</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="exp_3_orders_lakhs">3 Similar Orders Each Value ≥ (INR Lakhs)</label>
+                    <input type="number" step="0.01" id="exp_3_orders_lakhs" class="form-control" required min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="exp_2_orders_lakhs">2 Similar Orders Each Value ≥ (INR Lakhs)</label>
+                    <input type="number" step="0.01" id="exp_2_orders_lakhs" class="form-control" required min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="exp_1_order_lakhs">1 Similar Order Executed Value ≥ (INR Lakhs)</label>
+                    <input type="number" step="0.01" id="exp_1_order_lakhs" class="form-control" required min="0">
+                </div>
+            </div>
+
+            <!-- Technical Specification Rules -->
+            <div class="card" style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="card-header" style="margin-bottom:5px;">
+                    <h3><i data-lucide="cpu" style="color:#ec4899;"></i> Technical Specifications Baseline</h3>
+                </div>
+
+                <h4 style="font-size:0.8rem; color:#f8fafc; font-weight:700; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.04); padding-bottom:6px;">Annexure-A: Active LED Video Wall</h4>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="led_size">Min Size (Inch)</label>
+                        <input type="number" id="led_size" class="form-control" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="led_pitch">Max Pitch (mm)</label>
+                        <input type="number" step="0.1" id="led_pitch" class="form-control" required min="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="led_res">Resolution (LxH)</label>
+                        <input type="text" id="led_res" class="form-control" required placeholder="e.g. 1920 x 1080">
+                    </div>
+                    <div class="form-group">
+                        <label for="led_contrast">Min Contrast Ratio</label>
+                        <input type="number" id="led_contrast" class="form-control" required min="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="led_brightness">Min Brightness (Nits)</label>
+                        <input type="number" id="led_brightness" class="form-control" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="led_warranty">Warranty (Years)</label>
+                        <input type="number" id="led_warranty" class="form-control" required min="0">
+                    </div>
+                </div>
+
+                <h4 style="font-size:0.8rem; color:#f8fafc; font-weight:700; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.04); padding-bottom:6px; margin-top:10px;">Annexure-B: Large Format Display (LFD)</h4>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="lfd_size">Min Size (Inch)</label>
+                        <input type="number" id="lfd_size" class="form-control" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="lfd_res">Resolution</label>
+                        <input type="text" id="lfd_res" class="form-control" required placeholder="e.g. 3840 x 2160">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-panel">
+            <a href="pqc_comparison.html" class="btn btn-secondary"><i data-lucide="x"></i> Cancel</a>
+            <button type="submit" id="submit-btn" class="btn btn-primary">
+                <i data-lucide="save"></i> Save & Apply Rules
+            </button>
+        </div>
+    </form>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    lucide.createIcons();
+    requireAuth();
+
+    let fetchedConfig = {};
+
+    async function loadRules() {
+        try {
+            const data = await ApiClient.request('/reports/pqc-rules');
+            fetchedConfig = data;
+
+            // Populate form fields
+            document.getElementById('tender_ref_no').value = data.tender_ref_no || '';
+            document.getElementById('relaxation_applicable').value = data.relaxation_applicable ? "true" : "false";
+            document.getElementById('turnover_lakhs').value = data.turnover_lakhs || 0;
+            document.getElementById('exp_3_orders_lakhs').value = data.exp_3_orders_lakhs || 0;
+            document.getElementById('exp_2_orders_lakhs').value = data.exp_2_orders_lakhs || 0;
+            document.getElementById('exp_1_order_lakhs').value = data.exp_1_order_lakhs || 0;
+            
+            // Annexure A
+            const annA = data.annexure_a || {};
+            document.getElementById('led_size').value = annA.size_inch || 0;
+            document.getElementById('led_pitch').value = annA.pixel_pitch_mm || 0;
+            document.getElementById('led_res').value = annA.resolution || '';
+            document.getElementById('led_contrast').value = annA.contrast_ratio_min || 0;
+            document.getElementById('led_brightness').value = annA.brightness_peak_nit || 0;
+            document.getElementById('led_warranty').value = annA.warranty_years || 0;
+            
+            // Annexure B
+            const annB = data.annexure_b || {};
+            document.getElementById('lfd_size').value = annB.size_inch || 0;
+            document.getElementById('lfd_res').value = annB.resolution || '';
+
+            // Hide loader and show form
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('rules-form').style.display = 'block';
+            lucide.createIcons();
+
+        } catch (e) {
+            console.error(e);
+            document.getElementById('loader').innerHTML = `
+                <div style="color:#f87171; font-family:monospace;">
+                    <i data-lucide="alert-triangle" style="width:36px; height:36px; margin-bottom:10px;"></i>
+                    <p>Failed to load PQC rules config.</p>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+    }
+
+    async function saveRules(event) {
+        event.preventDefault();
+        
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span> Applying Changes...`;
+
+        // Build thresholds payload
+        const payload = {
+            thresholds: {
+                tender_ref_no: document.getElementById('tender_ref_no').value,
+                relaxation_applicable: document.getElementById('relaxation_applicable').value === "true",
+                turnover_lakhs: parseFloat(document.getElementById('turnover_lakhs').value),
+                exp_3_orders_lakhs: parseFloat(document.getElementById('exp_3_orders_lakhs').value),
+                exp_2_orders_lakhs: parseFloat(document.getElementById('exp_2_orders_lakhs').value),
+                exp_1_order_lakhs: parseFloat(document.getElementById('exp_1_order_lakhs').value),
+                bid_references: fetchedConfig.bid_references || [],
+                annexure_a: {
+                    size_inch: parseInt(document.getElementById('led_size').value),
+                    pixel_pitch_mm: parseFloat(document.getElementById('led_pitch').value),
+                    resolution: document.getElementById('led_res').value,
+                    contrast_ratio_min: parseInt(document.getElementById('led_contrast').value),
+                    brightness_peak_nit: parseInt(document.getElementById('led_brightness').value),
+                    refresh_rate_hz: fetchedConfig.annexure_a?.refresh_rate_hz || 3840,
+                    os_options: fetchedConfig.annexure_a?.os_options || ["Android TV", "webOS", "Tizen"],
+                    warranty_years: parseInt(document.getElementById('led_warranty').value)
+                },
+                annexure_b: {
+                    size_inch: parseInt(document.getElementById('lfd_size').value),
+                    resolution: document.getElementById('lfd_res').value,
+                    brightness_nit: fetchedConfig.annexure_b?.brightness_nit || 250,
+                    contrast_ratio_min: fetchedConfig.annexure_b?.contrast_ratio_min || 4700,
+                    os_options: fetchedConfig.annexure_b?.os_options || ["Android TV", "webOS", "Tizen 7.0"],
+                    warranty_years: fetchedConfig.annexure_b?.warranty_years || 3
+                }
+            }
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/reports/pqc-rules`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error("HTTP " + response.status);
+            }
+
+            // Redirect back to comparative matrix with a query param to trigger a programmatic rescan
+            window.location.href = 'pqc_comparison.html?rescan=true';
+
+        } catch (e) {
+            console.error(e);
+            alert("Failed to save rules. Make sure the backend server is online.");
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="save"></i> Save & Apply Rules`;
+            lucide.createIcons();
+        }
+    }
+
+    loadRules();
+</script>
+</body>
+</html>

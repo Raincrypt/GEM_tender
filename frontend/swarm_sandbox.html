@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swarm AI Sandbox | Auto-Negotiation</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#050810;color:#e2e8f0;height:100vh;display:flex;flex-direction:column}
+        .mono{font-family:'JetBrains Mono',monospace}
+        .topbar{padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(2,6,23,0.8);backdrop-filter:blur(10px)}
+        .topbar h1{font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px}
+        
+        .layout{display:flex;flex:1;overflow:hidden}
+        .sidebar{width:320px;border-right:1px solid rgba(255,255,255,0.05);padding:24px;background:rgba(15,23,42,0.4);display:flex;flex-direction:column;gap:20px}
+        
+        .c{background:rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px}
+        .ct{font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+        
+        .chat-container{flex:1;display:flex;flex-direction:column;position:relative}
+        .chat-log{flex:1;padding:40px;overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+        .chat-log::-webkit-scrollbar{width:6px}
+        .chat-log::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:6px}
+        
+        .msg{display:flex;flex-direction:column;max-width:80%;animation:slideUp 0.3s ease-out}
+        @keyframes slideUp{from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)}}
+        
+        .msg-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem;font-weight:600}
+        .msg-body{padding:16px 20px;border-radius:12px;font-size:0.95rem;line-height:1.6;border:1px solid rgba(255,255,255,0.05)}
+        
+        .agent-planner .msg-header{color:#3b82f6} .agent-planner .msg-body{background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.2)}
+        .agent-sentinel .msg-header{color:#ef4444} .agent-sentinel .msg-body{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2)}
+        .agent-oracle .msg-header{color:#8b5cf6} .agent-oracle .msg-body{background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.2)}
+        .agent-analyst .msg-header{color:#06b6d4} .agent-analyst .msg-body{background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2)}
+        .agent-negotiator .msg-header{color:#f59e0b} .agent-negotiator .msg-body{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.2)}
+        .agent-auditor .msg-header{color:#10b981} .agent-auditor .msg-body{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2)}
+        
+        .meta-box{background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#94a3b8;margin-top:10px}
+        
+        .trigger-btn{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:white;border:none;padding:14px;border-radius:10px;font-weight:600;font-size:0.9rem;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:10px;transition:all 0.2s}
+        .trigger-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+        .trigger-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+        
+        .pulse{width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981;animation:p 1s infinite}
+        @keyframes p{50%{opacity:0.5}}
+        
+        #status-bar{position:absolute;bottom:0;left:0;right:0;padding:12px 40px;background:rgba(2,6,23,0.9);border-top:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center}
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1><i data-lucide="cpu" style="color:#8b5cf6"></i> Swarm AI Auto-Negotiation Sandbox</h1>
+    <a href="command_center.html" style="color:#64748b;text-decoration:none;font-weight:600;font-size:0.9rem">Back to Command Center</a>
+</div>
+
+<div class="layout">
+    <div class="sidebar">
+        <div class="c">
+            <div class="ct"><i data-lucide="crosshair"></i> Target Procurement</div>
+            <label style="font-size:0.8rem;color:#94a3b8;margin-bottom:6px;display:block">Tender ID</label>
+            <input type="number" id="tender-id" value="1" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:white;padding:12px;border-radius:8px;margin-bottom:20px" min="1">
+            
+            <button class="trigger-btn" id="start-btn" onclick="startSwarm()" style="width:100%"><i data-lucide="play"></i> Launch Cognitive Swarm</button>
+        </div>
+        
+        <div class="c" style="flex:1">
+            <div class="ct"><i data-lucide="users"></i> Agent Protocol Status</div>
+            <div style="display:flex;flex-direction:column;gap:12px;font-size:0.85rem">
+                <div style="display:flex;justify-content:space-between;color:#3b82f6"><span>PLANNER</span><span id="st-planner">Standby</span></div>
+                <div style="display:flex;justify-content:space-between;color:#ef4444"><span>SENTINEL</span><span id="st-sentinel">Standby</span></div>
+                <div style="display:flex;justify-content:space-between;color:#8b5cf6"><span>ORACLE</span><span id="st-oracle">Standby</span></div>
+                <div style="display:flex;justify-content:space-between;color:#06b6d4"><span>ANALYST</span><span id="st-analyst">Standby</span></div>
+                <div style="display:flex;justify-content:space-between;color:#f59e0b"><span>NEGOTIATOR</span><span id="st-negotiator">Standby</span></div>
+                <div style="display:flex;justify-content:space-between;color:#10b981"><span>AUDITOR</span><span id="st-auditor">Standby</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-log" id="chat">
+            <div style="text-align:center;color:#64748b;margin-top:100px">
+                <i data-lucide="bot" style="width:48px;height:48px;opacity:0.2;margin-bottom:16px"></i>
+                <p>Sandbox Ready. Enter a Tender ID and Launch Swarm.</p>
+            </div>
+        </div>
+        
+        <div id="status-bar" style="display:none">
+            <div style="display:flex;align-items:center;gap:10px;font-size:0.85rem;color:#10b981;font-weight:600">
+                <div class="pulse"></div> Swarm is actively debating...
+            </div>
+            <div class="mono" id="event-counter" style="font-size:0.8rem;color:#64748b">0 Cognitive Events</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+    
+    let eventSource = null;
+    let eventCount = 0;
+
+    function getAgentIcon(sender) {
+        const icons = {
+            'PLANNER': 'calendar',
+            'SENTINEL': 'shield-alert',
+            'ORACLE': 'eye',
+            'ANALYST': 'bar-chart-2',
+            'NEGOTIATOR': 'message-square',
+            'AUDITOR': 'check-circle'
+        };
+        return icons[sender] || 'cpu';
+    }
+
+    function setStatus(agent, status) {
+        const el = document.getElementById(`st-${agent.toLowerCase()}`);
+        if(el) el.textContent = status;
+    }
+
+    function startSwarm() {
+        const tenderId = document.getElementById('tender-id').value;
+        if(!tenderId) return;
+        
+        const btn = document.getElementById('start-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Swarm Active';
+        
+        document.getElementById('chat').innerHTML = '';
+        document.getElementById('status-bar').style.display = 'flex';
+        eventCount = 0;
+        
+        ['PLANNER','SENTINEL','ORACLE','ANALYST','NEGOTIATOR','AUDITOR'].forEach(a => setStatus(a, 'Standby'));
+        
+        // Connect to SSE Endpoint
+        eventSource = new EventSource(`/ai-ops/negotiate-stream/${tenderId}`);
+        
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            eventCount++;
+            document.getElementById('event-counter').textContent = `${eventCount} Cognitive Events`;
+            
+            setStatus(data.sender, 'Active');
+            
+            const isSystem = data.sender === 'SYSTEM';
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg agent-${data.sender.toLowerCase()}`;
+            if(data.sender === 'NEGOTIATOR' || data.sender === 'AUDITOR') {
+                msgDiv.style.alignSelf = 'flex-end';
+            }
+            
+            let metaHtml = '';
+            if(Object.keys(data.metadata || {}).length > 0) {
+                metaHtml = `<div class="meta-box">${JSON.stringify(data.metadata, null, 2)}</div>`;
+            }
+            
+            msgDiv.innerHTML = `
+                <div class="msg-header">
+                    <i data-lucide="${getAgentIcon(data.sender)}" style="width:14px;height:14px"></i>
+                    ${data.sender} <span style="font-weight:400;color:#64748b;font-size:0.7rem;margin-left:8px">${new Date(data.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <div class="msg-body">
+                    ${data.content.replace(/\n/g, '<br>')}
+                    ${metaHtml}
+                </div>
+            `;
+            
+            document.getElementById('chat').appendChild(msgDiv);
+            lucide.createIcons();
+            document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+            
+            if(data.content.includes("Swarm protocol finalized")) {
+                eventSource.close();
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="play"></i> Launch Cognitive Swarm';
+                document.querySelector('.pulse').style.background = '#64748b';
+                document.querySelector('.pulse').style.boxShadow = 'none';
+                document.querySelector('.pulse').style.animation = 'none';
+            }
+        };
+        
+        eventSource.onerror = function() {
+            eventSource.close();
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="play"></i> Launch Cognitive Swarm';
+            const err = document.createElement('div');
+            err.style = "color:#ef4444;text-align:center;margin-top:20px";
+            err.textContent = "Swarm Stream Disconnected or Failed.";
+            document.getElementById('chat').appendChild(err);
+        };
+    }
+</script>
+
+</body>
+</html>

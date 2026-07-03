@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - GEM Tender Evaluation</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Dashboard Overview</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Welcome back to the GEM Evaluation System</p>
+                </div>
+                <div class="user-profile">
+                    <div style="text-align: right;">
+                        <div id="user-name" style="font-weight: 500;">User</div>
+                        <div id="user-role" style="font-size: 0.8rem; color: var(--text-muted);">Role</div>
+                    </div>
+                    <div class="avatar" id="user-avatar">U</div>
+                    <button class="theme-toggle" onclick="GemTheme.toggle()" title="Toggle theme">
+                        <i data-lucide="sun"></i>
+                    </button>
+                    <button class="btn btn-outline" onclick="logout()" style="padding: 8px; margin-left: 4px;">
+                        <i data-lucide="log-out"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div style="margin-bottom: 24px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-outline" onclick="exportDashboardCSV()" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <i data-lucide="download"></i> Export Data
+                </button>
+                <button class="btn btn-primary" id="btn-voice-ai" onclick="toggleVoiceAI()" style="background: #3b82f6; border: none; color: white;">
+                    <i data-lucide="mic"></i> Voice Command
+                </button>
+                <button class="btn btn-warning" onclick="activateNeuralOracle()" style="background: #f59e0b; border: none; color: white; animation: pulse 2s infinite;">
+                    <i data-lucide="brain-circuit"></i> Activate Neural Oracle
+                </button>
+            </div>
+
+            <!-- Neural Oracle Predictive Feed (Hidden by default) -->
+            <div id="neural-oracle-panel" style="display: none; margin-bottom: 24px; padding: 20px; background: rgba(15, 23, 42, 0.9); border: 1px solid #f59e0b; border-radius: 12px; box-shadow: 0 0 30px rgba(245, 158, 11, 0.15); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, transparent, #f59e0b, transparent); animation: scan 3s linear infinite;"></div>
+                <h3 style="color: #f59e0b; margin-bottom: 15px; display:flex; align-items:center; gap:10px;"><i data-lucide="satellite"></i> Proactive Intelligence Feed</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Predictive Market Timing -->
+                    <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+                            <span style="color: #3b82f6; font-weight: bold; font-size: 0.9rem;">MARKET FORECAST</span>
+                            <span class="badge" id="oracle-timing-sector" style="background: rgba(59,130,246,0.1); color:#3b82f6;">Hardware Sector</span>
+                        </div>
+                        <p id="oracle-timing-analysis" style="color: #e2e8f0; font-size: 0.95rem;"><strong>Analysis:</strong> Querying neural networks and swarm critic nodes...</p>
+                        <p id="oracle-timing-recommendation" style="color: #10b981; font-size: 0.9rem; margin-top: 5px;"><i data-lucide="trending-down" style="width:14px; height:14px;"></i> <strong>Oracle Recommendation:</strong> Synthesizing recommendations...</p>
+                    </div>
+                    
+                    <!-- Autonomous Restocking -->
+                    <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border-left: 3px solid #10b981;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+                            <span style="color: #10b981; font-weight: bold; font-size: 0.9rem;">AUTONOMOUS ACTION</span>
+                            <span class="badge" style="background: rgba(16,185,129,0.1); color:#10b981;">Inventory Sensor</span>
+                        </div>
+                        <p style="color: #e2e8f0; font-size: 0.95rem;"><strong>Analysis:</strong> Enterprise supply sensors detect that 'A4 Printer Paper' inventory will deplete in 12 days.</p>
+                        <div style="margin-top: 10px; display:flex; gap:10px;">
+                            <button class="btn btn-sm" style="background: #10b981; color:white; border:none;" onclick="alert('Autonomous Draft Published to Ledger!')">Publish Pre-Drafted Tender</button>
+                            <button class="btn btn-outline btn-sm">Review Draft</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Autopilot Center Banner -->
+            <div class="card" style="margin-bottom: 24px; border: 1px solid rgba(16, 185, 129, 0.25); background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(59, 130, 246, 0.05)); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                    <div style="display: flex; align-items: center; gap: 18px;">
+                        <div style="width: 54px; height: 54px; border-radius: 14px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);">
+                            <i data-lucide="navigation" style="width: 26px; height: 26px;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                                Procure-Shield Autonomous Autopilot
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.65rem; padding: 2px 8px;">Dynamic Operation</span>
+                            </h3>
+                            <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted); max-width: 680px;">
+                                Experience complete dynamic operation of the procurement lifecycle. Simulate or fully automate biometric KYC morph-checks, AES bid vault lock-ins, AI technical OCR compliance scans, live reverse auctions, and Web3 Solidity contract generation in real-time.
+                            </p>
+                        </div>
+                    </div>
+                    <a href="autopilot.html" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #3b82f6); border: none; color: #020617; font-weight: bold; padding: 12px 24px; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);">
+                        ENGAGE AUTOPILOT
+                    </a>
+                </div>
+            </div>
+
+            <!-- KPI Strip -->
+            <div id="kpi-strip" style="display:grid; grid-template-columns: repeat(4,1fr); gap:16px; margin-bottom:24px;">
+                <div class="card" style="padding:16px; display:flex; align-items:center; gap:14px; border-left:3px solid #3b82f6;">
+                    <div style="width:40px;height:40px;border-radius:10px;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;color:#3b82f6"><i data-lucide="timer" style="width:20px;height:20px"></i></div>
+                    <div><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em">Avg Cycle Time</div><div id="kpi-cycle" style="font-size:1.3rem;font-weight:700">—</div></div>
+                </div>
+                <div class="card" style="padding:16px; display:flex; align-items:center; gap:14px; border-left:3px solid #10b981;">
+                    <div style="width:40px;height:40px;border-radius:10px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;color:#10b981"><i data-lucide="piggy-bank" style="width:20px;height:20px"></i></div>
+                    <div><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em">Avg Savings</div><div id="kpi-savings" style="font-size:1.3rem;font-weight:700">—</div></div>
+                </div>
+                <div class="card" style="padding:16px; display:flex; align-items:center; gap:14px; border-left:3px solid #ef4444;">
+                    <div style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;color:#ef4444"><i data-lucide="shield-alert" style="width:20px;height:20px"></i></div>
+                    <div><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em">Active Threats</div><div id="kpi-threats" style="font-size:1.3rem;font-weight:700">—</div></div>
+                </div>
+                <div class="card" style="padding:16px; display:flex; align-items:center; gap:14px; border-left:3px solid #8b5cf6;">
+                    <div style="width:40px;height:40px;border-radius:10px;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;color:#8b5cf6"><i data-lucide="check-circle" style="width:20px;height:20px"></i></div>
+                    <div><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em">Vendor Compliance</div><div id="kpi-compliance" style="font-size:1.3rem;font-weight:700">—</div></div>
+                </div>
+            </div>
+
+            <!-- AI Insights Panel -->
+            <div id="ai-insights-panel" class="card" style="margin-bottom:24px; padding:20px; border:1px solid rgba(59,130,246,0.2); background:linear-gradient(135deg, rgba(59,130,246,0.05), rgba(139,92,246,0.03));">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white"><i data-lucide="sparkles" style="width:18px;height:18px"></i></div>
+                    <div><h3 style="margin:0;font-size:0.95rem">AI Insights</h3><p style="margin:0;font-size:0.75rem;color:var(--text-muted)">Real-time intelligence from your procurement data</p></div>
+                    <a href="ai_copilot.html" class="btn btn-outline btn-sm" style="margin-left:auto;font-size:0.75rem">Open Copilot</a>
+                </div>
+                <div id="insights-list" style="display:grid;gap:10px"><div style="color:var(--text-muted);font-size:0.85rem">Loading insights…</div></div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <div class="stat-icon"><i data-lucide="file-text"></i></div>
+                    <div class="stat-info">
+                        <p>Total Tenders</p>
+                        <h3 id="stat-tenders">-</h3>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="color: var(--success); background: rgba(16,185,129,0.1);"><i data-lucide="briefcase"></i></div>
+                    <div class="stat-info">
+                        <p>Total Bids</p>
+                        <h3 id="stat-bids">-</h3>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="color: var(--warning); background: rgba(245,158,11,0.1);"><i data-lucide="clock"></i></div>
+                    <div class="stat-info">
+                        <p>Pending Evaluation</p>
+                        <h3 id="stat-pending">-</h3>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="color: #8b5cf6; background: rgba(139,92,246,0.1);"><i data-lucide="star"></i></div>
+                    <div class="stat-info">
+                        <p>Avg Bid Score</p>
+                        <h3 id="stat-score">-</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;">Tender Status Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;">Monthly Bids Trend</h3>
+                    <div class="chart-container">
+                        <canvas id="bidsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity Grid -->
+            <div class="charts-grid">
+                <!-- Recent Tenders -->
+                <div class="card">
+                    <div class="d-flex justify-between align-center mb-4">
+                        <h3>Recent Tenders</h3>
+                        <a href="tenders.html" class="btn btn-outline">View All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="recent-tenders-table">
+                            <thead>
+                                <tr>
+                                    <th>Bid Number</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Live Audit Stream -->
+                <div class="card">
+                    <div class="d-flex justify-between align-center mb-4">
+                        <h3 style="display:flex; align-items:center; gap:8px;">
+                            <i data-lucide="activity" style="color:var(--primary);"></i> 
+                            Live Audit Stream (Blockchain)
+                        </h3>
+                    </div>
+                    <div id="audit-stream" style="height: 300px; overflow-y: auto; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--text-muted); text-align:center; padding-top:40%;">Syncing Ledger...</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 24px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.05)); border: 1px solid rgba(139, 92, 246, 0.3);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <div style="background: #8b5cf6; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                            <i data-lucide="bot"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: #a78bfa;">Conversational Analytics (AI Data Copilot)</h3>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Text-to-SQL: Ask your database any question in plain English.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="ai-query-input" class="form-control" placeholder="e.g. 'Show me total PO value by month' or 'How many vendors are blacklisted?'" style="flex: 1; background: rgba(0,0,0,0.3);">
+                        <button class="btn btn-primary" onclick="askAI()" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none;">
+                            <i data-lucide="sparkles"></i> Analyze
+                        </button>
+                    </div>
+
+                    <div id="ai-response-container" style="display: none; margin-top: 20px;">
+                        <div id="ai-insight" style="padding: 15px; background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; margin-bottom: 20px; font-weight: 500;"></div>
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="ai-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+        loadUserProfile();
+
+        let dashboardStats = null;
+        let dashboardLogs = null;
+        let dashboardKpi = null;
+
+        function exportDashboardCSV() {
+            if (!dashboardStats) {
+                showToast('No stats data loaded yet to export', 'error');
+                return;
+            }
+            const csvRows = [];
+            
+            // Section 1: KPI Summary
+            csvRows.push('--- DASHBOARD KPI SUMMARY ---');
+            csvRows.push('Metric,Value');
+            csvRows.push(`Total Tenders,${dashboardStats.total_tenders || 0}`);
+            csvRows.push(`Total Bids,${dashboardStats.total_bids || 0}`);
+            csvRows.push(`Pending Evaluation,${dashboardStats.pending_evaluations || 0}`);
+            csvRows.push(`Avg Bid Score,${dashboardStats.avg_bid_score || 0}`);
+            if (dashboardKpi) {
+                csvRows.push(`Avg Cycle Days,${dashboardKpi.avg_cycle_days || 0}`);
+                csvRows.push(`Avg Savings,${dashboardKpi.avg_savings_pct || '0'}%`);
+                csvRows.push(`Active Threats,${dashboardKpi.active_threats || 0}`);
+                csvRows.push(`Vendor Compliance,${dashboardKpi.vendor_compliance_pct || '100'}%`);
+            }
+            csvRows.push('');
+            
+            // Section 2: Recent Tenders
+            csvRows.push('--- RECENT TENDERS ---');
+            csvRows.push('Bid Number,Title,Status,Created Date');
+            if (dashboardStats.recent_tenders && dashboardStats.recent_tenders.length) {
+                dashboardStats.recent_tenders.forEach(t => {
+                    const date = new Date(t.created_at).toLocaleDateString();
+                    csvRows.push(`"${t.bid_number}","${t.title.replace(/"/g, '""')}","${t.status}","${date}"`);
+                });
+            } else {
+                csvRows.push('No tenders found');
+            }
+            csvRows.push('');
+            
+            // Section 3: Audit Logs
+            csvRows.push('--- SYSTEM AUDIT LEDGER ---');
+            csvRows.push('Timestamp,User ID,Action,Details');
+            if (dashboardLogs && dashboardLogs.length) {
+                dashboardLogs.forEach(l => {
+                    const date = new Date(l.timestamp).toLocaleString();
+                    csvRows.push(`"${date}","${l.user_id}","${l.action.replace(/"/g, '""')}","${l.details.replace(/"/g, '""')}"`);
+                });
+            } else {
+                csvRows.push('No activity logs found');
+            }
+            
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "gem_dashboard_report.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Dashboard report exported successfully', 'success');
+        }
+
+        const user = JSON.parse(localStorage.getItem('gem_user'));
+        if (user && (user.role === 'Admin' || user.role === 'Evaluator')) {
+            document.getElementById('nav-evaluation').style.display = 'block';
+            document.getElementById('nav-cartel').style.display = 'block';
+            document.getElementById('nav-plagiarism').style.display = 'block';
+            document.getElementById('nav-pqc').style.display = 'block';
+            document.getElementById('nav-tender-rules').style.display = 'block';
+            document.getElementById('nav-forensics').style.display = 'block';
+            document.getElementById('nav-analysis').style.display = 'block';
+            document.getElementById('nav-rule-analyzer').style.display = 'block';
+        }
+
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+
+        // --- VOICE AI PROTOCOL ---
+        let recognition = null;
+        let isVoiceActive = false;
+        
+        function speak(text) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.1;
+            synth.speak(utterance);
+        }
+
+        function toggleVoiceAI() {
+            if (!('webkitSpeechRecognition' in window)) {
+                return showToast("Voice AI is not supported in this browser. Use Chrome.", "error");
+            }
+            
+            const btn = document.getElementById('btn-voice-ai');
+            
+            if (isVoiceActive) {
+                recognition.stop();
+                isVoiceActive = false;
+                btn.style.background = '#3b82f6';
+                btn.innerHTML = '<i data-lucide="mic"></i> Voice Command';
+                lucide.createIcons();
+                showToast("Voice Protocol Disabled.", "success");
+                return;
+            }
+
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                isVoiceActive = true;
+                btn.style.background = '#ef4444';
+                btn.style.animation = 'pulse 1s infinite';
+                btn.innerHTML = '<i data-lucide="mic"></i> Listening...';
+                lucide.createIcons();
+                speak("Voice protocol online. Awaiting your command.");
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                console.log("Voice Command:", transcript);
+                
+                if (transcript.includes("oracle") || transcript.includes("intelligence")) {
+                    activateNeuralOracle();
+                    speak("Activating the Neural Oracle now.");
+                } else if (transcript.includes("evaluation") || transcript.includes("evaluate")) {
+                    window.location.href = 'evaluation.html';
+                    speak("Navigating to the advanced evaluation terminal.");
+                } else if (transcript.includes("cartel") || transcript.includes("fraud")) {
+                    speak("Warning. Navigating to Cartel Intelligence Network.");
+                    window.location.href = 'cartel.html';
+                } else {
+                    speak("Command not recognized. Please try again.");
+                }
+            };
+
+            recognition.onend = function() {
+                isVoiceActive = false;
+                btn.style.background = '#3b82f6';
+                btn.style.animation = 'none';
+                btn.innerHTML = '<i data-lucide="mic"></i> Voice Command';
+                lucide.createIcons();
+            };
+
+            recognition.start();
+        }
+        // -------------------------
+
+        async function activateNeuralOracle() {
+            const panel = document.getElementById('neural-oracle-panel');
+            if(panel.style.display === 'none') {
+                panel.style.display = 'block';
+                showToast("Neural Oracle Online: Syncing with CAFE v5.0 Stacking Engine...", "success");
+                
+                try {
+                    const res = await fetch(`${API_BASE_URL}/reports/predictive-forecast?material_category=IT%20Hardware`, {
+                        headers: { 'Authorization': `Bearer ${ApiClient.getToken()}` }
+                    });
+                    const data = await res.json();
+                    const insight = data.ai_insight || {};
+                    const metadata = data.engine_metadata || {};
+                    
+                    document.getElementById('oracle-timing-sector').innerText = data.category || 'IT Hardware';
+                    document.getElementById('oracle-timing-analysis').innerHTML = `<strong>Analysis:</strong> Price index is expected to change by <strong>${insight.projected_variance_pct || '0'}%</strong>. Expected Shortfall (ES 95%): ₹${((metadata.expected_shortfall_95 || 0) / 100000).toFixed(2)} L.`;
+                    
+                    const recText = insight.recommendation || 'Awaiting swarm coordination...';
+                    document.getElementById('oracle-timing-recommendation').innerHTML = `<i data-lucide="trending-up" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> <strong>Verdict: ${insight.action || 'HOLD'}</strong> - ${recText}`;
+                    
+                    lucide.createIcons();
+                    
+                    speak(`Neural Oracle Activated. Material category is ${data.category}. Market prediction verdict is ${insight.action}. Recommendation details: ${recText}`);
+                    
+                } catch(e) {
+                    console.error("Neural Oracle Sync failed:", e);
+                    document.getElementById('oracle-timing-analysis').innerHTML = `<strong>Analysis:</strong> Offline. Failed to connect to CAFE backend Stacking Engine.`;
+                }
+            } else {
+                panel.style.display = 'none';
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        async function initDashboard() {
+            try {
+                const stats = await ApiClient.getDashboardStats();
+                if (!stats) throw new Error("Failed to load stats data");
+                dashboardStats = stats;
+                
+                // Update KPI Cards
+                document.getElementById('stat-tenders').textContent = stats.total_tenders || 0;
+                document.getElementById('stat-bids').textContent = stats.total_bids || 0;
+                document.getElementById('stat-pending').textContent = stats.pending_evaluations || 0;
+                document.getElementById('stat-score').textContent = stats.avg_bid_score || 0;
+
+                // Status Chart
+                const statusCtx = document.getElementById('statusChart').getContext('2d');
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: stats.status_distribution.map(s => s.status),
+                        datasets: [{
+                            data: stats.status_distribution.map(s => s.count),
+                            backgroundColor: [
+                                '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right' } },
+                        cutout: '70%'
+                    }
+                });
+
+                // Monthly Chart
+                const bidsCtx = document.getElementById('bidsChart').getContext('2d');
+                new Chart(bidsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: stats.monthly_bids.map(m => m.month),
+                        datasets: [{
+                            label: 'Bids Received',
+                            data: stats.monthly_bids.map(m => m.count),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // Recent Tenders Table
+                const tbody = document.querySelector('#recent-tenders-table tbody');
+                tbody.innerHTML = '';
+                if(stats.recent_tenders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No tenders found.</td></tr>';
+                } else {
+                    stats.recent_tenders.forEach(t => {
+                        const date = new Date(t.created_at).toLocaleDateString();
+                        let badgeClass = 'badge-primary';
+                        if(t.status === 'Published') badgeClass = 'badge-success';
+                        else if(t.status === 'Closed' || t.status === 'Cancelled') badgeClass = 'badge-danger';
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${t.bid_number}</strong></td>
+                                <td>${t.title}</td>
+                                <td><span class="badge ${badgeClass}">${t.status}</span></td>
+                                <td>${date}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                // Load Audit Stream
+                const logs = await ApiClient.getAuditLog();
+                dashboardLogs = logs;
+                const auditDiv = document.getElementById('audit-stream');
+                auditDiv.innerHTML = '';
+                if(logs.length === 0) {
+                    auditDiv.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding-top:40%;">No activity recorded yet.</div>';
+                } else {
+                    logs.forEach(l => {
+                        const date = new Date(l.timestamp).toLocaleTimeString();
+                        let color = '#3b82f6';
+                        if(l.action.includes('AWARD')) color = '#10b981';
+                        if(l.action.includes('FRAUD') || l.action.includes('DISQUALIFY')) color = '#ef4444';
+                        
+                        auditDiv.innerHTML += `
+                            <div style="border-left: 2px solid ${color}; padding-left: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <div style="color: #94a3b8; font-size: 0.7rem; display:flex; justify-content:space-between;">
+                                    <span>[${date}] User ID: ${l.user_id}</span>
+                                    <span style="color: #64748b;" title="Cryptographic Hash">${l.current_hash ? l.current_hash.substring(0,16) + '...' : ''}</span>
+                                </div>
+                                <div style="color: ${color}; font-weight: bold; margin: 4px 0;">${l.action}</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem;">${l.details}</div>
+                            </div>
+                        `;
+                    });
+                }
+                lucide.createIcons();
+            } catch (error) {
+                console.error("Dashboard Load Error:", error);
+            }
+        }
+
+        initDashboard();
+        loadKpiAndInsights();
+
+        async function loadKpiAndInsights() {
+            try {
+                const kpi = await ApiClient.getKpiSummary();
+                if (!kpi) throw new Error("Failed to load KPI data");
+                dashboardKpi = kpi;
+                document.getElementById('kpi-cycle').textContent = kpi.avg_cycle_days ? kpi.avg_cycle_days + ' days' : 'N/A';
+                document.getElementById('kpi-savings').textContent = kpi.avg_savings_pct ? kpi.avg_savings_pct + '%' : '0%';
+                document.getElementById('kpi-threats').textContent = kpi.active_threats || 0;
+                document.getElementById('kpi-compliance').textContent = kpi.vendor_compliance_pct ? kpi.vendor_compliance_pct + '%' : '100%';
+                if (kpi.active_threats > 0) document.getElementById('kpi-threats').style.color = '#ef4444';
+            } catch(e) { console.warn('KPI load error:', e); }
+
+            try {
+                const ins = await ApiClient.getAiInsights();
+                const el = document.getElementById('insights-list');
+                if (!ins.insights || ins.insights.length === 0) {
+                    el.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem">No insights at this time.</div>';
+                    return;
+                }
+                el.innerHTML = ins.insights.slice(0,4).map(i => `
+                    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:rgba(0,0,0,0.2);border-radius:10px;border-left:3px solid ${i.color}">
+                        <i data-lucide="${i.icon}" style="width:18px;height:18px;color:${i.color};flex-shrink:0;margin-top:2px"></i>
+                        <div style="flex:1;min-width:0">
+                            <div style="font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:3px">${i.title}</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);line-height:1.5">${i.detail}</div>
+                        </div>
+                        <span class="badge" style="background:${i.color}20;color:${i.color};font-size:0.68rem;flex-shrink:0">${i.severity}</span>
+                    </div>`).join('');
+                lucide.createIcons();
+            } catch(e) { console.warn('Insights load error:', e); }
+        }
+        
+        // Connect Global WebSocket for true real-time Audit Ledger Stream
+        function connectAuditWebSocket() {
+            const auditWs = new WebSocket(API_BASE_URL.replace('http', 'ws') + '/ws/audit');
+            auditWs.onmessage = (event) => {
+                try {
+                    const newLogs = JSON.parse(event.data);
+                    const auditDiv = document.getElementById('audit-stream');
+                    
+                    if(auditDiv.innerHTML.includes('No activity') || auditDiv.innerHTML.includes('Syncing Ledger')) {
+                        auditDiv.innerHTML = '';
+                    }
+
+                    newLogs.forEach(l => {
+                        const date = new Date(l.timestamp).toLocaleTimeString();
+                        let color = '#3b82f6';
+                        if(l.action.includes('AWARD')) color = '#10b981';
+                        if(l.action.includes('FRAUD') || l.action.includes('DISQUALIFY')) color = '#ef4444';
+                        
+                        const logHtml = `
+                            <div style="border-left: 2px solid ${color}; padding-left: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); animation: slideInRight 0.3s forwards;">
+                                <div style="color: #94a3b8; font-size: 0.7rem; display:flex; justify-content:space-between;">
+                                    <span>[${date}] User ID: ${l.user_id}</span>
+                                    <span style="color: #64748b;">${l.current_hash ? l.current_hash.substring(0,16) + '...' : ''}</span>
+                                </div>
+                                <div style="color: ${color}; font-weight: bold; margin: 4px 0;">${l.action}</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem;">${l.details}</div>
+                            </div>
+                        `;
+                        // Insert at the top so it scrolls naturally
+                        auditDiv.insertAdjacentHTML('afterbegin', logHtml);
+                    });
+                } catch(e) { console.error("WS Parse error", e); }
+            };
+            auditWs.onclose = () => setTimeout(connectAuditWebSocket, 2000); // Reconnect
+        }
+        connectAuditWebSocket();
+    </script>
+    
+    <!-- AI Chatbot Widget -->
+    <div id="ai-chat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-family: 'Inter', sans-serif;">
+        <!-- Chat Button -->
+        <button id="chat-toggle-btn" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #ec4899); border: none; color: white; cursor: pointer; box-shadow: 0 10px 25px rgba(236, 72, 153, 0.4); display: flex; align-items: center; justify-content: center; transition: all 0.3s;" onclick="toggleChat()">
+            <i data-lucide="bot" style="width: 30px; height: 30px;"></i>
+        </button>
+        
+        <!-- Chat Window -->
+        <div id="chat-window" style="display: none; position: absolute; bottom: 80px; right: 0; width: 350px; height: 450px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); flex-direction: column; overflow: hidden;">
+            <div style="padding: 15px 20px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2)); border-bottom: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: #8b5cf6; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="sparkles" style="width: 18px; height: 18px; color: white;"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1rem; color: white;">GEM Assistant</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #a78bfa;">Online | Ask me anything</p>
+                </div>
+                <button onclick="toggleChat()" style="margin-left: auto; background: none; border: none; color: #94a3b8; cursor: pointer;"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+            </div>
+            
+            <div id="chat-messages" style="flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+                <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2); padding: 10px 14px; border-radius: 12px; border-bottom-left-radius: 2px; align-self: flex-start; max-width: 85%; color: #e2e8f0;">
+                    Hello! I'm the AI Procurement Assistant. Try asking:<br/>
+                    <span style="color: #a78bfa;">- "Who won the latest tender?"</span><br/>
+                    <span style="color: #a78bfa;">- "Are there any high risk vendors?"</span>
+                </div>
+            </div>
+            
+            <div style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
+                <input type="text" id="chat-input" placeholder="Type a message..." style="flex: 1; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 20px; color: white; outline: none; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                <button onclick="sendChatMessage()" style="width: 40px; height: 40px; border-radius: 50%; background: #8b5cf6; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleChat() {
+            const w = document.getElementById('chat-window');
+            w.style.display = w.style.display === 'none' ? 'flex' : 'none';
+        }
+        
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if(!msg) return;
+            
+            const msgsDiv = document.getElementById('chat-messages');
+            
+            // Add user message
+            msgsDiv.innerHTML += `
+                <div style="background: #3b82f6; padding: 10px 14px; border-radius: 12px; border-bottom-right-radius: 2px; align-self: flex-end; max-width: 85%; color: white;">
+                    ${msg}
+                </div>
+            `;
+            input.value = '';
+            msgsDiv.scrollTop = msgsDiv.scrollHeight;
+            
+            // Add typing indicator
+            const typingId = "typing-" + Date.now();
+            msgsDiv.innerHTML += `
+                <div id="${typingId}" style="background: rgba(139, 92, 246, 0.1); padding: 10px 14px; border-radius: 12px; border-bottom-left-radius: 2px; align-self: flex-start; color: #a78bfa;">
+                    <i data-lucide="loader" class="spin" style="width: 14px; height: 14px;"></i> Thinking...
+                </div>
+            `;
+            lucide.createIcons();
+            msgsDiv.scrollTop = msgsDiv.scrollHeight;
+            
+            try {
+                const response = await ApiClient.sendChatMessage(msg);
+                document.getElementById(typingId).remove();
+                
+                msgsDiv.innerHTML += `
+                    <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2); padding: 10px 14px; border-radius: 12px; border-bottom-left-radius: 2px; align-self: flex-start; max-width: 85%; color: #e2e8f0;">
+                        ${response.reply}
+                    </div>
+                `;
+            } catch(e) {
+                document.getElementById(typingId).remove();
+                msgsDiv.innerHTML += `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 14px; border-radius: 12px; border-bottom-left-radius: 2px; align-self: flex-start; color: #fca5a5;">
+                        Sorry, I encountered an error connecting to the brain.
+                    </div>
+                `;
+            }
+            msgsDiv.scrollTop = msgsDiv.scrollHeight;
+        }
+
+        let aiChartInstance = null;
+
+        async function askAI() {
+            const query = document.getElementById('ai-query-input').value;
+            if(!query) return;
+            
+            try {
+                const res = await ApiClient.askC3AI(query);
+                document.getElementById('ai-response-container').style.display = 'block';
+                document.getElementById('ai-insight').textContent = "🤖 AI Insight: " + res.insight;
+                
+                const ctx = document.getElementById('ai-chart').getContext('2d');
+                if(aiChartInstance) aiChartInstance.destroy();
+                
+                aiChartInstance = new Chart(ctx, {
+                    type: res.type,
+                    data: {
+                        labels: res.labels,
+                        datasets: [{
+                            label: 'Data',
+                            data: res.data,
+                            backgroundColor: res.type === 'doughnut' || res.type === 'pie' ? 
+                                ['#8b5cf6', '#ef4444', '#10b981', '#3b82f6', '#f59e0b'] : 'rgba(139, 92, 246, 0.5)',
+                            borderColor: res.type === 'line' ? '#8b5cf6' : '#fff',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: res.type !== 'bar' && res.type !== 'line' }, title: { display: true, text: res.title, color: '#fff' } },
+                        scales: res.type === 'bar' || res.type === 'line' ? {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
+                            x: { grid: { display: false } }
+                        } : {}
+                    }
+                });
+                
+            } catch(e) { showToast("AI Error: " + e.message, 'error'); }
+        }
+    
+        // Dynamic Role-based navigation controls
+        const userNav = JSON.parse(localStorage.getItem('gem_user'));
+        if (userNav) {
+            const isStaff = userNav.role === 'Admin' || userNav.role === 'Evaluator';
+            ['nav-evaluation', 'nav-cartel', 'nav-plagiarism', 'nav-pqc', 'nav-tender-rules', 'nav-forensics', 'nav-analysis'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = isStaff ? 'block' : 'none';
+            });
+        }
+
+        // ── INTELLIGENCE TELEMETRY PANEL ────────────────────────
+        async function loadTelemetry() {
+            try {
+                const token = localStorage.getItem('access_token') || '';
+                const res = await fetch(`${API_BASE_URL}/reports/predictive-vendor-risk`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error('API unavailable');
+                const data = await res.json();
+                renderTelemetry(data);
+            } catch {
+                // Demo fallback
+                renderTelemetry({
+                    model_type: 'Heuristic', vendor_count: 3, critical_count: 1, high_count: 1,
+                    predictions: [
+                        { company_name: 'Cyber Infosys Ltd', risk_score: 0.82, risk_level: 'CRITICAL', risk_factors: ['BLACKLISTED'] },
+                        { company_name: 'Emdee Digitronics', risk_score: 0.54, risk_level: 'HIGH', risk_factors: ['Price volatility'] },
+                        { company_name: 'BenQ India', risk_score: 0.18, risk_level: 'LOW', risk_factors: [] },
+                    ]
+                });
+            }
+        }
+
+        function renderTelemetry(data) {
+            const summary = document.getElementById('telemetrySummary');
+            if (summary) {
+                summary.innerHTML = `
+                    <span style="color:#ef4444"><i class="fas fa-skull-crossbones"></i> ${data.critical_count||0} Critical</span>
+                    &nbsp;·&nbsp;
+                    <span style="color:#f97316"><i class="fas fa-exclamation-triangle"></i> ${data.high_count||0} High Risk</span>
+                    &nbsp;·&nbsp;
+                    <span style="color:#94a3b8">${data.vendor_count||0} vendors profiled via ${data.model_type||'ML'}</span>
+                `;
+            }
+            const list = document.getElementById('telemetryList');
+            if (!list) return;
+            const top5 = (data.predictions || []).slice(0, 5);
+            list.innerHTML = top5.map(v => {
+                const pct = Math.round(v.risk_score * 100);
+                const lvl = v.risk_level?.toLowerCase() || 'low';
+                const colors = { critical: '#ef4444', high: '#f97316', moderate: '#fbbf24', low: '#22c55e' };
+                const color = colors[lvl] || '#22c55e';
+                return `
+                    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid rgba(99,102,241,0.1)">
+                        <div style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0"></div>
+                        <div style="flex:1;font-size:0.82rem;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">
+                            <a href="predictive_risk.html?search=${encodeURIComponent(v.company_name)}" style="color:#ffffff;text-decoration:none;" onmouseover="this.style.textDecoration='underline';this.style.color='#6366f1';" onmouseout="this.style.textDecoration='none';this.style.color='#ffffff';">${v.company_name}</a>
+                        </div>
+                        <div style="width:80px;background:rgba(255,255,255,0.06);border-radius:99px;height:5px;overflow:hidden">
+                            <div style="width:${pct}%;height:100%;background:${color};border-radius:99px;transition:width 0.8s"></div>
+                        </div>
+                        <div style="font-size:0.75rem;font-family:monospace;color:${color};width:35px;text-align:right">${pct}%</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        loadTelemetry();
+
+    </script>
+
+    <!-- ══════════════════════════════════════════════════════════
+         INTELLIGENCE TELEMETRY PANEL
+    ════════════════════════════════════════════════════════════ -->
+    <div id="telemetryPanel" style="margin:1.5rem;background:linear-gradient(135deg,rgba(12,16,32,0.95),rgba(17,24,40,0.95));border:1px solid rgba(99,102,241,0.2);border-radius:16px;overflow:hidden;box-shadow:0 0 40px rgba(99,102,241,0.08)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid rgba(99,102,241,0.15);cursor:pointer" onclick="document.getElementById('telemetryBody').style.display=document.getElementById('telemetryBody').style.display==='none'?'block':'none'">
+            <div style="display:flex;align-items:center;gap:0.75rem">
+                <div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#a855f7);border-radius:8px;display:grid;place-items:center;font-size:0.9rem">🧠</div>
+                <div>
+                    <div style="font-weight:700;font-size:0.95rem">Intelligence Telemetry</div>
+                    <div id="telemetrySummary" style="font-size:0.75rem;color:#64748b">Loading predictive risk scores...</div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem">
+                <button onclick="event.stopPropagation();loadTelemetry()" style="padding:0.35rem 0.75rem;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);border-radius:7px;color:#a5b4fc;font-size:0.75rem;cursor:pointer"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <a href="predictive_risk.html" onclick="event.stopPropagation()" style="padding:0.35rem 0.75rem;background:linear-gradient(135deg,#6366f1,#a855f7);border:none;border-radius:7px;color:#fff;font-size:0.75rem;cursor:pointer;text-decoration:none;font-weight:600"><i class="fas fa-external-link-alt"></i> Full Report</a>
+                <i class="fas fa-chevron-down" style="color:#64748b;font-size:0.8rem"></i>
+            </div>
+        </div>
+        <div id="telemetryBody" style="padding:1rem 1.5rem">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                <div>
+                    <div style="font-size:0.78rem;color:#64748b;margin-bottom:0.6rem;font-weight:600">TOP RISK VENDORS</div>
+                    <div id="telemetryList">
+                        <div style="height:12px;background:linear-gradient(90deg,rgba(99,102,241,0.1) 25%,rgba(99,102,241,0.05) 50%,rgba(99,102,241,0.1) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;margin-bottom:8px"></div>
+                        <div style="height:12px;background:linear-gradient(90deg,rgba(99,102,241,0.1) 25%,rgba(99,102,241,0.05) 50%,rgba(99,102,241,0.1) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;margin-bottom:8px"></div>
+                        <div style="height:12px;background:linear-gradient(90deg,rgba(99,102,241,0.1) 25%,rgba(99,102,241,0.05) 50%,rgba(99,102,241,0.1) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px"></div>
+                    </div>
+                </div>
+                <div style="border-left:1px solid rgba(99,102,241,0.1);padding-left:1rem">
+                    <div style="font-size:0.78rem;color:#64748b;margin-bottom:0.6rem;font-weight:600">QUICK ACTIONS</div>
+                    <div style="display:flex;flex-direction:column;gap:0.5rem">
+                        <a href="predictive_risk.html" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.15);border-radius:8px;text-decoration:none;color:#a5b4fc;font-size:0.8rem;transition:all 0.2s" onmouseover="this.style.background='rgba(99,102,241,0.15)'" onmouseout="this.style.background='rgba(99,102,241,0.08)'"><i class="fas fa-chart-line"></i> Predictive Risk Dashboard</a>
+                        <a href="deep_forensics.html" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.15);border-radius:8px;text-decoration:none;color:#c084fc;font-size:0.8rem;transition:all 0.2s" onmouseover="this.style.background='rgba(168,85,247,0.15)'" onmouseout="this.style.background='rgba(168,85,247,0.08)'"><i class="fas fa-dna"></i> DNA Fingerprint Analysis</a>
+                        <a href="cartel.html" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);border-radius:8px;text-decoration:none;color:#f87171;font-size:0.8rem;transition:all 0.2s" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'"><i class="fas fa-project-diagram"></i> Cartel Network Graph</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

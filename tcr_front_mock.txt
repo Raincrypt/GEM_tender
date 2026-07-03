@@ -1,0 +1,1 @@
+2178:     // Re-sort the main _bids array alphabetically by vendor name to match spreadsheet mockup exactly

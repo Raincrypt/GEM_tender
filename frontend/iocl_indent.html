@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOCL Material Indent - Procurement Ecosystem</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .iocl-header {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.15), rgba(249, 115, 22, 0.05));
+            border: 1px solid rgba(234, 88, 12, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .iocl-logo {
+            width: 64px; height: 64px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ea580c, #f59e0b);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.1rem; color: white;
+            letter-spacing: 1px;
+        }
+        .iocl-header h2 { color: #fb923c; margin: 0 0 4px 0; }
+        .iocl-header p { color: var(--text-muted); margin: 0; font-size: 0.85rem; }
+
+        .pipeline {
+            display: flex; align-items: center; gap: 0;
+            margin-bottom: 32px; overflow-x: auto; padding: 10px 0;
+        }
+        .pipeline-step {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600;
+            white-space: nowrap; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02); color: var(--text-muted);
+            transition: all 0.3s;
+        }
+        .pipeline-step.active {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.2), rgba(249, 115, 22, 0.1));
+            border-color: #ea580c; color: #fb923c;
+            box-shadow: 0 0 15px rgba(234, 88, 12, 0.15);
+        }
+        .pipeline-step.done {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3); color: #10b981;
+        }
+        .pipeline-arrow {
+            color: var(--text-muted); font-size: 1.2rem; padding: 0 4px;
+        }
+
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+        .form-grid .full-width { grid-column: 1 / -1; }
+
+        .urgency-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
+        .urgency-routine { background: rgba(16,185,129,0.15); color: #10b981; }
+        .urgency-urgent { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .urgency-emergency { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+        .indent-card {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 12px; padding: 20px; margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+        .indent-card:hover {
+            border-color: rgba(234, 88, 12, 0.4);
+            box-shadow: 0 0 20px rgba(234, 88, 12, 0.05);
+        }
+
+        @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>IOCL Material Indent</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Stage 1 — Purchase Requisition & Indent Management</p>
+                </div>
+                <div class="user-profile">
+                    <div style="text-align: right;">
+                        <div id="user-name" style="font-weight: 500;">User</div>
+                        <div id="user-role" style="font-size: 0.8rem; color: var(--text-muted);">Role</div>
+                    </div>
+                    <div class="avatar" id="user-avatar">U</div>
+                </div>
+            </header>
+
+            <!-- IOCL Branding Header -->
+            <div class="iocl-header">
+                <div class="iocl-logo">IOCL</div>
+                <div>
+                    <h2>Indian Oil Corporation Limited</h2>
+                    <p>Ministry of Petroleum & Natural Gas | Govt. of India</p>
+                </div>
+            </div>
+
+            <!-- 9-Stage Pipeline Tracker -->
+            <div class="pipeline" id="pipeline-tracker">
+                <div class="pipeline-step active" data-stage="1"><i data-lucide="clipboard-list" style="width:14px;height:14px;"></i> 1. Indent</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="2"><i data-lucide="megaphone" style="width:14px;height:14px;"></i> 2. NIT</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="3"><i data-lucide="inbox" style="width:14px;height:14px;"></i> 3. Bid Submission</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="4"><i data-lucide="scan-search" style="width:14px;height:14px;"></i> 4. TCE</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="5"><i data-lucide="indian-rupee" style="width:14px;height:14px;"></i> 5. Price Bid</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="6"><i data-lucide="handshake" style="width:14px;height:14px;"></i> 6. PAC</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="7"><i data-lucide="file-check" style="width:14px;height:14px;"></i> 7. PO</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="8"><i data-lucide="truck" style="width:14px;height:14px;"></i> 8. Delivery</div>
+                <span class="pipeline-arrow">→</span>
+                <div class="pipeline-step" data-stage="9"><i data-lucide="banknote" style="width:14px;height:14px;"></i> 9. Payment</div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background: rgba(234,88,12,0.1); color: #ea580c;"><i data-lucide="clipboard-list"></i></div>
+                    <div class="stat-info"><h3 id="stat-total">0</h3><p>Total Indents</p></div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background: rgba(245,158,11,0.1); color: #f59e0b;"><i data-lucide="clock"></i></div>
+                    <div class="stat-info"><h3 id="stat-pending">0</h3><p>Pending Approval</p></div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background: rgba(16,185,129,0.1); color: #10b981;"><i data-lucide="check-circle"></i></div>
+                    <div class="stat-info"><h3 id="stat-approved">0</h3><p>Approved</p></div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background: rgba(37,99,235,0.1); color: #2563eb;"><i data-lucide="file-text"></i></div>
+                    <div class="stat-info"><h3 id="stat-converted">0</h3><p>Converted to NIT</p></div>
+                </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="card mb-4">
+                <div class="d-flex justify-between align-center">
+                    <div class="d-flex gap-3 align-center">
+                        <select class="form-control" id="indent-status-filter" style="width: 200px; padding: 8px;" onchange="loadIndents()">
+                            <option value="">All Statuses</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Converted to Tender">Converted to NIT</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="openCreateIndentModal()" style="background: linear-gradient(135deg, #ea580c, #f59e0b); border: none;">
+                        <i data-lucide="plus"></i> Raise New Indent
+                    </button>
+                </div>
+            </div>
+
+            <!-- Indents List -->
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table" id="indents-table">
+                        <thead>
+                            <tr>
+                                <th>Indent No.</th>
+                                <th>SAP PR</th>
+                                <th>Material</th>
+                                <th>Qty</th>
+                                <th>Est. Value (₹)</th>
+                                <th>Urgency</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="indents-tbody">
+                            <tr><td colspan="8" style="text-align:center; padding:40px; color:var(--text-muted);">Loading indents...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Indent Modal -->
+    <div class="modal-overlay" id="createIndentModal">
+        <div class="card modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 style="display:flex; align-items:center; gap:10px;">
+                    <i data-lucide="clipboard-plus" style="color: #ea580c;"></i> Raise Material Indent
+                </h2>
+                <button class="btn btn-outline" style="padding: 4px; border: none;" onclick="closeCreateIndentModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form id="indent-form" onsubmit="submitCreateIndent(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">SAP Material Code *</label>
+                        <input type="text" class="form-control" id="f-material-code" placeholder="e.g. 300012345" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Urgency Classification</label>
+                        <select class="form-control" id="f-urgency">
+                            <option value="Routine">Routine</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="Emergency">Emergency</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Material Description *</label>
+                        <input type="text" class="form-control" id="f-material-desc" placeholder="e.g. High-Speed Diesel Pump Assembly" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Quantity *</label>
+                        <input type="number" class="form-control" id="f-qty" min="1" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Unit of Measurement</label>
+                        <select class="form-control" id="f-uom">
+                            <option value="NOS">NOS (Numbers)</option>
+                            <option value="KG">KG (Kilogram)</option>
+                            <option value="MT">MT (Metric Ton)</option>
+                            <option value="KL">KL (Kilolitre)</option>
+                            <option value="LTR">LTR (Litre)</option>
+                            <option value="SET">SET</option>
+                            <option value="LOT">LOT</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Estimated Unit Rate (₹)</label>
+                        <input type="number" class="form-control" id="f-unit-rate" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Budget Head</label>
+                        <select class="form-control" id="f-budget">
+                            <option value="Capital">Capital</option>
+                            <option value="Revenue">Revenue</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cost Center</label>
+                        <input type="text" class="form-control" id="f-cost-center" placeholder="e.g. CC-REF-001">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Plant / Unit Code</label>
+                        <select class="form-control" id="f-plant">
+                            <option value="IOCL-REF-MAT">Mathura Refinery</option>
+                            <option value="IOCL-REF-PAN">Panipat Refinery</option>
+                            <option value="IOCL-REF-GUW">Guwahati Refinery</option>
+                            <option value="IOCL-REF-BAR">Barauni Refinery</option>
+                            <option value="IOCL-REF-HAL">Haldia Refinery</option>
+                            <option value="IOCL-PL-NORTH">Northern Pipeline</option>
+                            <option value="IOCL-MKT-EAST">Marketing - East</option>
+                            <option value="IOCL-MKT-WEST">Marketing - West</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Indenting Department</label>
+                        <input type="text" class="form-control" id="f-dept" placeholder="e.g. Mechanical Maintenance">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Indenting Officer</label>
+                        <input type="text" class="form-control" id="f-officer" placeholder="e.g. Er. Rajesh Kumar">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Technical Specification (SOR / SOW)</label>
+                        <textarea class="form-control" id="f-spec" rows="4" placeholder="Detailed technical specifications as per IOCL standards..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Justification for Procurement</label>
+                        <textarea class="form-control" id="f-justification" rows="3" placeholder="Explain why this material is needed..."></textarea>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; justify-content:flex-end; margin-top: 16px;">
+                    <button type="button" class="btn btn-outline" onclick="closeCreateIndentModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #ea580c, #f59e0b); border: none;">
+                        <i data-lucide="save"></i> Create Indent
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        loadUserProfile();
+        lucide.createIcons();
+
+        async function loadStats() {
+            try {
+                const stats = await ApiClient.getIOCLStats();
+                document.getElementById('stat-total').textContent = stats.total_indents;
+                document.getElementById('stat-pending').textContent = stats.pending_approval;
+                document.getElementById('stat-approved').textContent = stats.approved_indents;
+                document.getElementById('stat-converted').textContent = stats.converted_to_tender;
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadIndents() {
+            const status = document.getElementById('indent-status-filter').value;
+            const tbody = document.getElementById('indents-tbody');
+            try {
+                const indents = await ApiClient.getIndents(status);
+                if (indents.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--text-muted);">No indents found. Click "Raise New Indent" to start.</td></tr>';
+                    lucide.createIcons();
+                    return;
+                }
+                tbody.innerHTML = indents.map(ind => {
+                    const urgencyClass = ind.urgency === 'Emergency' ? 'urgency-emergency' : ind.urgency === 'Urgent' ? 'urgency-urgent' : 'urgency-routine';
+                    const statusBadge = ind.status === 'Approved' ? 'badge-success' :
+                                        ind.status === 'Submitted' ? 'badge-warning' :
+                                        ind.status === 'Rejected' ? 'badge-danger' :
+                                        ind.status.includes('Converted') ? 'badge-primary' : 'badge-warning';
+
+                    let actions = '';
+                    if (ind.status === 'Draft') {
+                        actions = `<button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;" onclick="submitForApproval(${ind.id})"><i data-lucide="send" style="width:14px;height:14px;"></i> Submit</button>`;
+                    } else if (ind.status === 'Submitted') {
+                        actions = `
+                            <button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem; background:#10b981; border:none;" onclick="approveIndent(${ind.id})"><i data-lucide="check" style="width:14px;height:14px;"></i> Approve</button>
+                            <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem;" onclick="rejectIndent(${ind.id})"><i data-lucide="x" style="width:14px;height:14px;"></i> Reject</button>
+                        `;
+                    } else if (ind.status === 'Approved') {
+                        actions = `<button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem; background:linear-gradient(135deg,#8b5cf6,#3b82f6); border:none;" onclick="convertToTender(${ind.id})"><i data-lucide="file-plus" style="width:14px;height:14px;"></i> Convert to NIT</button>`;
+                    } else if (ind.status.includes('Converted')) {
+                        actions = `<a href="evaluation.html" class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color: var(--primary);"><i data-lucide="external-link" style="width:14px;height:14px;"></i> View NIT</a>`;
+                    }
+
+                    return `<tr>
+                        <td style="font-weight:600; color: #fb923c;">${ind.indent_number}</td>
+                        <td style="font-family:monospace; color: var(--text-muted);">${ind.sap_pr_number || '-'}</td>
+                        <td>
+                            <div style="font-weight:500;">${ind.material_description}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Code: ${ind.material_code}</div>
+                        </td>
+                        <td>${ind.quantity} ${ind.unit_of_measurement}</td>
+                        <td style="font-weight:600;">₹${(ind.estimated_total_value || 0).toLocaleString('en-IN')}</td>
+                        <td><span class="urgency-badge ${urgencyClass}">${ind.urgency}</span></td>
+                        <td><span class="badge ${statusBadge}">${ind.status}</span></td>
+                        <td style="white-space: nowrap;">${actions}</td>
+                    </tr>`;
+                }).join('');
+                lucide.createIcons();
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--danger);">Failed to load indents.</td></tr>';
+            }
+        }
+
+        function openCreateIndentModal() {
+            document.getElementById('createIndentModal').classList.add('active');
+        }
+
+        function closeCreateIndentModal() {
+            document.getElementById('createIndentModal').classList.remove('active');
+            document.getElementById('indent-form').reset();
+        }
+
+        async function submitCreateIndent(e) {
+            e.preventDefault();
+            const data = {
+                material_code: document.getElementById('f-material-code').value,
+                material_description: document.getElementById('f-material-desc').value,
+                quantity: parseFloat(document.getElementById('f-qty').value),
+                unit_of_measurement: document.getElementById('f-uom').value,
+                estimated_unit_rate: parseFloat(document.getElementById('f-unit-rate').value) || 0,
+                budget_head: document.getElementById('f-budget').value,
+                cost_center: document.getElementById('f-cost-center').value,
+                plant_code: document.getElementById('f-plant').value,
+                indenting_department: document.getElementById('f-dept').value,
+                indenting_officer: document.getElementById('f-officer').value,
+                technical_specification: document.getElementById('f-spec').value,
+                justification: document.getElementById('f-justification').value,
+                urgency: document.getElementById('f-urgency').value
+            };
+            try {
+                const result = await ApiClient.createIndent(data);
+                showToast(`Indent ${result.indent_number} created with SAP PR: ${result.sap_pr_number}`, 'success');
+                closeCreateIndentModal();
+                loadIndents();
+                loadStats();
+            } catch(e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function submitForApproval(id) {
+            try {
+                await ApiClient.submitIndent(id);
+                showToast('Indent submitted for approval!', 'success');
+                loadIndents();
+                loadStats();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function approveIndent(id) {
+            if (!confirm('Approve this indent? This will authorize procurement.')) return;
+            try {
+                const res = await ApiClient.approveIndent(id);
+                showToast(res.message, 'success');
+                loadIndents();
+                loadStats();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function rejectIndent(id) {
+            if (!confirm('Reject this indent?')) return;
+            try {
+                const res = await ApiClient.rejectIndent(id);
+                showToast(res.message, 'success');
+                loadIndents();
+                loadStats();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function convertToTender(id) {
+            if (!confirm('Convert this indent to a formal IOCL NIT? This will auto-generate evaluation criteria.')) return;
+            try {
+                const res = await ApiClient.convertIndentToTender(id);
+                showToast(`${res.message}. NIT: ${res.nit_number}`, 'success');
+
+                // Animate pipeline
+                document.querySelector('.pipeline-step[data-stage="1"]').classList.remove('active');
+                document.querySelector('.pipeline-step[data-stage="1"]').classList.add('done');
+                document.querySelector('.pipeline-step[data-stage="2"]').classList.add('active');
+
+                loadIndents();
+                loadStats();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        // Init
+        loadStats();
+        loadIndents();
+
+    </script>
+</body>
+</html>

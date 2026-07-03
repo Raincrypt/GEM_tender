@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swarm AI Command Playground | GEM Tender</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #070b13; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .topbar { padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(15,23,42,0.6); backdrop-filter: blur(10px); }
+        .topbar h1 { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 10px; color: #ffffff; }
+        .topbar a { color: #94a3b8; text-decoration: none; font-weight: 600; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.08); padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+        .topbar a:hover { color: white; border-color: #3b82f6; background: rgba(59,130,246,0.05); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Sidebar Configuration Controls */
+        .sidebar { width: 340px; border-right: 1px solid rgba(255,255,255,0.05); padding: 24px; background: rgba(15,23,42,0.3); display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .c { background: rgba(2,6,23,0.5); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 18px; }
+        .ct { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+        
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
+        .control-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; transition: border-color 0.2s; }
+        .control-input:focus { border-color: #3b82f6; }
+        
+        /* Sliders */
+        .slider-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
+        .slider-val { font-weight: 700; color: #60a5fa; }
+        .range-slider { width: 100%; accent-color: #3b82f6; cursor: pointer; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); outline: none; margin-bottom: 12px; }
+        
+        .trigger-btn { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: all 0.2s; width: 100%; margin-bottom: 10px; }
+        .trigger-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .trigger-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-outline-red { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; }
+        .btn-outline-red:hover { background: rgba(239, 68, 68, 0.15); color: #ffffff; border-color: #ef4444; }
+
+        /* Chat Container & Log */
+        .chat-container { flex: 1; display: flex; flex-direction: column; position: relative; background: rgba(10,15,30,0.15); }
+        .chat-log { flex: 1; padding: 32px 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 100px; }
+        .chat-log::-webkit-scrollbar { width: 6px; }
+        .chat-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 6px; }
+        
+        .msg { display: flex; flex-direction: column; max-width: 80%; animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.78rem; font-weight: 700; }
+        .msg-body { padding: 14px 18px; border-radius: 12px; font-size: 0.9rem; line-height: 1.55; border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Agent-specific colors matching main engine */
+        .agent-planner .msg-header { color: #8b5cf6; } .agent-planner .msg-body { background: rgba(139, 92, 246, 0.07); border-color: rgba(139, 92, 246, 0.15); }
+        .agent-sentinel .msg-header { color: #ef4444; } .agent-sentinel .msg-body { background: rgba(239, 68, 68, 0.07); border-color: rgba(239, 68, 68, 0.15); }
+        .agent-oracle .msg-header { color: #06b6d4; } .agent-oracle .msg-body { background: rgba(6, 182, 212, 0.07); border-color: rgba(6, 182, 212, 0.15); }
+        .agent-analyst .msg-header { color: #3b82f6; } .agent-analyst .msg-body { background: rgba(59, 130, 246, 0.07); border-color: rgba(59, 130, 246, 0.15); }
+        .agent-negotiator .msg-header { color: #10b981; } .agent-negotiator .msg-body { background: rgba(16, 185, 129, 0.07); border-color: rgba(16, 185, 129, 0.15); }
+        .agent-critic .msg-header { color: #f43f5e; } .agent-critic .msg-body { background: rgba(244, 63, 94, 0.07); border-color: rgba(244, 63, 94, 0.15); }
+        .agent-auditor .msg-header { color: #f59e0b; } .agent-auditor .msg-body { background: rgba(245, 158, 11, 0.07); border-color: rgba(245, 158, 11, 0.15); }
+        .agent-user .msg-header { color: #60a5fa; } .agent-user .msg-body { background: rgba(96, 165, 250, 0.12); border-color: rgba(96, 165, 250, 0.25); }
+
+        .meta-box { background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #94a3b8; margin-top: 8px; border: 1px solid rgba(255,255,255,0.03); }
+        
+        /* Interactive Chat Input Area */
+        .chat-input-panel { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 40px; background: rgba(15,23,42,0.9); border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 12px; align-items: center; }
+        .chat-text-input { flex-grow: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; padding: 12px 18px; font-size: 0.9rem; outline: none; font-family: inherit; transition: border-color 0.2s; }
+        .chat-text-input:focus { border-color: #3b82f6; }
+        .chat-send-btn { background: #3b82f6; border: none; border-radius: 10px; color: white; padding: 12px 24px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background-color 0.2s; }
+        .chat-send-btn:hover { background: #2563eb; }
+        .chat-send-btn:disabled { background: #475569; opacity: 0.5; cursor: not-allowed; }
+
+        .pulse { width: 10px; height: 10px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: p 1s infinite; }
+        @keyframes p { 50% { opacity: 0.5; } }
+        
+        #status-bar { position: absolute; bottom: 85px; left: 40px; right: 40px; padding: 10px 20px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; z-index: 10; backdrop-filter: blur(10px); }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1><i data-lucide="cpu" style="color:#8b5cf6"></i> Swarm AI Cognitive Command Center</h1>
+    <div style="display:flex; gap:10px;">
+        <a href="plagiarism_report.html" style="border-color:#fbbf24; color:#fbbf24; background:rgba(251,191,36,0.05);"><i data-lucide="file-search" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Plagiarism Intel</a>
+        <a href="command_center.html">Back to Operations Room</a>
+    </div>
+</div>
+
+<div class="layout">
+    <!-- Sidebar Controls -->
+    <div class="sidebar">
+        <div class="c">
+            <div class="ct"><i data-lucide="crosshair"></i> Target Procurement</div>
+            <div class="input-group">
+                <label for="tender-id">Tender Reference ID</label>
+                <input type="number" id="tender-id" class="control-input" value="1" min="1">
+            </div>
+            
+            <div class="input-group">
+                <div class="slider-header">
+                    <label>Target Savings Margin</label>
+                    <span id="savings-pct-val" class="slider-val">5.0%</span>
+                </div>
+                <input type="range" id="target-savings-pct" class="range-slider" min="3" max="15" step="0.5" value="5.0" oninput="document.getElementById('savings-pct-val').textContent = this.value + '%'">
+            </div>
+
+            <div class="input-group">
+                <div class="slider-header">
+                    <label>Orchestrator Temperature</label>
+                    <span id="temp-val" class="slider-val">0.3</span>
+                </div>
+                <input type="range" id="temperature" class="range-slider" min="0" max="1" step="0.05" value="0.3" oninput="document.getElementById('temp-val').textContent = this.value">
+            </div>
+        </div>
+
+        <div class="c">
+            <div class="ct"><i data-lucide="settings"></i> Engine Mode</div>
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label for="agent-target">Chat Interaction Target</label>
+                <select id="agent-target" class="control-input" style="cursor: pointer;">
+                    <option value="SWARM">Debate with Swarm (Auto-Collaborative)</option>
+                    <option value="PLANNER">Planner Ω (Strategic directive)</option>
+                    <option value="ANALYST">Analyst Σ (Statistical pricing model)</option>
+                    <option value="NEGOTIATOR">Negotiator Δ (Autonomous pricing offer)</option>
+                    <option value="CRITIC">Critic Ξ (Game-theoretic audit)</option>
+                    <option value="AUDITOR">Auditor Λ (Compliance checklist)</option>
+                    <option value="SENTINEL">Sentinel Ψ (Collusion & threat scanner)</option>
+                    <option value="ORACLE">Oracle Φ (Market price forecast)</option>
+                </select>
+            </div>
+            
+            <button class="trigger-btn" id="stream-btn" onclick="startAutonomousStream()"><i data-lucide="play"></i> Launch Auto-Debate Stream</button>
+            <button class="trigger-btn btn-outline-red" onclick="clearConsole()"><i data-lucide="trash-2"></i> Clear Conversation Logs</button>
+        </div>
+        
+        <div class="c" style="flex:1">
+            <div class="ct"><i data-lucide="users"></i> Swarm Registry & Roles</div>
+            <div style="display:flex; flex-direction:column; gap:10px; font-size:0.75rem;">
+                <div style="display:flex; gap:6px;"><span style="color:#8b5cf6; font-weight:700; width:80px;">PLANNER:</span><span style="color:#94a3b8;">Strategic orchestrator</span></div>
+                <div style="display:flex; gap:6px;"><span style="color:#3b82f6; font-weight:700; width:80px;">ANALYST:</span><span style="color:#94a3b8;">Statistical price modeling</span></div>
+                <div style="display:flex; gap:6px;"><span style="color:#10b981; font-weight:700; width:80px;">NEGOTIATOR:</span><span style="color:#94a3b8;">Autonomous price anchor</span></div>
+                <div style="display:flex; gap:6px;"><span style="color:#f43f5e; font-weight:700; width:80px;">CRITIC:</span><span style="color:#94a3b8;">Game-theoretic auditor</span></div>
+                <div style="display:flex; gap:6px;"><span style="color:#f59e0b; font-weight:700; width:80px;">AUDITOR:</span><span style="color:#94a3b8;">Regulatory compliance</span></div>
+                <div style="display:flex; gap:6px;"><span style="color:#ef4444; font-weight:700; width:80px;">SENTINEL:</span><span style="color:#94a3b8;">Threat & anomaly scans</span></div>
+                <div style="display:flex; gap:6px;"><span style="color:#06b6d4; font-weight:700; width:80px;">ORACLE:</span><span style="color:#94a3b8;">ML cost & timing forecasts</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat log and interactive messaging -->
+    <div class="chat-container">
+        <div class="chat-log" id="chat">
+            <div style="text-align:center; color:#64748b; margin-top:150px;" id="welcome-message">
+                <i data-lucide="cpu" style="width:54px; height:54px; opacity:0.15; margin-bottom:16px;"></i>
+                <h3 style="color:#cbd5e1; font-size:1.1rem; margin-bottom:6px;">Multi-Agent Command Interface</h3>
+                <p style="font-size:0.85rem; max-width:400px; margin:0 auto; line-height:1.4;">Select a Target Agent, customize parameters, and type a prompt below, or launch the automated negotiation stream.</p>
+            </div>
+        </div>
+        
+        <!-- Live status indicators -->
+        <div id="status-bar" style="display:none">
+            <div style="display:flex; align-items:center; gap:8px; font-weight:600; color:#10b981;" id="pulse-container">
+                <div class="pulse"></div> <span id="status-text">Swarm is debating...</span>
+            </div>
+            <div class="mono" id="event-counter" style="color:#64748b;">0 Cognitive Events</div>
+        </div>
+
+        <!-- Input Panel -->
+        <div class="chat-input-panel">
+            <input type="text" id="chat-input" class="chat-text-input" placeholder="Ask specific questions (e.g. 'Is BHEL pricing fair?', 'Propose counter offer terms')..." onkeydown="if(event.key === 'Enter') sendInteractiveMsg()">
+            <button id="send-btn" class="chat-send-btn" onclick="sendInteractiveMsg()">
+                <i data-lucide="send" style="width:16px; height:16px;"></i> Send Prompt
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+    
+    let eventSource = null;
+    let eventCount = 0;
+
+    function getAgentIcon(sender) {
+        const icons = {
+            'PLANNER': 'brain',
+            'SENTINEL': 'radar',
+            'ORACLE': 'eye',
+            'ANALYST': 'bar-chart-2',
+            'NEGOTIATOR': 'handshake',
+            'CRITIC': 'shield-alert',
+            'AUDITOR': 'shield-check',
+            'USER': 'user'
+        };
+        return icons[sender] || 'cpu';
+    }
+
+    function clearConsole() {
+        document.getElementById('chat').innerHTML = `
+            <div style="text-align:center; color:#64748b; margin-top:150px;">
+                <i data-lucide="cpu" style="width:54px; height:54px; opacity:0.15; margin-bottom:16px;"></i>
+                <h3 style="color:#cbd5e1; font-size:1.1rem; margin-bottom:6px;">Multi-Agent Command Interface</h3>
+                <p style="font-size:0.85rem; max-width:400px; margin:0 auto; line-height:1.4;">Select a Target Agent, customize parameters, and type a prompt below, or launch the automated negotiation stream.</p>
+            </div>
+        `;
+        document.getElementById('status-bar').style.display = 'none';
+        lucide.createIcons();
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+        document.getElementById('stream-btn').disabled = false;
+        document.getElementById('stream-btn').innerHTML = '<i data-lucide="play"></i> Launch Auto-Debate Stream';
+    }
+
+    function appendMessage(sender, content, metadata = null) {
+        const chat = document.getElementById('chat');
+        const welcome = document.getElementById('welcome-message');
+        if (welcome) welcome.remove();
+
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg agent-${sender.toLowerCase()}`;
+        
+        if (sender === 'USER' || sender === 'NEGOTIATOR' || sender === 'AUDITOR') {
+            msgDiv.style.alignSelf = 'flex-end';
+        } else {
+            msgDiv.style.alignSelf = 'flex-start';
+        }
+
+        let metaHtml = '';
+        if (metadata && Object.keys(metadata).length > 0) {
+            metaHtml = `<div class="meta-box">${JSON.stringify(metadata, null, 2)}</div>`;
+        }
+
+        msgDiv.innerHTML = `
+            <div class="msg-header">
+                <i data-lucide="${getAgentIcon(sender)}" style="width:14px; height:14px;"></i>
+                ${sender === 'USER' ? 'Evaluator Command' : sender} 
+                <span style="font-weight:400; color:#64748b; font-size:0.7rem; margin-left:8px;">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <div class="msg-body">
+                ${content.replace(/\n/g, '<br>')}
+                ${metaHtml}
+            </div>
+        `;
+        
+        chat.appendChild(msgDiv);
+        lucide.createIcons();
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    // ── 1. SSE Stream Handler ──
+    function startAutonomousStream() {
+        const tenderId = document.getElementById('tender-id').value;
+        if (!tenderId) return alert("Please specify a valid Tender Reference ID.");
+        
+        const btn = document.getElementById('stream-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Swarm Streaming...';
+        lucide.createIcons();
+
+        document.getElementById('chat').innerHTML = '';
+        const sBar = document.getElementById('status-bar');
+        sBar.style.display = 'flex';
+        document.getElementById('status-text').textContent = 'Swarm is debating...';
+        document.getElementById('pulse-container').querySelector('.pulse').style.background = '#10b981';
+        document.getElementById('pulse-container').querySelector('.pulse').style.boxShadow = '0 0 10px #10b981';
+        
+        eventCount = 0;
+        document.getElementById('event-counter').textContent = '0 Cognitive Events';
+
+        if (eventSource) {
+            eventSource.close();
+        }
+
+        // Establish connection to backend SSE
+        eventSource = new EventSource(`/ai-ops/negotiate-stream/${tenderId}`);
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            eventCount++;
+            document.getElementById('event-counter').textContent = `${eventCount} Cognitive Events`;
+
+            appendMessage(data.sender, data.content, data.metadata);
+
+            if (data.content.includes("Swarm protocol finalized") || data.sender === "PLANNER" && data.type === "consensus") {
+                eventSource.close();
+                eventSource = null;
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="play"></i> Launch Auto-Debate Stream';
+                document.getElementById('status-text').textContent = 'Consensus Reached.';
+                document.getElementById('pulse-container').querySelector('.pulse').style.background = '#64748b';
+                document.getElementById('pulse-container').querySelector('.pulse').style.boxShadow = 'none';
+                lucide.createIcons();
+            }
+        };
+
+        eventSource.onerror = function() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="play"></i> Launch Auto-Debate Stream';
+            lucide.createIcons();
+            
+            const errDiv = document.createElement('div');
+            errDiv.style = "color:#f87171; text-align:center; font-family:monospace; margin-top:20px; font-size:0.85rem;";
+            errDiv.textContent = "[SYSTEM ERROR] Swarm stream disconnected or tender ID not initialized.";
+            document.getElementById('chat').appendChild(errDiv);
+        };
+    }
+
+    // ── 2. Interactive POST Messaging ──
+    async function sendInteractiveMsg() {
+        const input = document.getElementById('chat-input');
+        const query = input.value.trim();
+        if (!query) return;
+
+        const tenderId = document.getElementById('tender-id').value;
+        const agent = document.getElementById('agent-target').value;
+        const temp = parseFloat(document.getElementById('temperature').value);
+        const savings = parseFloat(document.getElementById('target-savings-pct').value);
+
+        if (!tenderId) return alert("Please specify a valid Tender Reference ID.");
+
+        // Clear input box
+        input.value = '';
+        
+        // Disable buttons
+        const sendBtn = document.getElementById('send-btn');
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i data-lucide="loader" class="spin"></i> Querying...';
+        lucide.createIcons();
+
+        // Show evaluator message in chat
+        appendMessage('USER', query);
+
+        // Show processing status
+        const sBar = document.getElementById('status-bar');
+        sBar.style.display = 'flex';
+        document.getElementById('status-text').textContent = `${agent === 'SWARM' ? 'Swarm is debating' : agent + ' is formulating response'}...`;
+        document.getElementById('pulse-container').querySelector('.pulse').style.background = '#3b82f6';
+        document.getElementById('pulse-container').querySelector('.pulse').style.boxShadow = '0 0 10px #3b82f6';
+
+        try {
+            const res = await fetch('/ai-ops/swarm-interactive', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tender_id: parseInt(tenderId),
+                    message: query,
+                    agent: agent,
+                    temperature: temp,
+                    target_savings_pct: savings
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || "Query failed");
+            }
+
+            const data = await res.json();
+            
+            if (data.mode === 'swarm') {
+                // Display debate sequentially with slight micro-delays
+                let index = 0;
+                function printNext() {
+                    if (index < data.debate.length) {
+                        const debateMsg = data.debate[index];
+                        appendMessage(debateMsg.sender, debateMsg.content, debateMsg.metadata);
+                        index++;
+                        setTimeout(printNext, 600); // 600ms micro-animation delay
+                    } else {
+                        finalizeQuery();
+                    }
+                }
+                printNext();
+            } else {
+                appendMessage(data.reply.sender, data.reply.content, data.reply.metadata);
+                finalizeQuery();
+            }
+
+        } catch (e) {
+            console.error(e);
+            const errDiv = document.createElement('div');
+            errDiv.style = "color:#f87171; text-align:left; font-family:monospace; padding:12px; background:rgba(239,68,68,0.08); border-left:3px solid #ef4444; border-radius:4px; font-size:0.8rem; margin-top:10px;";
+            errDiv.textContent = `[ERROR] Formulation Failed: ${e.message}`;
+            document.getElementById('chat').appendChild(errDiv);
+            finalizeQuery();
+        }
+    }
+
+    function finalizeQuery() {
+        document.getElementById('send-btn').disabled = false;
+        document.getElementById('send-btn').innerHTML = '<i data-lucide="send" style="width:16px; height:16px;"></i> Send Prompt';
+        document.getElementById('status-text').textContent = 'Engine Ready.';
+        document.getElementById('pulse-container').querySelector('.pulse').style.background = '#10b981';
+        document.getElementById('pulse-container').querySelector('.pulse').style.boxShadow = '0 0 10px #10b981';
+        lucide.createIcons();
+    }
+</script>
+</body>
+</html>

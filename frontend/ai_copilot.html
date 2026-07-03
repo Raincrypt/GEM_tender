@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEM AI Copilot — Intelligent Procurement Assistant</title>
+    <meta name="description" content="AI-powered procurement assistant for the GEM Tender Evaluation System">
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ── Layout ─────────────────────────────────────────── */
+        .copilot-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            height: calc(100vh - 64px);
+            gap: 0;
+        }
+
+        /* ── Sidebar ─────────────────────────────────────────── */
+        .sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-header h2 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+        }
+        .quick-prompt {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(59,130,246,0.06);
+            border: 1px solid rgba(59,130,246,0.15);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            margin-bottom: 8px;
+            text-align: left;
+            width: 100%;
+        }
+        .quick-prompt:hover {
+            background: rgba(59,130,246,0.12);
+            border-color: rgba(59,130,246,0.4);
+            color: var(--primary);
+            transform: translateX(3px);
+        }
+        .quick-prompt i { flex-shrink: 0; color: var(--primary); }
+
+        .sidebar-section { padding: 16px 20px; }
+        .sidebar-section h3 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+        .agent-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .agent-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        /* ── Chat Area ───────────────────────────────────────── */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            height: 100%;
+        }
+        .chat-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .copilot-avatar {
+            width: 44px; height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            box-shadow: 0 0 20px rgba(59,130,246,0.4);
+            animation: pulse-glow 3s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+            to   { box-shadow: 0 0 30px rgba(139,92,246,0.6); }
+        }
+        .copilot-info h1 { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+        .copilot-info p  { font-size: 0.78rem; color: var(--text-muted); }
+        .status-badge {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.75rem; color: var(--success);
+            background: rgba(16,185,129,0.1);
+            padding: 4px 10px; border-radius: 20px;
+            border: 1px solid rgba(16,185,129,0.3);
+        }
+        .status-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--success);
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        /* ── Messages ────────────────────────────────────────── */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+        .message { display: flex; gap: 12px; max-width: 820px; }
+        .message.user { flex-direction: row-reverse; margin-left: auto; }
+
+        .msg-avatar {
+            width: 34px; height: 34px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700;
+            flex-shrink: 0;
+        }
+        .ai-avatar {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+        }
+        .user-avatar-msg {
+            background: rgba(59,130,246,0.15);
+            color: var(--primary);
+        }
+
+        .msg-bubble {
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 0.88rem;
+            line-height: 1.65;
+            max-width: 680px;
+        }
+        .ai-bubble {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px 16px 16px 16px;
+            color: var(--text);
+        }
+        .user-bubble {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            border-radius: 16px 4px 16px 16px;
+        }
+
+        .msg-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            padding: 0 4px;
+        }
+
+        /* Thinking animation */
+        .thinking-bubble {
+            padding: 14px 18px;
+            border-radius: 4px 16px 16px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex; gap: 5px; align-items: center;
+        }
+        .thinking-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--primary);
+            animation: bounce-dot 1.2s infinite;
+        }
+        .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce-dot {
+            0%,80%,100% { transform: scale(0.7); opacity: 0.5; }
+            40%          { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Inline chart in chat */
+        .chat-chart-wrap {
+            margin-top: 14px;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+        .chat-chart-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .chat-chart-canvas { max-height: 220px; }
+
+        /* Strong tags in AI responses */
+        .ai-bubble strong { color: var(--primary); font-weight: 600; }
+
+        /* ── Input Area ──────────────────────────────────────── */
+        .input-area {
+            padding: 20px 28px;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .input-wrap {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 16px;
+            transition: border-color 0.2s;
+        }
+        .input-wrap:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        #chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text);
+            resize: none;
+            min-height: 22px;
+            max-height: 120px;
+            line-height: 1.5;
+        }
+        #chat-input::placeholder { color: var(--text-muted); }
+        #send-btn {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: white; flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        #send-btn:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
+        #send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .input-hint {
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+<!-- ── Nav ───────────────────────────────────────────────────── -->
+<nav class="navbar">
+    <div class="nav-brand">
+        <i data-lucide="shield-check" class="nav-logo-icon"></i>
+        <span>GEM Tender</span>
+    </div>
+    <div class="nav-links">
+        <a href="command_center.html" style="border-color:#06b6d4; color:#06b6d4;"><i data-lucide="home" style="width:14px;height:14px;"></i> Command Center</a>
+        <a href="dashboard.html"><i data-lucide="layout-dashboard" style="width:14px;height:14px;"></i> Eval Dashboard</a>
+        <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+        <a href="tenders.html"   class="nav-link"><i data-lucide="file-text"></i>Tenders</a>
+        <a href="vendors.html"   class="nav-link"><i data-lucide="users"></i>Vendors</a>
+        <a href="ai_copilot.html" class="nav-link active"><i data-lucide="bot"></i>AI Copilot</a>
+    </div>
+    <div class="nav-user">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div>
+            <div class="user-name" id="user-name">Loading…</div>
+            <div class="user-role" id="user-role"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="logout()">
+            <i data-lucide="log-out"></i>
+        </button>
+    </div>
+</nav>
+
+<!-- ── Main Layout ─────────────────────────────────────────── -->
+<div class="copilot-layout">
+
+    <!-- Sidebar -->
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+    <!-- Chat -->
+    <div class="chat-area">
+        <div class="chat-header">
+            <div class="copilot-avatar">
+                <i data-lucide="bot" style="width:22px;height:22px"></i>
+            </div>
+            <div class="copilot-info">
+                <h1>GEM AI Copilot</h1>
+                <p>Powered by Ollama llama3 · Live procurement intelligence</p>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                Online
+            </div>
+        </div>
+
+        <div class="messages-container" id="messages">
+            <!-- Welcome message -->
+            <div class="message ai">
+                <div class="msg-avatar ai-avatar"><i data-lucide="bot" style="width:16px;height:16px"></i></div>
+                <div>
+                    <div class="msg-bubble ai-bubble">
+                        👋 Hello! I'm your <strong>GEM AI Copilot</strong> — a fully data-driven procurement intelligence assistant.<br><br>
+                        I have direct access to your <strong>live procurement database</strong> and can answer questions about tenders, vendors, risks, cartels, purchase orders, and more. I'll also generate <strong>real-time charts</strong> from actual data.<br><br>
+                        Try asking me something or use the quick prompts on the left!
+                    </div>
+                    <div class="msg-meta">Just now · GEM AI</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrap">
+                <textarea id="chat-input" placeholder="Ask me anything about tenders, vendors, risks, or procurement data…" rows="1"></textarea>
+                <button id="send-btn" onclick="sendMessage()">
+                    <i data-lucide="send" style="width:16px;height:16px"></i>
+                </button>
+            </div>
+            <div class="input-hint">Press Enter to send · Shift+Enter for new line · Powered by local Ollama llama3</div>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    lucide.createIcons();
+    requireAuth();
+    loadUserProfile();
+
+    const messagesEl = document.getElementById('messages');
+    const inputEl    = document.getElementById('chat-input');
+    const sendBtn    = document.getElementById('send-btn');
+
+    // Chart counter for unique canvas IDs
+    let chartIdx = 0;
+
+    // Auto-resize textarea
+    inputEl.addEventListener('input', () => {
+        inputEl.style.height = 'auto';
+        inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+    });
+
+    inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    function scrollBottom() {
+        messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+    }
+
+    function appendUserMessage(text) {
+        const user = ApiClient.getStoredUser();
+        const initials = (user?.full_name || user?.username || 'U').charAt(0).toUpperCase();
+        const el = document.createElement('div');
+        el.className = 'message user';
+        el.innerHTML = `
+            <div class="msg-avatar user-avatar-msg">${initials}</div>
+            <div>
+                <div class="msg-bubble user-bubble">${escapeHtml(text)}</div>
+                <div class="msg-meta" style="text-align:right">Just now · You</div>
+            </div>`;
+        messagesEl.appendChild(el);
+        scrollBottom();
+    }
+
+    function showThinking() {
+        const el = document.createElement('div');
+        el.className = 'message ai';
+        el.id = 'thinking-indicator';
+        el.innerHTML = `
+            <div class="msg-avatar ai-avatar"><i data-lucide="bot" style="width:16px;height:16px"></i></div>
+            <div class="thinking-bubble">
+                <div class="thinking-dot"></div>
+                <div class="thinking-dot"></div>
+                <div class="thinking-dot"></div>
+            </div>`;
+        messagesEl.appendChild(el);
+        lucide.createIcons({ el });
+        scrollBottom();
+    }
+
+    function removeThinking() {
+        const t = document.getElementById('thinking-indicator');
+        if (t) t.remove();
+    }
+
+    function appendAIMessage(reply, chartData) {
+        const el = document.createElement('div');
+        el.className = 'message ai';
+
+        // Convert **bold** markdown
+        const formatted = reply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        const cid = `chat-chart-${chartIdx++}`;
+        const chartHtml = chartData ? `
+            <div class="chat-chart-wrap">
+                <div class="chat-chart-title">${chartData.title || 'Analytics Chart'}</div>
+                <canvas class="chat-chart-canvas" id="${cid}"></canvas>
+            </div>` : '';
+
+        el.innerHTML = `
+            <div class="msg-avatar ai-avatar"><i data-lucide="bot" style="width:16px;height:16px"></i></div>
+            <div>
+                <div class="msg-bubble ai-bubble">${formatted}${chartHtml}</div>
+                <div class="msg-meta">${new Date().toLocaleTimeString()} · GEM AI</div>
+            </div>`;
+        messagesEl.appendChild(el);
+        lucide.createIcons({ el });
+
+        if (chartData) {
+            renderChart(cid, chartData);
+        }
+        scrollBottom();
+    }
+
+    function renderChart(canvasId, chartData) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const colors = [
+            'rgba(59,130,246,0.8)', 'rgba(139,92,246,0.8)',
+            'rgba(16,185,129,0.8)', 'rgba(245,158,11,0.8)',
+            'rgba(239,68,68,0.8)',  'rgba(6,182,212,0.8)',
+        ];
+
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: chartData.type || 'bar',
+            data: {
+                labels: chartData.labels || [],
+                datasets: [{
+                    label: chartData.title || 'Data',
+                    data: chartData.data || [],
+                    backgroundColor: chartData.type === 'line' ? 'rgba(59,130,246,0.15)' : colors,
+                    borderColor: chartData.type === 'line' ? '#3b82f6' : colors.map(c => c.replace('0.8', '1')),
+                    borderWidth: 2,
+                    borderRadius: chartData.type === 'bar' ? 6 : 0,
+                    fill: chartData.type === 'line',
+                    tension: 0.4,
+                    pointRadius: chartData.type === 'line' ? 4 : 0,
+                    pointBackgroundColor: '#3b82f6',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#94a3b8',
+                        bodyColor: '#f1f5f9',
+                        padding: 10,
+                        callbacks: {
+                            label: (ctx) => {
+                                const val = ctx.parsed.y ?? ctx.parsed;
+                                return ` ${typeof val === 'number' && val > 9999 ? '₹' + val.toLocaleString('en-IN') : val}`;
+                            }
+                        }
+                    }
+                },
+                scales: chartData.type !== 'doughnut' && chartData.type !== 'pie' ? {
+                    x: {
+                        ticks: { color: '#64748b', font: { size: 10 } },
+                        grid: { color: 'rgba(255,255,255,0.04)' }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#64748b', font: { size: 10 },
+                            callback: (v) => v > 9999 ? '₹' + (v/100000).toFixed(1) + 'L' : v
+                        },
+                        grid: { color: 'rgba(255,255,255,0.06)' }
+                    }
+                } : undefined
+            }
+        });
+    }
+
+    async function sendMessage() {
+        const text = inputEl.value.trim();
+        if (!text) return;
+
+        inputEl.value = '';
+        inputEl.style.height = 'auto';
+        sendBtn.disabled = true;
+
+        appendUserMessage(text);
+        showThinking();
+
+        try {
+            // Try C3 AI first (returns structured chart data)
+            const res = await ApiClient.askC3AI(text);
+            removeThinking();
+
+            if (res.insight) {
+                appendAIMessage(res.insight, res.data ? res : null);
+            } else {
+                appendAIMessage('I received a response but it was in an unexpected format. Please try again.');
+            }
+        } catch (err) {
+            removeThinking();
+            // Fallback to natural language assistant
+            try {
+                const res2 = await ApiClient.askAI(text);
+                appendAIMessage(res2.reply || 'I was unable to process your query.');
+            } catch (err2) {
+                appendAIMessage(`⚠️ Unable to connect to the AI backend. Please ensure the backend server is running at ${API_BASE_URL}.`);
+            }
+        }
+
+        sendBtn.disabled = false;
+        inputEl.focus();
+    }
+
+    function sendQuick(prompt) {
+        inputEl.value = prompt;
+        sendMessage();
+    }
+
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+</script>
+</body>
+</html>

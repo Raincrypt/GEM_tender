@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluation & OCR - GEM Tender</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .ocr-preview {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #10b981;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Bid Evaluation & OCR Verification</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Review bids, verify OCR documents, and
+                        generate comparative statements</p>
+                </div>
+                <div class="user-profile">
+                    <div style="text-align: right;">
+                        <div id="user-name" style="font-weight: 500;">User</div>
+                        <div id="user-role" style="font-size: 0.8rem; color: var(--text-muted);">Role</div>
+                    </div>
+                    <div class="avatar" id="user-avatar">U</div>
+                </div>
+            </header>
+
+            <div class="card mb-4 d-flex align-center gap-3">
+                <select id="tender-select" class="form-control" style="max-width: 400px;"></select>
+                <button class="btn btn-primary" onclick="loadComparativeStatement()">Load Data</button>
+                <div style="margin-left:auto; display:flex; gap:12px;">
+                    <button class="btn btn-primary" onclick="autoEvaluate()" id="btn-auto-eval"
+                        style="display:none; background: #ec4899; border-color: #ec4899;">
+                        <i data-lucide="zap"></i> AI Auto-Evaluate All Bids
+                    </button>
+                    <button class="btn btn-primary" onclick="unlockFinancials()" id="btn-unlock-fin"
+                        style="display:none; background: var(--warning); border-color: var(--warning);">
+                        <i data-lucide="unlock"></i> Unlock Financials
+                    </button>
+                    <button class="btn btn-primary" onclick="startAuction()" id="btn-auction"
+                        style="display:none; background: #8b5cf6; border-color: #8b5cf6;">
+                        <i data-lucide="gavel"></i> Start Reverse Auction
+                    </button>
+                    <button class="btn btn-warning" onclick="openNegotiationRoom()" id="btn-negotiate"
+                        style="display:none; background: #f59e0b; border-color: #f59e0b; color: white;">
+                        <i data-lucide="users"></i> AI Agent Negotiation
+                    </button>
+                    <button class="btn btn-outline" onclick="openCompareModal()" id="btn-compare"
+                        style="display:none; color: var(--success); border-color: var(--success);">
+                        <i data-lucide="split-square-horizontal"></i> Fast Verify Compare
+                    </button>
+                    <button class="btn btn-outline" onclick="runFraudAnalysis()" id="btn-fraud"
+                        style="display:none; color: var(--warning); border-color: var(--warning);">
+                        <i data-lucide="shield-alert"></i> AI Fraud Scan
+                    </button>
+                    <button class="btn btn-outline" onclick="exportCSV()" id="btn-export-csv"
+                    style="color: var(--primary); border-color: var(--primary);"><i data-lucide="file-spreadsheet"></i> Export CSV
+                    Analysis</button>
+                    <a href="pqc_comparison.html" class="btn btn-primary" id="btn-pqc-forensics" style="background: #ec4899; border-color: #ec4899; color: white; display: none;"><i data-lucide="shield"></i> PQC Forensics</a>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed rgba(139, 92, 246, 0.3);">
+                <span style="color: #a78bfa; font-weight: bold; font-size: 0.9rem;"><i data-lucide="zap" style="width:16px;height:16px;"></i> ZERO-TOUCH ORCHESTRATION</span>
+                <button class="btn btn-primary" onclick="startZeroTouchAutopilot()" id="btn-autopilot" style="background: linear-gradient(90deg, #8b5cf6, #ec4899); border: none; box-shadow: 0 0 20px rgba(236, 72, 153, 0.4); animation: pulse 2s infinite;">
+                    <i data-lucide="bot"></i> Engage AI Autopilot
+                </button>
+            </div>
+
+            <div id="evaluation-content" style="display: none;">
+                <!-- Scoring Legend Card -->
+                <div id="scoring-legend-card" class="card mb-4" style="background:rgba(37,99,235,0.05);border-color:rgba(37,99,235,0.15);padding:20px 28px;">
+                    <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:center;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i data-lucide="bar-chart" style="color:#3b82f6;width:18px;height:18px;"></i>
+                            <span style="font-size:0.8rem;color:#94a3b8;">SCORING ENGINE</span>
+                        </div>
+                        <div style="font-size:0.8rem;">
+                            <span style="color:#64748b;">Tech Weight:</span> <strong id="cs-tech-w" style="color:#60a5fa;"></strong>%
+                            &nbsp;&bull;&nbsp;
+                            <span style="color:#64748b;">Fin Weight:</span> <strong id="cs-fin-w" style="color:#4ade80;"></strong>%
+                        </div>
+                        <div style="font-size:0.8rem;color:#64748b;" id="cs-formula-display"></div>
+                        <div style="font-size:0.8rem;">
+                            <span style="color:#64748b;">DQ Threshold:</span> <strong id="cs-threshold" style="color:#f87171;"></strong>%
+                        </div>
+                        <div style="font-size:0.75rem;color:#475569;font-style:italic;">Financial: L1-method &bull; Click any row to expand per-criteria breakdown</div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 mb-4" style="align-items: stretch;">
+                    <div class="card" style="flex: 1;padding:20px;">
+                        <h3 id="cs-title" style="font-size:1rem;">Comparative Statement</h3>
+                    </div>
+                    <div class="card" style="width:300px;display:flex;align-items:center;justify-content:center;padding:16px;">
+                        <canvas id="bidderRadarChart" style="max-width:100%;max-height:200px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <div class="table-responsive">
+                        <table class="table" id="cs-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:60px;">Rank</th>
+                                    <th>Vendor</th>
+                                    <th>Tech Score</th>
+                                    <th>Fin Score</th>
+                                    <th>Composite</th>
+                                    <th>ESG Score</th>
+                                    <th>Bid Value (₹)</th>
+                                    <th>Status</th>
+                                    <th style="width:40px;"></th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="placeholder" style="text-align: center; color: var(--text-muted); margin-top: 60px;">
+                <i data-lucide="file-bar-chart-2"
+                    style="width: 64px; height: 64px; opacity: 0.2; margin-bottom: 16px;"></i>
+                <h2>Select a Tender</h2>
+                <p>Choose a tender from the dropdown to view its comparative statement and verify OCR documents.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Score Bid Modal -->
+    <div class="modal-overlay" id="scoreModal">
+        <div class="card modal" style="max-width:640px;">
+            <div class="modal-header">
+                <div>
+                    <h2 id="score-modal-title" style="font-size:1.1rem;">Evaluate Bid</h2>
+                    <p style="font-size:0.8rem;color:#64748b;margin-top:4px;">Score each criterion &bull; Live composite preview below</p>
+                </div>
+                <button class="btn btn-outline" style="padding:4px;border:none;" onclick="closeScoreModal()"><i data-lucide="x"></i></button>
+            </div>
+
+            <!-- AI Auto-score bar -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px 16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:12px;">
+                <div style="font-size:0.8rem;color:#94a3b8;"><i data-lucide="brain" style="width:14px;height:14px;vertical-align:middle;color:#60a5fa;"></i> AI Neural Engine ready to auto-score all criteria</div>
+                <button type="button" class="btn btn-outline" onclick="autoFillAIScores()" id="btn-ai-score" style="padding:8px 14px;font-size:0.8rem;color:#60a5fa;border-color:rgba(96,165,250,0.3);">
+                    <i data-lucide="sparkles" style="width:14px;height:14px;"></i> AI Auto-Score
+                </button>
+            </div>
+            <div id="ai-loading" style="display:none;color:#60a5fa;font-size:0.85rem;margin-bottom:12px;text-align:center;padding:10px;background:rgba(96,165,250,0.05);border-radius:8px;">
+                <i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> AI scanning documents &amp; extracting criteria signals...
+            </div>
+
+            <form id="score-form">
+                <div id="criteria-inputs" class="mb-4"></div>
+
+                <!-- Live Score Preview Panel -->
+                <div id="live-score-panel" style="margin-bottom:20px;padding:16px;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
+                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#475569;margin-bottom:12px;">Live Score Preview</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+                        <div style="text-align:center;padding:10px;background:rgba(59,130,246,0.08);border-radius:10px;border:1px solid rgba(59,130,246,0.15);">
+                            <div style="font-size:1.4rem;font-weight:700;color:#60a5fa;" id="preview-tech">—</div>
+                            <div style="font-size:0.7rem;color:#64748b;margin-top:2px;">Tech Score</div>
+                        </div>
+                        <div style="text-align:center;padding:10px;background:rgba(16,185,129,0.08);border-radius:10px;border:1px solid rgba(16,185,129,0.15);">
+                            <div style="font-size:1.4rem;font-weight:700;color:#4ade80;" id="preview-fin">—</div>
+                            <div style="font-size:0.7rem;color:#64748b;margin-top:2px;">Fin Score</div>
+                        </div>
+                        <div style="text-align:center;padding:10px;background:rgba(139,92,246,0.08);border-radius:10px;border:1px solid rgba(139,92,246,0.15);">
+                            <div style="font-size:1.4rem;font-weight:700;color:#a78bfa;" id="preview-composite">—</div>
+                            <div style="font-size:0.7rem;color:#64748b;margin-top:2px;">Composite</div>
+                        </div>
+                    </div>
+                    <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+                        <div id="preview-bar" style="height:100%;border-radius:3px;background:linear-gradient(90deg,#3b82f6,#8b5cf6);width:0%;transition:width 0.5s ease;"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#475569;margin-top:4px;">
+                        <span>0</span><span id="preview-threshold-label"></span><span>100</span>
+                    </div>
+                    <div id="preview-formula" style="font-size:0.72rem;color:#475569;margin-top:8px;font-family:monospace;"></div>
+                </div>
+
+                <div class="form-group mb-4" style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
+                    <label class="d-flex align-center gap-3" style="color:#f87171;font-weight:500;font-size:0.9rem;">
+                        <input type="checkbox" id="eval_dq" onchange="document.getElementById('dq_reason').style.display=this.checked?'block':'none'">
+                        Disqualify this Bid
+                    </label>
+                    <textarea id="dq_reason" class="form-control" style="display:none;margin-top:10px;font-size:0.85rem;" placeholder="Reason for disqualification..."></textarea>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:12px;">
+                    <button type="button" class="btn btn-outline" onclick="closeScoreModal()" style="font-size:0.85rem;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="font-size:0.85rem;"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Evaluation</button>
+                </div>
+            </form>
+
+            <!-- Post-Save Result Panel -->
+            <div id="score-result-panel" style="display:none;margin-top:20px;padding:20px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:14px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                    <i data-lucide="check-circle" style="color:#4ade80;width:18px;height:18px;"></i>
+                    <span style="font-weight:600;color:#4ade80;">Evaluation Saved — Detailed Results</span>
+                </div>
+                <div id="score-result-body" style="font-size:0.82rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compare Documents Modal -->
+    <div class="modal-overlay" id="compareModal">
+        <div class="card modal"
+            style="max-width: 90%; width: 1200px; height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h2>Advanced Side-by-Side Document Verification</h2>
+                <button class="btn btn-outline" style="padding: 4px; border: none;" onclick="closeCompareModal()"><i
+                        data-lucide="x"></i></button>
+            </div>
+
+            <div class="form-group">
+                <label>Select Document Category</label>
+                <select id="compare-doc-type" class="form-control" onchange="renderComparisonGrid()"></select>
+            </div>
+
+            <div id="compare-grid" style="display: flex; gap: 20px; overflow-x: auto; flex: 1; padding: 10px 0;">
+                <!-- Dynamically populated vendor columns -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Modal -->
+    <div class="modal-overlay" id="docModal">
+        <div class="card modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="modal-vendor-name">Vendor Documents</h2>
+                <button class="btn btn-outline" style="padding: 4px; border: none;" onclick="closeDocModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="d-flex gap-3 mb-4"
+                style="align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+                <div style="flex:1;">
+                    <label class="form-label">Upload New Document for OCR Verification</label>
+                    <div class="d-flex gap-3">
+                        <select id="doc-type" class="form-control">
+                            <option value="GST Certificate">GST Certificate</option>
+                            <option value="MSME Certificate">MSME Certificate</option>
+                            <option value="PAN Card">PAN Card</option>
+                            <option value="Financial Statement">Financial Statement</option>
+                        </select>
+                        <input type="file" id="doc-file" class="form-control" accept=".txt,.pdf,image/*"
+                            style="padding: 9px;">
+                        <button class="btn btn-primary" onclick="uploadDoc()" id="btn-upload-doc">Upload &
+                            Extract</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="doc-list">
+                <!-- Documents list injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Reasoning Terminal Modal -->
+    <div class="modal-overlay" id="aiTerminalModal" style="z-index: 2000;">
+        <div class="card modal"
+            style="max-width: 700px; background: #0f172a; border: 1px solid #3b82f6; box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);">
+            <div class="modal-header" style="border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <i data-lucide="terminal" style="color: #3b82f6;"></i>
+                    <h2 style="color: #e2e8f0; font-family: monospace; font-size: 1.1rem; margin:0;">
+                        GEM_AI_NEURAL_ENGINE_v4.2</h2>
+                </div>
+            </div>
+
+            <div id="terminal-output"
+                style="height: 350px; overflow-y: auto; padding: 20px 10px; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; color: #10b981; display:flex; flex-direction:column; gap:8px;">
+                <!-- Streaming logs go here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Web3 Smart Contract IDE -->
+    <div class="modal-overlay" id="web3IdeModal" style="z-index: 3000;">
+        <div class="card modal" style="max-width: 1000px; background: #0f172a; border: 1px solid #8b5cf6; padding: 0; box-shadow: 0 0 50px rgba(139, 92, 246, 0.3); overflow: hidden;">
+            <div style="background: #1e293b; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+                <div style="display:flex; align-items:center; gap:10px; color: #a78bfa; font-weight: bold;">
+                    <i data-lucide="file-code-2"></i> Autonomous Solidity IDE & Auditor
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-sm" id="btn-run-audit" onclick="runSmartContractAudit()" style="background: #ef4444; color: white; border: none;"><i data-lucide="shield-alert"></i> Run Vulnerability Audit</button>
+                    <button class="btn btn-sm" id="btn-deploy-web3" onclick="deployToBlockchain()" style="display:none; background: #10b981; color: white; border: none;"><i data-lucide="rocket"></i> Deploy to Mainnet</button>
+                    <button class="btn btn-outline btn-sm" style="color: white; border: none;" onclick="closeWeb3IDE()"><i data-lucide="x"></i></button>
+                </div>
+            </div>
+            <div style="display: flex; height: 500px;">
+                <!-- Code Editor -->
+                <div style="flex: 2; background: #000000; color: #10b981; font-family: monospace; padding: 20px; overflow-y: auto; font-size: 0.9rem; line-height: 1.5; border-right: 1px solid #334155;" id="solidity-editor">
+                    <span style="color: #64748b;">// SPDX-License-Identifier: MIT</span><br>
+                    <span style="color: #f59e0b;">pragma solidity</span> ^0.8.19;<br><br>
+                    <span style="color: #f59e0b;">contract</span> <span style="color: #3b82f6;">GEM_TenderAward</span> {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;address <span style="color: #f59e0b;">public</span> govtAdmin;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;address <span style="color: #f59e0b;">public</span> vendorAddress;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;uint256 <span style="color: #f59e0b;">public</span> contractValue;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f59e0b;">bool</span> <span style="color: #f59e0b;">public</span> isDelivered;<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f59e0b;">constructor</span>() {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;govtAdmin = msg.sender;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f59e0b;">function</span> <span style="color: #3b82f6;">releaseFunds</span>() <span style="color: #f59e0b;">public</span> {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;">// WARNING: Raw Transfer</span><br>
+                    <span id="vuln-line" style="background: rgba(239,68,68,0.2); display:block; width:100%;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(bool success, ) = vendorAddress.call{value: contractValue}("");</span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f59e0b;">require</span>(success, "Transfer failed");<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;isDelivered = <span style="color: #f59e0b;">true</span>;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                    }
+                </div>
+                <!-- Auditor Terminal -->
+                <div style="flex: 1; background: #0f172a; padding: 15px; display: flex; flex-direction: column; gap: 10px;" id="auditor-terminal">
+                    <div style="color: #94a3b8; font-size: 0.8rem; text-align: center; border-bottom: 1px solid #334155; padding-bottom: 10px;">AI AUDIT TERMINAL</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Agent Negotiation Room -->
+    <div class="modal-overlay" id="negotiationModal" style="z-index: 2500;">
+        <div class="card modal" style="max-width: 900px; background: #0f172a; border: 1px solid #f59e0b; box-shadow: 0 0 40px rgba(245, 158, 11, 0.2);">
+            <div class="modal-header" style="border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
+                <h2 style="color: #f59e0b; display:flex; align-items:center; gap:10px;"><i data-lucide="users"></i> Autonomous Multi-Agent Negotiation Room</h2>
+                <button class="btn btn-outline" style="padding: 4px; border: none; color: white;" onclick="closeNegotiationRoom()"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <!-- Agents Sidebar -->
+                <div style="width: 250px; display: flex; flex-direction: column; gap: 15px;">
+                    <div class="card" style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 10px;">
+                        <div style="font-weight: bold; color: #10b981;">Agent 1: Finance Alpha</div>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">Objective: Price Squeeze</div>
+                    </div>
+                    <div class="card" style="background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; padding: 10px;">
+                        <div style="font-weight: bold; color: #3b82f6;">Agent 2: Tech Oracle</div>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">Objective: Warranty Extension</div>
+                    </div>
+                    <div class="card" style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 10px;">
+                        <div style="font-weight: bold; color: #ef4444;">Agent 3: Legal Prime</div>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">Objective: Penalty Clauses</div>
+                    </div>
+                </div>
+                
+                <!-- Chat Window -->
+                <div id="nego-chat" style="flex: 1; height: 400px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+                    <div style="text-align: center; color: #94a3b8; font-size: 0.8rem;">--- Negotiation Protocol Initiated with L1 Vendor ---</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+        loadUserProfile();
+
+        let currentTenderBids = [];
+        let currentBidId = null;
+        let radarChartInstance = null;
+        let ws = null;
+
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+
+        async function init() {
+            try {
+                const tenders = await ApiClient.getTenders();
+                const select = document.getElementById('tender-select');
+                tenders.filter(t => t.status !== 'Draft').forEach(t => {
+                    select.innerHTML += `<option value="${t.id}">${t.bid_number} - ${t.title}</option>`;
+                });
+            } catch (e) { }
+        }
+
+        async function loadComparativeStatement() {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+
+            const btnLoad = document.querySelector('button[onclick="loadComparativeStatement()"]');
+            const originalText = btnLoad ? btnLoad.innerHTML : 'Load Data';
+            if (btnLoad) { btnLoad.innerHTML = '<i data-lucide="loader" class="spin" style="width:16px;height:16px;margin-right:8px;"></i> Loading...'; btnLoad.disabled = true; lucide.createIcons(); }
+
+            try {
+                const data = await ApiClient.request(`/evaluation/comparative/${tenderId}`);
+
+                // Fetch bids directly to get documents array
+                const bidsFullData = await ApiClient.request(`/bids/tender/${tenderId}`);
+                currentTenderBids = bidsFullData;
+
+                const setDisplay = (id, display) => { const el = document.getElementById(id); if (el) el.style.display = display; };
+
+                setDisplay('placeholder', 'none');
+                setDisplay('evaluation-content', 'block');
+                setDisplay('btn-export-csv', 'inline-flex');
+                setDisplay('btn-export-pdf', 'inline-flex');
+                setDisplay('btn-compare', 'inline-flex');
+
+                if (data.tender.status === 'Awarded') {
+                    setDisplay('btn-cycle-dossier', 'inline-flex');
+                } else {
+                    setDisplay('btn-cycle-dossier', 'none');
+                }
+
+                const user = ApiClient.getStoredUser();
+                if (user && user.role === 'Admin') {
+                    setDisplay('btn-fraud', 'inline-flex');
+                    setDisplay('btn-pqc-forensics', 'inline-flex');
+                    if (!data.tender.is_financial_opened) {
+                        setDisplay('btn-auto-eval', 'inline-flex');
+                        setDisplay('btn-unlock-fin', 'inline-flex');
+                        setDisplay('btn-autopilot', 'inline-flex');
+                        setDisplay('btn-auction', 'none');
+                    } else {
+                        setDisplay('btn-auto-eval', 'none');
+                        setDisplay('btn-unlock-fin', 'none');
+                        if (!data.tender.is_auction_active) {
+                            setDisplay('btn-auction', 'inline-flex');
+                            setDisplay('btn-negotiate', 'inline-flex');
+                        } else {
+                            setDisplay('btn-auction', 'none');
+                            setDisplay('btn-negotiate', 'none');
+                        }
+                    }
+                }
+
+                document.getElementById('cs-title').textContent = `Comparative Statement: ${data.tender.bid_number}`;
+                document.getElementById('cs-tech-w').textContent = data.tender.technical_weightage;
+                document.getElementById('cs-fin-w').textContent = data.tender.financial_weightage;
+                if(document.getElementById('cs-threshold')) document.getElementById('cs-threshold').textContent = data.tender.technical_threshold||70;
+                if(document.getElementById('cs-formula-display')) document.getElementById('cs-formula-display').textContent = `Composite = Tech×${data.tender.technical_weightage/100} + Fin×${data.tender.financial_weightage/100}`;
+
+                // Render Radar Chart
+                renderRadarChart(data.bids);
+
+                const tbody = document.querySelector('#cs-table tbody');
+                tbody.innerHTML = '';
+
+                if (data.bids.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No bids submitted for this tender yet.</td></tr>';
+                    return;
+                }
+
+                data.bids.forEach(b => {
+                    const fullBid = bidsFullData.find(fb => fb.id === b.id);
+                    const docsCount = fullBid && fullBid.documents ? fullBid.documents.length : 0;
+                    const verifiedCount = fullBid && fullBid.documents ? fullBid.documents.filter(d => d.verified).length : 0;
+
+
+                    const isFinOpened = data.tender.is_financial_opened;
+
+                    const finScoreHtml = isFinOpened ? b.financial_score.toFixed(2) : '<span style="color:var(--warning);"><i data-lucide="lock" style="width:14px;height:14px;"></i> Encrypted</span>';
+                    const compScoreHtml = isFinOpened ? `<strong>${b.composite_score.toFixed(2)}</strong>` : '<span style="color:var(--text-muted);">-</span>';
+                    const valHtml = isFinOpened ? `₹${b.total_amount.toLocaleString('en-IN')}` : '<span style="color:var(--warning);"><i data-lucide="lock" style="width:14px;height:14px;"></i> Encrypted</span>';
+
+                    const esgScoreVal = b.composite_esg_score || 0;
+                    let esgColor = '#94a3b8';
+                    if (esgScoreVal >= 70) esgColor = '#10b981';
+                    else if (esgScoreVal >= 35) esgColor = '#f59e0b';
+                    else if (esgScoreVal > 0) esgColor = '#ef4444';
+                    
+                    const esgHtml = `
+                        <div style="font-weight:700;color:${esgColor}">${esgScoreVal > 0 ? esgScoreVal.toFixed(1) + '%' : 'N/A'}</div>
+                        <div style="height:3px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:4px;width:70px"><div style="height:100%;border-radius:2px;background:${esgColor};width:${esgScoreVal}%"></div></div>
+                    `;
+
+                    const hasCB = b.criteria_breakdown && b.criteria_breakdown.length > 0;
+                    const cbHtml = hasCB ? b.criteria_breakdown.map(c=>`
+                        <div style="padding:10px 14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid ${c.pass?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'}">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                                <span style="font-size:0.78rem;font-weight:600">${c.name}</span>
+                                <span class="badge ${c.pass?'badge-success':'badge-danger'}" style="font-size:0.6rem;padding:2px 8px">${c.pass?'PASS':'FAIL'}</span>
+                            </div>
+                            <div style="display:flex;gap:14px;font-size:0.7rem;color:#64748b;margin-bottom:5px">
+                                <span>Raw: <b style="color:#e2e8f0">${c.raw_score}/${c.max_score}</b></span>
+                                <span>Pct: <b style="color:${c.pass?'#4ade80':'#f87171'}">${c.score_pct}%</b></span>
+                                <span>Wt: <b style="color:#94a3b8">${c.weight_pct}%</b></span>
+                                <span>Contrib: <b style="color:#a78bfa">${c.weighted_contribution}</b></span>
+                            </div>
+                            <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden"><div style="height:100%;border-radius:2px;background:${c.pass?'#10b981':'#ef4444'};width:${c.score_pct}%"></div></div>
+                            ${c.remarks?`<div style="font-size:0.67rem;color:#475569;margin-top:4px;font-style:italic">${c.remarks.substring(0,90)}</div>`:''}
+                        </div>`).join('') : '<div style="color:#475569;font-size:0.8rem">No criteria scored yet.</div>';
+
+                    const formulaRow = isFinOpened && b.fin_score_formula ? `
+                        <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:0.73rem;font-family:monospace;padding:8px 14px;background:rgba(0,0,0,0.2);border-radius:8px;margin-top:10px;border:1px solid rgba(255,255,255,0.04)">
+                            <span style="color:#64748b">Fin: <span style="color:#4ade80">${b.fin_score_formula}</span></span>
+                            <span style="color:#64748b">Composite: <span style="color:#a78bfa">${b.composite_formula}</span></span>
+                            ${b.savings_vs_l1>0?`<span style="color:#64748b">Above L1: <span style="color:#f87171">+₹${b.savings_vs_l1.toLocaleString('en-IN')}</span></span>`:'<span style="color:#4ade80;font-weight:700">★ L1 — Lowest Bidder</span>'}
+                        </div>` : '';
+
+                    tbody.innerHTML += `
+                        <tr style="${b.is_disqualified?'opacity:0.55;':''}cursor:pointer" onclick="toggleBreakdown(${b.id})">
+                            <td>${b.is_disqualified?'<span class="badge badge-danger">DQ</span>':(isFinOpened?`<strong style="font-size:1.1rem;color:${b.rank===1?'#4ade80':'#e2e8f0'}">L${b.rank||'-'}</strong>`:'-')}</td>
+                            <td>
+                                <div style="font-weight:600">${b.vendor_name}</div>
+                                <div style="font-size:0.75rem;color:#64748b">${b.gem_reg_no}${b.msme?' <span class="badge badge-primary" style="font-size:0.6rem;padding:2px 6px">MSME</span>':''}</div>
+                                ${b.is_disqualified?`<div style="color:#f87171;font-size:0.72rem;margin-top:2px">${b.disqualification_reason||'Failed Tech Threshold'}</div>`:''}
+                            </td>
+                            <td>
+                                <div style="font-weight:700;color:#60a5fa">${b.technical_score.toFixed(2)}</div>
+                                <div style="height:3px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:4px;width:70px"><div style="height:100%;border-radius:2px;background:#3b82f6;width:${Math.min(b.technical_score,100)}%"></div></div>
+                            </td>
+                            <td>${finScoreHtml}</td>
+                            <td>${compScoreHtml}</td>
+                            <td>${esgHtml}</td>
+                            <td style="font-size:0.9rem">${valHtml}</td>
+                            <td>${b.status==='Awarded'?'<span class="badge badge-success">Awarded</span>':(b.is_disqualified?'<span class="badge badge-danger">DQ</span>':'<span class="badge badge-primary">Evaluated</span>')}</td>
+                            <td style="text-align:center">${hasCB?`<i data-lucide="chevron-down" id="chev-${b.id}" style="width:15px;height:15px;color:#64748b;transition:transform 0.3s"></i>`:''}</td>
+                            <td>
+                                <div class="d-flex gap-3">
+                                    <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openDocModal(${b.id},'${b.vendor_name.replace(/'/g,"\\'")}')" title="Docs"><i data-lucide="file-search"></i> ${verifiedCount}/${docsCount}</button>
+                                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openScoreModal(${b.id},'${b.vendor_name.replace(/'/g,"\\'")}')" ${data.tender.status==='Awarded'?'disabled':''}><i data-lucide="check-square"></i></button>
+                                    ${(user && user.role==='Admin'&&data.tender.status!=='Awarded'&&!b.is_disqualified&&isFinOpened)?`<button class="btn btn-success btn-sm" onclick="event.stopPropagation();awardTender(${tenderId},${b.id})"><i data-lucide="award"></i></button>`:''}
+                                    ${b.status==='Awarded'?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();downloadContract(${tenderId},${b.id})" style="border-color:var(--success);color:var(--success)"><i data-lucide="file-text"></i></button><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();downloadSmartContract(${tenderId})" style="border-color:#8b5cf6;color:#8b5cf6"><i data-lucide="code"></i></button>`:''}
+                                </div>
+                            </td>
+                        </tr>
+                        <tr id="bd-${b.id}" style="display:none;background:rgba(10,14,26,0.9)">
+                            <td colspan="10" style="padding:16px 20px 16px 60px;border-top:1px solid rgba(59,130,246,0.1)">
+                                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:#475569;margin-bottom:10px">▸ Per-Criteria Technical Breakdown</div>
+                                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px">${cbHtml}</div>
+                                ${formulaRow}
+                            </td>
+                        </tr>`;
+                });
+                lucide.createIcons();
+            } catch (e) {
+                console.error(e);
+                showToast(e.message || "Failed to load evaluation data", "error");
+            } finally {
+                if (btnLoad) { btnLoad.innerHTML = originalText; btnLoad.disabled = false; }
+            }
+        }
+
+        function renderRadarChart(bids) {
+            const ctx = document.getElementById('bidderRadarChart').getContext('2d');
+            if (radarChartInstance) radarChartInstance.destroy();
+
+            // Get top 3 bidders to avoid clutter
+            const topBids = bids.slice(0, 3);
+
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Tech Score', 'Fin Score', 'Composite'],
+                    datasets: topBids.map((b, i) => {
+                        const colors = ['rgba(37, 99, 235, 0.5)', 'rgba(16, 185, 129, 0.5)', 'rgba(245, 158, 11, 0.5)'];
+                        const borderColors = ['#2563eb', '#10b981', '#f59e0b'];
+                        return {
+                            label: b.vendor_name.substring(0, 10) + '...',
+                            data: [b.technical_score, b.financial_score, b.composite_score],
+                            backgroundColor: colors[i % 3],
+                            borderColor: borderColors[i % 3],
+                            borderWidth: 2,
+                        };
+                    })
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0, max: 100,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            pointLabels: { color: '#f8fafc', font: { size: 10 } }
+                        }
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                }
+            });
+        }
+
+        let fullTenderDataForScoring = null;
+
+        async function openScoreModal(bidId, vendorName) {
+            currentBidId = bidId;
+            document.getElementById('score-modal-title').textContent = `Evaluate: ${vendorName}`;
+
+            const tenderId = document.getElementById('tender-select').value;
+            fullTenderDataForScoring = await ApiClient.request(`/tenders/${tenderId}`);
+
+            const container = document.getElementById('criteria-inputs');
+            container.innerHTML = '';
+
+            const techCriteria = fullTenderDataForScoring.criteria.filter(c => c.criteria_type === 'Technical');
+
+            if (techCriteria.length === 0) {
+                container.innerHTML = '<p style="color:#64748b">No technical criteria defined.</p>';
+            } else {
+                const tw = techCriteria.reduce((s,c)=>s+c.weight,0)||1;
+                techCriteria.forEach(c => {
+                    container.innerHTML += `
+                        <div style="padding:12px 16px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid rgba(255,255,255,0.07);margin-bottom:10px">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                                <label style="font-size:0.85rem;font-weight:600;color:#e2e8f0">${c.name}</label>
+                                <div style="display:flex;gap:8px;font-size:0.7rem;color:#64748b">
+                                    <span style="background:rgba(59,130,246,0.1);padding:2px 7px;border-radius:6px">Max: ${c.max_score}</span>
+                                    <span style="background:rgba(139,92,246,0.1);padding:2px 7px;border-radius:6px">Wt: ${Math.round(c.weight/tw*100)}%</span>
+                                </div>
+                            </div>
+                            <input type="number" class="form-control score-input" data-cid="${c.id}" data-max="${c.max_score}" data-weight="${c.weight}" data-tw="${tw}" max="${c.max_score}" min="0" step="0.1" required placeholder="Score 0 – ${c.max_score}" oninput="updateLivePreview()" style="font-size:1rem;font-weight:600">
+                            <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:#475569;margin-top:5px">
+                                <span id="pct-${c.id}">0% achieved</span>
+                                <span id="contrib-${c.id}">Contribution: 0</span>
+                            </div>
+                            <div style="height:3px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:4px;overflow:hidden"><div id="bar-${c.id}" style="height:100%;border-radius:2px;background:#3b82f6;width:0%;transition:width 0.3s"></div></div>
+                            <div id="ai-rationale-${c.id}" style="font-size:0.75rem;color:#64748b;margin-top:6px;font-style:italic"></div>
+                        </div>`;
+                });
+            }
+
+            document.getElementById('eval_dq').checked = false;
+            document.getElementById('dq_reason').style.display = 'none';
+            document.getElementById('dq_reason').value = '';
+            document.getElementById('score-result-panel').style.display = 'none';
+            updateLivePreview();
+
+            document.getElementById('scoreModal').classList.add('active');
+        }
+
+        function closeScoreModal() {
+            document.getElementById('scoreModal').classList.remove('active');
+            currentBidId = null;
+        }
+
+        document.getElementById('score-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const isDq = document.getElementById('eval_dq').checked;
+            const dqReason = document.getElementById('dq_reason').value;
+
+            const scores = [];
+            document.querySelectorAll('.score-input').forEach(input => {
+                scores.push({
+                    criteria_id: parseInt(input.getAttribute('data-cid')),
+                    score: parseFloat(input.value) || 0,
+                    remarks: ""
+                });
+            });
+
+            const payload = {
+                bid_id: currentBidId,
+                scores: scores,
+                is_disqualified: isDq,
+                disqualification_reason: isDq ? dqReason : null
+            };
+
+            try {
+                const result = await ApiClient.scoreBid(payload);
+                if (result && result.criteria_detail && result.criteria_detail.length > 0) {
+                    const rb = document.getElementById('score-result-body');
+                    rb.innerHTML = `
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+                            <div style="text-align:center;padding:10px;background:rgba(59,130,246,0.08);border-radius:10px">
+                                <div style="font-size:1.3rem;font-weight:700;color:#60a5fa">${result.technical_score}</div>
+                                <div style="font-size:0.68rem;color:#64748b">Tech Score</div>
+                            </div>
+                            <div style="text-align:center;padding:10px;background:rgba(16,185,129,0.08);border-radius:10px">
+                                <div style="font-size:1.3rem;font-weight:700;color:#4ade80">${result.financial_score}</div>
+                                <div style="font-size:0.68rem;color:#64748b">Fin Score</div>
+                            </div>
+                            <div style="text-align:center;padding:10px;background:rgba(139,92,246,0.08);border-radius:10px">
+                                <div style="font-size:1.3rem;font-weight:700;color:#a78bfa">${result.composite_score}</div>
+                                <div style="font-size:0.68rem;color:#64748b">Composite</div>
+                            </div>
+                        </div>
+                        <div style="font-size:0.72rem;font-family:monospace;color:#64748b;margin-bottom:10px">${result.composite_formula||''}</div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px">
+                            ${result.criteria_detail.map(c=>`
+                            <div style="padding:8px 10px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid ${c.pass?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'}">
+                                <div style="font-size:0.75rem;font-weight:600;margin-bottom:3px">${c.criteria_name}</div>
+                                <div style="font-size:0.7rem;color:#64748b">${c.raw_score}/${c.max_score} · ${c.score_pct}% · contrib <b style="color:#a78bfa">${c.weighted_contribution}</b></div>
+                                <div style="height:3px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:4px;overflow:hidden"><div style="height:100%;background:${c.pass?'#10b981':'#ef4444'};width:${c.score_pct}%"></div></div>
+                            </div>`).join('')}
+                        </div>
+                        ${result.rank?`<div style="margin-top:12px;font-size:0.8rem;color:#4ade80">✓ Rank: L${result.rank} &bull; ${result.passed_threshold?'Passed':'Failed'} threshold</div>`:''}`;
+                    document.getElementById('score-result-panel').style.display = 'block';
+                } else {
+                    showToast('Bid Evaluated Successfully');
+                    closeScoreModal();
+                }
+                loadComparativeStatement();
+                if (ws && ws.readyState === WebSocket.OPEN) ws.send('SCORED_BID');
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        });
+
+        async function autoFillAIScores() {
+            if (!currentBidId) return;
+
+            const btn = document.getElementById('btn-ai-score');
+            const loader = document.getElementById('ai-loading');
+            btn.disabled = true;
+            loader.style.display = 'block';
+
+            try {
+                const suggestions = await ApiClient.getAIScoreSuggestion(currentBidId);
+
+                // Fill the inputs and rationales
+                const inputs = document.querySelectorAll('.score-input');
+                inputs.forEach(input => {
+                    const cId = input.getAttribute('data-cid');
+                    if (suggestions[cId]) {
+                        input.value = suggestions[cId].suggested_score;
+                        const rationaleDiv = document.getElementById(`ai-rationale-${cId}`);
+                        if (rationaleDiv) {
+                            rationaleDiv.innerHTML = `<strong>AI Suggestion:</strong> ${suggestions[cId].rationale}`;
+                            rationaleDiv.style.color = suggestions[cId].suggested_score > (fullTenderDataForScoring.criteria.find(c => c.id == cId).max_score * 0.4) ? "var(--success)" : "var(--warning)";
+                        }
+                    }
+                });
+
+                showToast("AI Auto-Scoring Complete!", "success");
+            } catch (e) {
+                console.error(e);
+                showToast("Failed to fetch AI suggestions.", "error");
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+
+        function openDocModal(bidId, vendorName) {
+            currentBidId = bidId;
+            document.getElementById('modal-vendor-name').textContent = `Documents - ${vendorName}`;
+            renderDocsList();
+            document.getElementById('docModal').classList.add('active');
+        }
+
+        function closeDocModal() {
+            document.getElementById('docModal').classList.remove('active');
+            currentBidId = null;
+        }
+
+        function renderDocsList() {
+            const bid = currentTenderBids.find(b => b.id === currentBidId);
+            const container = document.getElementById('doc-list');
+            container.innerHTML = '';
+
+            if (!bid || !bid.documents || bid.documents.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">No documents uploaded yet.</p>';
+                return;
+            }
+
+            bid.documents.forEach(doc => {
+                container.innerHTML += `
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <div class="d-flex justify-between align-center mb-4">
+                            <h4 style="margin:0;"><i data-lucide="file-text" style="width:16px;height:16px;margin-right:8px;"></i>${doc.document_type}</h4>
+                            <div class="d-flex align-center gap-3">
+                                ${doc.verified ?
+                        '<span class="badge badge-success"><i data-lucide="check-circle" style="width:12px;height:12px;margin-right:4px;"></i>Verified</span>' :
+                        '<span class="badge badge-warning"><i data-lucide="clock" style="width:12px;height:12px;margin-right:4px;"></i>Pending Verification</span>'
+                    }
+                                <button class="btn ${doc.verified ? 'btn-outline' : 'btn-primary'}" onclick="verifyDoc(${doc.id}, ${!doc.verified})" style="padding:4px 8px; font-size:0.8rem;">
+                                    ${doc.verified ? 'Unverify' : 'Mark Verified'}
+                                </button>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Extracted OCR Text:</div>
+                        <div class="ocr-preview">${doc.ocr_extracted_text || '[No text extracted]'}</div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        async function uploadDoc() {
+            const fileInput = document.getElementById('doc-file');
+            const typeSelect = document.getElementById('doc-type');
+            const btn = document.getElementById('btn-upload-doc');
+
+            if (!fileInput.files[0]) {
+                showToast("Please select a file first", "error");
+                return;
+            }
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Processing OCR...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await ApiClient.uploadDocument(currentBidId, typeSelect.value, fileInput.files[0]);
+                showToast("Document uploaded and OCR processed successfully");
+                fileInput.value = '';
+
+                // Refresh data
+                await loadComparativeStatement();
+                renderDocsList();
+            } catch (e) {
+                showToast(e.message, "error");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function verifyDoc(docId, verifiedStatus) {
+            try {
+                await ApiClient.verifyDocument(docId, verifiedStatus);
+                showToast(verifiedStatus ? "Document Verified" : "Verification Removed");
+                await loadComparativeStatement();
+                renderDocsList();
+            } catch (e) {
+                showToast("Failed to update status", "error");
+            }
+        }
+
+        function exportCSV() {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+            const token = ApiClient.getToken();
+            window.open(`${API_BASE_URL}/reports/export/comparative/${tenderId}?token=${token}`, '_blank');
+        }
+
+        function openCycleDossier() {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+            window.open(`cycle_report.html?tender_id=${tenderId}`, '_blank');
+        }
+
+        let comparisonDataCache = {};
+
+        async function openCompareModal() {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+
+            try {
+                comparisonDataCache = await ApiClient.compareDocuments(tenderId);
+                const select = document.getElementById('compare-doc-type');
+                select.innerHTML = '<option value="">-- Select Document Category --</option>';
+
+                Object.keys(comparisonDataCache).forEach(type => {
+                    select.innerHTML += `<option value="${type}">${type}</option>`;
+                });
+
+                document.getElementById('compare-grid').innerHTML = '';
+                document.getElementById('compareModal').classList.add('active');
+            } catch (e) {
+                showToast("Failed to load comparison data", "error");
+            }
+        }
+
+        function closeCompareModal() {
+            document.getElementById('compareModal').classList.remove('active');
+            loadComparativeStatement(); // Refresh main view to update verify counts
+        }
+
+        function renderComparisonGrid() {
+            const docType = document.getElementById('compare-doc-type').value;
+            const grid = document.getElementById('compare-grid');
+            grid.innerHTML = '';
+
+            if (!docType || !comparisonDataCache[docType]) return;
+
+            const docs = comparisonDataCache[docType];
+
+            docs.forEach(doc => {
+                const verifiedHtml = doc.verified ?
+                    `<span class="badge badge-success mb-2 d-inline-block">Verified</span>` :
+                    `<span class="badge badge-warning mb-2 d-inline-block">Pending</span>`;
+
+                const riskHtml = doc.risk_score > 0 ?
+                    `<div style="color:var(--danger); font-size:0.8rem; font-weight:600; margin-bottom:10px;">🚨 NLP Risk Score: ${doc.risk_score}/100</div>` :
+                    `<div style="color:var(--success); font-size:0.8rem; font-weight:600; margin-bottom:10px;">✅ NLP Risk: Clear (0/100)</div>`;
+
+                const esgScoreVal = doc.esg_score || 0;
+                let esgColor = '#94a3b8';
+                if (esgScoreVal >= 70) esgColor = '#10b981';
+                else if (esgScoreVal >= 35) esgColor = '#f59e0b';
+                else if (esgScoreVal > 0) esgColor = '#ef4444';
+
+                const esgHtml = esgScoreVal > 0 ? `
+                    <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                        <div style="color:${esgColor}; font-size:0.8rem; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
+                            <span>🌱 ESG Score: ${esgScoreVal.toFixed(1)}%</span>
+                            <span class="badge" style="background:${esgColor}20; color:${esgColor}; font-size:0.6rem; padding: 2px 6px;">Green Integrity</span>
+                        </div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px; display: flex; flex-direction: column; gap: 2px;">
+                            ${(doc.esg_highlights || []).map(h => `<div style="display:flex; align-items:center; gap:4px;"><span style="color:#10b981;">✔</span> ${h}</div>`).join('')}
+                        </div>
+                    </div>
+                ` : `<div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:10px; border: 1px dashed rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;">🌱 ESG Metrics: standard baseline</div>`;
+
+                grid.innerHTML += `
+                    <div class="card" style="min-width: 350px; flex: 0 0 350px; display: flex; flex-direction: column; background: rgba(255,255,255,0.02);">
+                        <h4 style="color:var(--primary);">${doc.vendor_name}</h4>
+                        ${verifiedHtml}
+                        ${riskHtml}
+                        ${esgHtml}
+                        
+                        <div style="flex: 1; overflow-y: auto; background: var(--bg-dark); padding: 12px; border-radius: 6px; font-size: 0.8rem; border: 1px solid var(--border); margin-bottom: 15px;">
+                            <strong>AI Summary:</strong><br/>
+                            <span style="color:var(--text-main);">${doc.summary}</span>
+                            <hr style="border-color:var(--border); margin: 8px 0;"/>
+                            <strong>Full OCR Extraction:</strong><br/>
+                            <span style="color:var(--text-muted);">${doc.extracted_text}</span>
+                        </div>
+                        
+                        <div id="deepfake-result-${doc.doc_id}" style="margin-bottom: 10px;"></div>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline" style="flex:1; border-color: #f59e0b; color: #f59e0b; font-size: 0.8rem;" onclick="runDeepfakeScan(${doc.doc_id})">
+                                <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Deepfake Scan
+                            </button>
+                            <button class="btn ${doc.verified ? 'btn-outline' : 'btn-success'}" style="flex:1; font-size: 0.8rem;" 
+                                    onclick="quickVerifyDoc(${doc.doc_id}, ${!doc.verified}, this, '${docType}')">
+                                ${doc.verified ? 'Unverify' : 'Approve'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        async function runDeepfakeScan(docId) {
+            const resultDiv = document.getElementById(`deepfake-result-${docId}`);
+            resultDiv.innerHTML = `<div style="color:#f59e0b; font-size:0.8rem; text-align:center;"><i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> AI scanning pixels...</div>`;
+            lucide.createIcons();
+            
+            try {
+                const res = await ApiClient.request(`/documents/${docId}/deepfake-scan`, { method: 'POST' });
+                const isForged = res.status === "Forged";
+                const color = isForged ? '#ef4444' : '#10b981';
+                
+                resultDiv.innerHTML = `
+                    <div style="background: rgba(0,0,0,0.4); border: 1px solid ${color}; padding: 10px; border-radius: 6px; font-size: 0.75rem;">
+                        <div style="color:${color}; font-weight:bold; margin-bottom:6px; display:flex; justify-content:space-between;">
+                            <span>Deepfake Analysis</span>
+                            <span>${res.status}</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; color:var(--text-muted);">
+                            <span>Manipulation Prob:</span> <span style="color:#e2e8f0;">${res.manipulation_probability_pct}%</span>
+                            <span>Pixel Anomalies:</span> <span style="color:#e2e8f0;">${res.pixel_anomalies}</span>
+                            <span>Metadata:</span> <span style="color:${isForged?'#fca5a5':'#e2e8f0'};">${res.metadata_consistency}</span>
+                            <span>Font Match:</span> <span style="color:#e2e8f0;">${res.font_matching_score_pct}%</span>
+                        </div>
+                        <div style="margin-top:8px; color:${color}; font-style:italic;">"${res.ai_conclusion}"</div>
+                    </div>
+                `;
+            } catch (e) {
+                resultDiv.innerHTML = `<div style="color:#ef4444; font-size:0.8rem;">Scan failed: ${e.message}</div>`;
+            }
+        }
+
+        async function quickVerifyDoc(docId, status, btnElement, docType) {
+            try {
+                await ApiClient.verifyDocument(docId, status);
+                showToast("Document status updated!");
+
+                // Update local cache to re-render without network request
+                const docIndex = comparisonDataCache[docType].findIndex(d => d.doc_id === docId);
+                if (docIndex > -1) {
+                    comparisonDataCache[docType][docIndex].verified = status;
+                }
+                renderComparisonGrid();
+            } catch (e) {
+                showToast("Failed to verify", "error");
+            }
+        }
+
+        function exportPDF() {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+            const token = ApiClient.getToken();
+            window.open(`${API_BASE_URL}/reports/export/comparative-pdf/${tenderId}?token=${token}`, '_blank');
+        }
+
+        async function unlockFinancials() {
+            // Replaced by detailed function below
+        }
+
+        async function autoEvaluate(bypassConfirm = false) {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+            if (!bypassConfirm && !confirm("Are you sure you want the AI to autonomously evaluate ALL bids?")) return;
+
+            const steps = [
+                "> [SYS] Initializing NLP Document Processor...",
+                "> [SYS] Connecting to GEM Tensor Engine...",
+                "> [NET] Fetching all bids for selected tender...",
+                "> [AI] Extracting full-text from Vendor PDF & TXT documents...",
+                "> [AI] Parsing domain-specific technical criteria weights...",
+                "> [AI] Applying Jaccard Similarity Algorithm for compliance checking...",
+                "> [WARN] Checking Cartel & Bid-Rigging Network History...",
+                "> [SEC] Vendor Risk Score: CLEAR.",
+                "> [AI] Autonomously generating rationale and mapping points...",
+                "> [MATH] Calculating composite matrix vs baseline threshold...",
+                "> [SYS] Disqualifying vendors below 70% technical benchmark...",
+                "> [DB] Committing final scores to immutable ledger...",
+                "> [OK] Autonomous Evaluation Successfully Completed in 0.82s."
+            ];
+
+            await runDetailedOperation("GEM_AI_NEURAL_ENGINE_v4.2", steps, async () => {
+                const res = await ApiClient.autoEvaluateTender(tenderId);
+                showToast(`Success! AI evaluated ${res.bids_processed} bids autonomously.`, "success");
+                loadComparativeStatement();
+            });
+        }
+
+        async function unlockFinancials(bypassConfirm = false) {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+            if (!bypassConfirm && !confirm("Are you sure you want to Unlock Financial Bids?")) return;
+
+            const steps = [
+                "> [SEC] Initiating RSA-2048 Decryption Protocol...",
+                "> [SEC] Requesting Admin Authorization Token...",
+                "> [OK] Token Verified. Access Granted.",
+                "> [SYS] Accessing Secure Financial Vault...",
+                "> [MATH] Decrypting AES-256 encrypted bid amounts...",
+                "  => Decrypting Vendor 1... [OK]",
+                "  => Decrypting Vendor 2... [OK]",
+                "  => Decrypting Vendor 3... [OK]",
+                "> [CALC] Applying dynamically generated Financial Weightages...",
+                "> [CALC] Merging Technical & Financial Scores into Composite Score...",
+                "> [RANK] Sorting vendors by Composite Score to determine True L1...",
+                "> [DB] Broadcasting Unlocked Status to all Evaluators...",
+                "> [OK] Financials Successfully Unlocked and Ranked."
+            ];
+
+            await runDetailedOperation("GEM_CRYPTO_VAULT_DECRYPTOR", steps, async () => {
+                await ApiClient.openFinancialBids(tenderId);
+                showToast("Financials Unlocked. L1 Ranked successfully!", "success");
+                loadComparativeStatement();
+            });
+        }
+
+        async function startAuction() {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+            if (!confirm("Are you sure you want to Start a Live Reverse Auction?")) return;
+
+            const steps = [
+                "> [NET] Initializing WebSocket Global Broadcast Channel...",
+                "> [SYS] Setting Base Reserve Price from Current L1...",
+                "> [SEC] Creating isolated trading rooms for eligible vendors...",
+                "> [TIME] Syncing countdown timers across all client nodes...",
+                "> [OK] Live Auction Room is now ACTIVE."
+            ];
+
+            await runDetailedOperation("GEM_AUCTION_INITIATOR", steps, async () => {
+                await ApiClient.startAuction(tenderId);
+                showToast("Live Reverse Auction Started!", "success");
+                loadComparativeStatement();
+            });
+        }
+
+        async function awardTender(tenderId, bidId, bypassConfirm = false) {
+            if (!bypassConfirm && !confirm("Are you sure you want to AWARD the contract?")) return;
+
+            const steps = [
+                "> [SYS] Preparing Final Award Documentation...",
+                "> [PDF] Generating legal Contract PDF with ReportLab...",
+                "> [WEB3] Compiling Solidity (.sol) Smart Contract...",
+                "> [WEB3] Injecting Vendor Address, Award Amount, and Delivery Terms...",
+                "> [BLOCKCHAIN] Signing cryptographic hash for immutable audit trail...",
+                "> [MAIL] Dispatching SMTP Win Notification to Vendor...",
+                "> [MAIL] Dispatching SMTP Loss Notifications to competing Vendors...",
+                "> [OK] Tender Awarded. Web3 Contract Ready for Download."
+            ];
+
+            await runDetailedOperation("GEM_CONTRACT_ORACLE", steps, async () => {
+                await ApiClient.awardTender(tenderId, bidId);
+                showToast("Tender mathematically awarded successfully!", "success");
+                loadComparativeStatement();
+                
+                // Trigger the advanced AI IDE instead of just downloading
+                setTimeout(() => {
+                    document.getElementById('web3IdeModal').classList.add('active');
+                }, 1000);
+            });
+        }
+        
+        async function startZeroTouchAutopilot() {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+            if (!confirm("WARNING: Engaging Zero-Touch Autopilot will hand over complete control of the Procurement Cycle to the AI Engine. It will autonomously Evaluate, Decrypt, Negotiate, and Award the contract. Proceed?")) return;
+
+            const btn = document.getElementById('btn-autopilot');
+            btn.innerHTML = '<i data-lucide="loader" class="spin"></i> AI ORCHESTRATION ACTIVE';
+            btn.style.animation = 'none';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            // STEP 1: Auto Evaluate
+            showToast("Autopilot: Initiating Neural NLP Evaluation...", "warning");
+            await new Promise(r => setTimeout(r, 1500));
+            await autoEvaluate();
+            await new Promise(r => setTimeout(r, 4000)); // Wait for modal to close
+
+            // STEP 2: Unlock Financials
+            showToast("Autopilot: Decrypting Financial Vaults...", "warning");
+            await unlockFinancials(true); // pass true to bypass confirm
+            await new Promise(r => setTimeout(r, 4000));
+
+            // Find L1
+            const tbody = document.querySelector('#cs-table tbody');
+            const rows = tbody.querySelectorAll('tr');
+            if (rows.length === 0) {
+                showToast("Autopilot Aborted: No valid bids found.", "error");
+                btn.innerHTML = '<i data-lucide="bot"></i> Engage AI Autopilot';
+                btn.disabled = false;
+                return;
+            }
+            const winningBidId = rows[0].querySelector('button[onclick^="awardTender"]').getAttribute('onclick').match(/\d+, (\d+)/)[1];
+
+            // STEP 3: Spawning Multi-Agent Negotiation
+            showToast("Autopilot: Spawning Autonomous Negotiation Swarm...", "warning");
+            await new Promise(r => setTimeout(r, 1500));
+            openNegotiationRoom();
+            
+            // Let the user watch the negotiation for 12 seconds, then close it
+            await new Promise(r => setTimeout(r, 12000));
+            closeNegotiationRoom();
+
+            // STEP 4: Award & Smart Contract
+            showToast("Autopilot: Minting Web3 Smart Contract for Winner...", "success");
+            await new Promise(r => setTimeout(r, 1500));
+            await awardTender(tenderId, winningBidId, true); // bypass confirm
+            
+            // Autopilot done!
+            btn.innerHTML = '<i data-lucide="check-circle"></i> Autopilot Complete';
+            btn.style.background = '#10b981';
+            btn.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
+            lucide.createIcons();
+        }
+
+        async function runDetailedOperation(title, steps, apiCallback) {
+            const terminalModal = document.getElementById('aiTerminalModal');
+            const terminalOutput = document.getElementById('terminal-output');
+            const titleEl = document.querySelector('#aiTerminalModal h2');
+
+            titleEl.textContent = title;
+            terminalModal.classList.add('active');
+            terminalOutput.innerHTML = '';
+
+            const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+            for (let i = 0; i < steps.length; i++) {
+                const line = document.createElement('div');
+                line.textContent = steps[i];
+                if (steps[i].includes('[WARN]')) line.style.color = '#f59e0b';
+                if (steps[i].includes('[OK]')) line.style.color = '#3b82f6';
+                if (steps[i].includes('[SEC]')) line.style.color = '#10b981';
+                if (steps[i].includes('[WEB3]') || steps[i].includes('[BLOCKCHAIN]')) line.style.color = '#8b5cf6';
+
+                terminalOutput.appendChild(line);
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+
+                // Dynamic speed based on text length to feel realistic
+                await delay(150 + (steps[i].length * 3) + Math.random() * 200);
+            }
+
+            await delay(600);
+
+            try {
+                await apiCallback();
+            } catch (e) {
+                showToast(e.message, "error");
+            } finally {
+                terminalModal.classList.remove('active');
+            }
+        }
+
+        function downloadContract(tenderId, bidId) {
+            const token = ApiClient.getToken();
+            window.open(`${API_BASE_URL}/evaluation/contract/${tenderId}/${bidId}?token=${token}`, '_blank');
+        }
+
+        function downloadSmartContract(tenderId) {
+            const token = ApiClient.getToken();
+            window.open(`${API_BASE_URL}/evaluation/smart-contract/${tenderId}?token=${token}`, '_blank');
+        }
+
+        async function runSmartContractAudit() {
+            const terminal = document.getElementById('auditor-terminal');
+            const vulnLine = document.getElementById('vuln-line');
+            const btnAudit = document.getElementById('btn-run-audit');
+            const btnDeploy = document.getElementById('btn-deploy-web3');
+            
+            btnAudit.disabled = true;
+            terminal.innerHTML += '<div style="color: #f59e0b; font-size: 0.85rem; margin-top: 10px;">> [AI] Scanning AST for Reentrancy & Overflow vectors...</div>';
+            await new Promise(r => setTimeout(r, 1500));
+            
+            terminal.innerHTML += '<div style="color: #ef4444; font-size: 0.85rem; margin-top: 10px;">> [CRITICAL] Reentrancy Vulnerability detected on line 14: `call{value}` executed before state update!</div>';
+            vulnLine.style.background = 'rgba(239,68,68,0.5)';
+            vulnLine.style.borderLeft = '4px solid #ef4444';
+            await new Promise(r => setTimeout(r, 2000));
+            
+            terminal.innerHTML += '<div style="color: #3b82f6; font-size: 0.85rem; margin-top: 10px;">> [AI] Autonomously restructuring logic to Checks-Effects-Interactions pattern...</div>';
+            
+            // Fix the code visually
+            vulnLine.style.background = 'rgba(16,185,129,0.2)';
+            vulnLine.style.borderLeft = '4px solid #10b981';
+            vulnLine.innerHTML = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;isDelivered = <span style="color: #f59e0b;">true</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(bool success, ) = vendorAddress.call{value: contractValue}("");`;
+            
+            await new Promise(r => setTimeout(r, 1000));
+            terminal.innerHTML += '<div style="color: #10b981; font-size: 0.85rem; margin-top: 10px;">> [OK] Vulnerability patched. Smart Contract is mathematically proven secure. Ready for Mainnet.</div>';
+            
+            btnAudit.style.display = 'none';
+            btnDeploy.style.display = 'inline-flex';
+        }
+
+        function deployToBlockchain() {
+            showToast("Contract deployed to Web3 Node successfully! Hash: 0x8f2a...9b", "success");
+            setTimeout(closeWeb3IDE, 2000);
+        }
+
+        function closeWeb3IDE() {
+            document.getElementById('web3IdeModal').classList.remove('active');
+        }
+
+        async function runFraudAnalysis() {
+            const steps = [
+                "> [SYS] Initializing GEM Fraud Detection Module...",
+                "> [NET] Fetching global vendor historical data...",
+                "> [GRAPH] Constructing Co-Bidding Network Map (Nodes=Vendors, Edges=Tenders)...",
+                "> [MATH] Calculating Edge Weights based on bidding frequencies...",
+                "> [AI] Applying Deep Walk algorithms to detect isolated clusters...",
+                "> [WARN] Scanning for IP address overlaps and shared device fingerprints...",
+                "> [WARN] Analyzing historical price drops and territory allocation patterns...",
+                "> [SEC] Cross-referencing against National Blacklist Registry...",
+                "> [OK] Analysis Complete. Formatting Intelligence Report..."
+            ];
+
+            await runDetailedOperation("GEM_CARTEL_INTEL_SCANNER", steps, async () => {
+                const data = await ApiClient.request('/reports/fraud-analysis');
+                if (data.fraud_alerts.length === 0) {
+                    alert("AI Fraud Scan Complete: No suspicious cartel or bid rigging patterns detected.");
+                } else {
+                    let msg = "🚨 FRAUD ALERTS DETECTED 🚨\n\n";
+                    data.fraud_alerts.forEach(a => {
+                        msg += `Tender: ${a.bid_number} - ${a.title}\nIssue: ${a.issue}\nVariance: ${a.variance_pct}%\n\n`;
+                    });
+                    alert(msg);
+                }
+            });
+        }
+
+        async function openNegotiationRoom() {
+            const tenderId = document.getElementById('tender-select').value;
+            if (!tenderId) return;
+
+            document.getElementById('negotiationModal').classList.add('active');
+            const chat = document.getElementById('nego-chat');
+            chat.innerHTML = '<div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 20px;"><i data-lucide="loader" class="spin" style="width:24px;height:24px;"></i><br/><br/>Booting Intelligent Multi-Agent Neural Swarm...</div>';
+            lucide.createIcons();
+            
+            try {
+                // Call the REAL intelligent backend
+                const res = await ApiClient.request(`/evaluation/negotiate/${tenderId}`, 'POST');
+                
+                chat.innerHTML = '<div style="text-align: center; color: #94a3b8; font-size: 0.8rem;">--- Autonomous Negotiation Protocol Initiated ---</div>';
+                
+                const messages = res.script;
+
+                for (let i = 0; i < messages.length; i++) {
+                    await new Promise(r => setTimeout(r, 2200));
+                    const msg = messages[i];
+                    const div = document.createElement('div');
+                    div.style.background = `rgba(${hexToRgb(msg.color)}, 0.1)`;
+                    div.style.borderLeft = `4px solid ${msg.color}`;
+                    div.style.padding = '10px 15px';
+                    div.style.borderRadius = '4px';
+                    div.style.animation = 'fadeIn 0.5s ease-out';
+                    div.innerHTML = `<strong style="color: ${msg.color}; font-size: 0.8rem;">${msg.agent}</strong><p style="margin-top: 5px; color: #cbd5e1; font-size: 0.95rem;">${msg.text}</p>`;
+                    chat.appendChild(div);
+                    chat.scrollTop = chat.scrollHeight;
+                }
+                
+                showToast(`Negotiation Complete! Saved ₹${res.savings.toLocaleString('en-IN')}`, "success");
+                
+                // Refresh the grid to show the newly reduced mathematical price
+                setTimeout(loadComparativeStatement, 2000);
+                
+            } catch(e) {
+                chat.innerHTML = `<div style="text-align: center; color: #ef4444; font-size: 0.9rem; padding: 20px;">Negotiation Failed: ${e.message}</div>`;
+            }
+        }
+
+        function closeNegotiationRoom() {
+            document.getElementById('negotiationModal').classList.remove('active');
+        }
+
+        function hexToRgb(hex) {
+            const bigint = parseInt(hex.replace('#', ''), 16);
+            return `${(bigint >> 16) & 255}, ${(bigint >> 8) & 255}, ${bigint & 255}`;
+        }
+
+        document.getElementById('tender-select').addEventListener('change', (e) => {
+            const tenderId = e.target.value;
+            if (!tenderId) return;
+            if (ws) ws.close();
+
+            // Connect WebSocket for Real-time Collaboration
+            ws = new WebSocket(API_BASE_URL.replace('http', 'ws') + `/ws/evaluation/${tenderId}`);
+            ws.onmessage = (event) => {
+                // Someone updated a score, refresh the matrix
+                console.log("WebSocket Sync Triggered");
+                showToast("Data was updated by another evaluator. Syncing...");
+                loadComparativeStatement();
+
+                // If side-by-side comparison modal is active, reload its contents in real-time
+                const compModal = document.getElementById('compareModal');
+                if (compModal && compModal.classList.contains('active')) {
+                    const activeTenderId = document.getElementById('tender-select').value;
+                    ApiClient.compareDocuments(activeTenderId).then(data => {
+                        comparisonDataCache = data;
+                        renderComparisonGrid();
+                    }).catch(err => {
+                        console.error("Failed to dynamically update comparison grid:", err);
+                    });
+                }
+            };
+        });
+
+        init();
+
+        function toggleBreakdown(id) {
+            const row = document.getElementById('bd-'+id);
+            const chev = document.getElementById('chev-'+id);
+            if (!row) return;
+            const open = row.style.display === 'none';
+            row.style.display = open ? '' : 'none';
+            if (chev) chev.style.transform = open ? 'rotate(180deg)' : '';
+        }
+
+        function updateLivePreview() {
+            const inputs = document.querySelectorAll('.score-input');
+            if (!inputs.length || !fullTenderDataForScoring) return;
+            let techScore = 0, tw = 0;
+            inputs.forEach(inp => {
+                const val = parseFloat(inp.value)||0;
+                const max = parseFloat(inp.getAttribute('data-max'))||100;
+                const wt  = parseFloat(inp.getAttribute('data-weight'))||0;
+                const totalW = parseFloat(inp.getAttribute('data-tw'))||1;
+                const pct = max>0 ? (val/max*100) : 0;
+                const contrib = max>0 && totalW>0 ? (val/max)*(wt/totalW)*100 : 0;
+                tw += wt;
+                techScore += contrib;
+                const cid = inp.getAttribute('data-cid');
+                const pctEl = document.getElementById('pct-'+cid);
+                const cEl  = document.getElementById('contrib-'+cid);
+                const bEl  = document.getElementById('bar-'+cid);
+                if (pctEl) pctEl.textContent = pct.toFixed(1)+'% achieved';
+                if (cEl)  cEl.textContent  = 'Contribution: '+contrib.toFixed(2);
+                if (bEl)  bEl.style.width  = Math.min(pct,100)+'%';
+            });
+            const techW = fullTenderDataForScoring.technical_weightage/100||0.7;
+            const finW  = fullTenderDataForScoring.financial_weightage/100||0.3;
+            const composite = techScore*techW;
+            const techEl = document.getElementById('preview-tech');
+            const compEl = document.getElementById('preview-composite');
+            const barEl  = document.getElementById('preview-bar');
+            const frmEl  = document.getElementById('preview-formula');
+            const thrLbl = document.getElementById('preview-threshold-label');
+            const thr    = fullTenderDataForScoring.technical_threshold||70;
+            if (techEl) techEl.textContent = techScore.toFixed(2);
+            if (compEl) compEl.textContent = composite.toFixed(2);
+            if (barEl)  barEl.style.width  = Math.min(techScore,100)+'%';
+            if (frmEl)  frmEl.textContent  = `Tech(${techScore.toFixed(1)}) × ${techW} + Fin(?) × ${finW} = ${composite.toFixed(1)}+?`;
+            if (thrLbl) thrLbl.textContent  = `Threshold: ${thr}%`;
+            if (techEl) techEl.style.color = techScore >= thr ? '#4ade80' : '#f87171';
+        }
+    
+        // Dynamic Role-based navigation controls
+        const userNav = JSON.parse(localStorage.getItem('gem_user'));
+        if (userNav) {
+            const isStaff = userNav.role === 'Admin' || userNav.role === 'Evaluator';
+            ['nav-evaluation', 'nav-cartel', 'nav-pqc', 'nav-forensics', 'nav-analysis'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = isStaff ? 'block' : 'none';
+            });
+        }
+
+    </script>
+    <style>
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</body>
+
+</html>

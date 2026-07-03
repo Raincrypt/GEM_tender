@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Forensics v5.0 | GEM Intelligence</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#050810;color:#e2e8f0;min-height:100vh}
+        .mono{font-family:'JetBrains Mono',monospace}
+        .topbar{padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.04)}
+        .topbar h1{font-size:1.4rem;background:linear-gradient(135deg,#ef4444,#f59e0b,#8b5cf6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .g{display:grid;gap:20px;padding:20px 40px;max-width:1700px;margin:0 auto}
+        .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr 1fr 1fr} .g4{grid-template-columns:repeat(4,1fr)} .g1{grid-template-columns:1fr}
+        .c{background:rgba(10,14,26,0.95);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:22px;transition:all 0.3s}
+        .c:hover{border-color:rgba(139,92,246,0.3);box-shadow:0 0 40px rgba(139,92,246,0.06)}
+        .ct{font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:#475569;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+        .ct i{width:14px;height:14px}
+        .big{font-size:2.5rem;font-weight:700}
+        .sub{font-size:0.8rem;color:#475569;margin-top:4px}
+        .grn{color:#4ade80} .red{color:#f87171} .amb{color:#fbbf24} .blu{color:#60a5fa} .pur{color:#a78bfa} .pnk{color:#f472b6}
+        table{width:100%;border-collapse:collapse;font-size:0.78rem}
+        th{text-align:left;padding:10px 8px;color:#475569;border-bottom:1px solid rgba(255,255,255,0.06);font-weight:600}
+        td{padding:10px 8px;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .b{padding:3px 10px;border-radius:20px;font-size:0.6rem;font-weight:700;display:inline-block}
+        .bg{background:rgba(34,197,94,0.15);color:#4ade80} .br{background:rgba(239,68,68,0.15);color:#f87171}
+        .ba{background:rgba(251,191,36,0.15);color:#fbbf24} .bb{background:rgba(96,165,250,0.15);color:#60a5fa}
+        .bp{background:rgba(139,92,246,0.15);color:#a78bfa} .bpk{background:rgba(244,114,182,0.15);color:#f472b6}
+        .ch{height:260px;position:relative}
+        .bar{height:6px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:4px}
+        .bf{height:100%;border-radius:3px;transition:width 0.8s ease}
+        .links a{text-decoration:none;color:#94a3b8;background:rgba(255,255,255,0.04);padding:8px 14px;border-radius:10px;font-size:0.8rem;border:1px solid rgba(255,255,255,0.06);margin-left:8px}
+        .links a:hover{border-color:#8b5cf6;color:#a78bfa}
+        #load{position:fixed;inset:0;background:#050810;display:flex;align-items:center;justify-content:center;z-index:999}
+        .sp{width:24px;height:24px;border:3px solid #1e293b;border-top-color:#8b5cf6;border-radius:50%;animation:s 0.8s linear infinite;margin-right:12px}
+        @keyframes s{to{transform:rotate(360deg)}}
+        .gauge-ring{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto}
+        .trait{display:inline-block;margin:2px 4px 2px 0;padding:2px 8px;border-radius:12px;font-size:0.6rem;font-weight:600}
+        @media(max-width:1000px){.g2,.g3,.g4{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div id="load"><div class="sp"></div><span class="mono" style="color:#64748b">Running Deep Forensics Engine v5.0...</span></div>
+
+<div class="topbar">
+    <div><h1>Deep Forensics Engine v5.0</h1><p style="font-size:0.72rem;color:#334155" class="mono">HHI &bull; Bid Rotation &bull; Nash Equilibrium &bull; Vendor DNA &bull; Gini Index</p></div>
+    <div class="links">
+        <a href="plagiarism_report.html">Plagiarism Intel</a>
+        <a href="bid_analysis.html">Bid Analysis</a>
+        <a href="analytics_dashboard.html">Intelligence Hub</a>
+        <a href="test_everything.html">Test Bench</a>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="g g4" id="kpis"></div>
+
+<!-- Vision Forensics -->
+<div class="g g1">
+    <div class="c">
+        <div class="ct"><i data-lucide="eye"></i> Computer Vision Document Forensics (Error Level Analysis)</div>
+        <p style="font-size:0.8rem;color:#64748b;margin-bottom:14px">Detect deepfakes, spliced signatures, or photoshopped amounts on MSME certificates and Bank Guarantees using ELA compression analysis.</p>
+        <div style="display:flex;gap:20px;align-items:flex-start;">
+            <div style="flex:1">
+                <input type="file" id="vision-upload" accept="image/*" style="display:none" onchange="runVisionScan(this)">
+                <button onclick="document.getElementById('vision-upload').click()" id="vision-btn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.85rem;display:flex;align-items:center;gap:8px"><i data-lucide="upload"></i> Upload Document Image</button>
+                <div id="vision-results" style="margin-top:20px;display:none;background:rgba(255,255,255,0.02);padding:16px;border-radius:8px;border:1px solid rgba(255,255,255,0.05)">
+                    <div class="big" id="v-verdict" style="font-size:1.2rem;margin-bottom:10px"></div>
+                    <div class="sub">Forgery Risk Score: <span id="v-score" style="font-weight:700"></span>/100</div>
+                    <div class="sub">Variance (StdDev): <span id="v-stddev" class="mono"></span></div>
+                </div>
+            </div>
+            <div style="flex:2;text-align:center;border:1px dashed rgba(255,255,255,0.1);border-radius:12px;padding:10px;min-height:200px;display:flex;align-items:center;justify-content:center;background:#020617">
+                <img id="ela-preview" style="max-width:100%;max-height:300px;display:none;border-radius:8px;box-shadow:0 0 20px rgba(239,68,68,0.2)" alt="ELA Heatmap">
+                <span id="ela-placeholder" style="color:#475569;font-size:0.85rem">Heatmap visualization will appear here</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- True Vector RAG (Chat with Dossier) -->
+<div class="g g1">
+    <div class="c">
+        <div class="ct"><i data-lucide="database"></i> True Vector RAG (Chat with the Dossier)</div>
+        <p style="font-size:0.8rem;color:#64748b;margin-bottom:14px">Upload a 50-page technical PDF. Our FAISS Vector Database chunks the document, allowing you to ask hyper-specific questions about compliance clauses and receive instantly cited answers.</p>
+        <div style="display:flex;gap:20px;align-items:stretch;">
+            <div style="flex:1;background:rgba(255,255,255,0.02);padding:20px;border-radius:12px;border:1px dashed rgba(255,255,255,0.1);display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <input type="file" id="rag-upload" accept="application/pdf" style="display:none" onchange="uploadDossier(this)">
+                <button onclick="document.getElementById('rag-upload').click()" id="rag-upload-btn" style="background:rgba(139,92,246,0.2);color:#a78bfa;border:1px solid rgba(139,92,246,0.4);padding:12px 24px;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.85rem;display:flex;align-items:center;gap:8px"><i data-lucide="file-text"></i> Upload Vendor PDF Dossier</button>
+                <div id="rag-status" style="margin-top:12px;font-size:0.75rem;color:#4ade80;display:none"></div>
+            </div>
+            <div style="flex:2;background:#020617;border:1px solid rgba(255,255,255,0.05);border-radius:12px;display:flex;flex-direction:column;min-height:250px">
+                <div id="rag-chat-log" style="flex:1;padding:16px;overflow-y:auto;max-height:250px;font-size:0.85rem;color:#e2e8f0;display:flex;flex-direction:column;gap:12px">
+                    <div style="color:#64748b;text-align:center;margin-top:40px">Upload a dossier and ask a question...</div>
+                </div>
+                <div style="padding:12px;border-top:1px solid rgba(255,255,255,0.05);display:flex;gap:10px">
+                    <input type="text" id="rag-input" placeholder="e.g., 'Did the vendor agree to the 5-year warranty clause?'" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:white;padding:10px 14px;border-radius:8px;font-size:0.85rem" onkeypress="if(event.key === 'Enter') askRag()">
+                    <button id="rag-ask-btn" onclick="askRag()" style="background:#8b5cf6;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600"><i data-lucide="send" style="width:16px;height:16px"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HHI & Gini -->
+<div class="g g2">
+    <div class="c"><div class="ct"><i data-lucide="pie-chart"></i> HHI Market Concentration Index</div>
+        <div style="display:flex;align-items:center;gap:24px;margin-bottom:16px">
+            <div><div class="big" id="hhi-val">—</div><div class="sub" id="hhi-level">Loading...</div></div>
+            <div class="ch" style="flex:1;height:200px"><canvas id="hhiChart"></canvas></div>
+        </div>
+    </div>
+    <div class="c"><div class="ct"><i data-lucide="target"></i> Gini Coefficient (Bid Equality)</div>
+        <div style="text-align:center;padding:20px">
+            <div class="gauge-ring" id="gini-gauge" style="background:conic-gradient(#8b5cf6 0%,#1e293b 0%)">
+                <div style="width:70px;height:70px;border-radius:50%;background:#050810;display:flex;align-items:center;justify-content:center">
+                    <span class="big pur" id="gini-val" style="font-size:1.8rem">—</span>
+                </div>
+            </div>
+            <div class="sub" style="margin-top:12px" id="gini-text">Loading...</div>
+            <p style="font-size:0.7rem;color:#334155;margin-top:8px">0 = Perfect Equality &bull; 1 = Total Inequality</p>
+        </div>
+    </div>
+</div>
+
+<!-- Game Theory -->
+<div class="g g1">
+    <div class="c"><div class="ct"><i data-lucide="swords"></i> Game Theory — Nash Equilibrium Analysis</div>
+        <div style="overflow-x:auto" id="nash-table"></div>
+    </div>
+</div>
+
+<!-- Bid Rotation & Co-Bidding -->
+<div class="g g2">
+    <div class="c"><div class="ct"><i data-lucide="rotate-ccw"></i> Bid Rotation Detection</div><div id="rotation-box"></div></div>
+    <div class="c"><div class="ct"><i data-lucide="users"></i> Co-Bidding Frequency Matrix</div><div id="cobid-table"></div></div>
+</div>
+
+<!-- Vendor DNA -->
+<div class="g g1">
+    <div class="c"><div class="ct"><i data-lucide="dna"></i> Vendor DNA Fingerprint (Behavioral Profile)</div>
+        <div style="overflow-x:auto" id="dna-table"></div>
+    </div>
+</div>
+
+<!-- Bid Timing Forensics -->
+<div class="g g1">
+    <div class="c"><div class="ct"><i data-lucide="clock"></i> Bid Submission Timing Forensics</div>
+        <div id="timing-section"><p style="color:#334155;text-align:center;padding:20px">Loading timing data...</p></div>
+    </div>
+</div>
+
+<!-- Vendor Performance Recalc -->
+<div class="g g1">
+    <div class="c"><div class="ct"><i data-lucide="refresh-cw"></i> Vendor Performance Auto-Calibration</div>
+        <p style="font-size:0.8rem;color:#64748b;margin-bottom:14px">Recalculates vendor trust scores from actual procurement history (win rate, technical performance, bid consistency, delivery compliance).</p>
+        <button onclick="recalcPerf()" id="recalc-btn" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;border:none;padding:10px 24px;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.85rem">⚡ Recalculate All Vendor Scores</button>
+        <div id="recalc-results" style="margin-top:16px"></div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+async function init() {
+    try {
+        const D = await ApiClient.getDeepForensics();
+        document.getElementById('load').style.display = 'none';
+
+        // KPIs
+        document.getElementById('kpis').innerHTML = [
+            kp('HHI Index', D.hhi.index, D.hhi.level === 'Competitive' ? 'grn' : 'red', D.hhi.level),
+            kp('Gini', D.gini.coefficient, 'pur', D.gini.assessment),
+            kp('Rotation Signals', D.bid_rotation.signals.length, D.bid_rotation.signals.length > 0 ? 'red' : 'grn', D.bid_rotation.signals.length > 0 ? 'ALERT: Pattern Found' : 'No rotation detected'),
+            kp('Vendor Profiles', D.vendor_dna.length, 'blu', `${D.meta.bids} bids across ${D.meta.tenders} tenders`),
+        ].join('');
+
+        // HHI Chart
+        new Chart(document.getElementById('hhiChart').getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: D.hhi.breakdown.map(h => h.vendor.substring(0,15)), datasets: [{
+                data: D.hhi.breakdown.map(h => h.market_share_pct),
+                backgroundColor: ['#3b82f6','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ec4899','#ef4444','#6366f1'],
+                borderWidth: 0
+            }]},
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%',
+                plugins: { legend: { position: 'right', labels: { color: '#64748b', font: { size: 10 }, padding: 8 } } } }
+        });
+        document.getElementById('hhi-val').textContent = D.hhi.index;
+        document.getElementById('hhi-val').className = `big ${D.hhi.level === 'Competitive' ? 'grn' : 'red'}`;
+        document.getElementById('hhi-level').textContent = D.hhi.level;
+
+        // Gini Gauge
+        const gPct = D.gini.coefficient * 100;
+        document.getElementById('gini-gauge').style.background = `conic-gradient(#8b5cf6 ${gPct}%, #1e293b ${gPct}%)`;
+        document.getElementById('gini-val').textContent = D.gini.coefficient;
+        document.getElementById('gini-text').textContent = D.gini.assessment;
+
+        // Nash Table
+        document.getElementById('nash-table').innerHTML = `<table><thead><tr><th>Tender</th><th>Vendor</th><th>Actual Bid</th><th>Nash Optimal</th><th>Deviation</th><th>Strategy</th></tr></thead><tbody>${
+            D.game_theory.map(n => `<tr><td class="mono" style="font-size:0.7rem">${n.tender}</td><td>${n.vendor.substring(0,25)}</td>
+            <td>₹${(n.actual_bid/100000).toFixed(1)}L</td><td>₹${(n.nash_optimal/100000).toFixed(1)}L</td>
+            <td class="${n.deviation_pct > 3 ? 'red' : n.deviation_pct < -3 ? 'grn' : 'amb'}">${n.deviation_pct > 0 ? '+' : ''}${n.deviation_pct}%</td>
+            <td><span class="b ${n.strategy === 'OPTIMAL' ? 'bg' : n.strategy === 'AGGRESSIVE' ? 'bb' : 'ba'}">${n.strategy}</span></td></tr>`).join('')
+        }</tbody></table>`;
+
+        // Rotation
+        const rot = D.bid_rotation;
+        let rotHtml = '';
+        if (rot.signals.length > 0) {
+            rotHtml = rot.signals.map(s => `<div style="padding:14px;background:rgba(239,68,68,0.08);border-left:3px solid #ef4444;border-radius:8px;margin-bottom:10px">
+                <div class="red" style="font-weight:700;font-size:0.85rem">${s.type} — ${s.severity}</div>
+                <p style="font-size:0.8rem;color:#94a3b8;margin-top:4px">${s.detail}</p>
+                <div class="mono" style="font-size:0.65rem;color:#475569;margin-top:6px">Sequence: ${s.sequence.join(' → ')}</div>
+            </div>`).join('');
+        } else {
+            rotHtml = '<div style="text-align:center;padding:20px;color:#334155"><p>No rotation patterns detected</p></div>';
+        }
+        document.getElementById('rotation-box').innerHTML = rotHtml;
+
+        // Co-bidding
+        document.getElementById('cobid-table').innerHTML = D.bid_rotation.co_bidding_pairs.length > 0 ?
+            `<table><thead><tr><th>Vendor A</th><th>Vendor B</th><th>Co-Bids</th><th>Rate</th><th>Risk</th></tr></thead><tbody>${
+            D.bid_rotation.co_bidding_pairs.map(p => `<tr><td>${p.vendor_a.substring(0,18)}</td><td>${p.vendor_b.substring(0,18)}</td>
+            <td>${p.co_bid_count}/${p.total_tenders}</td><td>${p.co_bid_rate_pct}%</td>
+            <td><span class="b ${p.risk === 'HIGH' ? 'br' : 'ba'}">${p.risk}</span></td></tr>`).join('')
+        }</tbody></table>` : '<p style="color:#334155;text-align:center;padding:20px">No frequent co-bidding pairs</p>';
+
+        // Vendor DNA
+        document.getElementById('dna-table').innerHTML = `<table><thead><tr><th>Vendor</th><th>Bids</th><th>Win%</th><th>Avg Tech</th><th>PER</th><th>Volatility</th><th>Delivery</th><th>Trust</th><th>Behavioral Traits</th></tr></thead><tbody>${
+            D.vendor_dna.map(d => `<tr style="${d.blacklisted ? 'opacity:0.4' : ''}">
+            <td>${d.vendor.substring(0,22)}</td><td>${d.total_bids}</td>
+            <td class="${d.win_rate > 30 ? 'grn' : ''}">${d.win_rate}%</td>
+            <td>${d.avg_technical}</td><td>${d.avg_price_to_estimate}</td>
+            <td class="${d.bid_volatility > 20 ? 'red' : ''}">${d.bid_volatility}%</td>
+            <td>${d.avg_delivery_days}d</td><td>${d.trust_score}</td>
+            <td>${d.traits.map(t => {
+                let cls = 'bp';
+                if (t.includes('BLACKLISTED')) cls = 'br';
+                else if (t.includes('Aggressive') || t.includes('Erratic')) cls = 'ba';
+                else if (t.includes('Leader') || t.includes('Dominant') || t.includes('Fast')) cls = 'bg';
+                else if (t.includes('MSME')) cls = 'bb';
+                return `<span class="trait ${cls}">${t}</span>`;
+            }).join('')}</td></tr>`).join('')
+        }</tbody></table>`;
+
+        lucide.createIcons();
+
+        // Load bid timing forensics
+        loadTiming();
+    } catch(e) { document.getElementById('load').innerHTML = `<span class="red mono">Error: ${e.message}</span>`; }
+}
+
+async function loadTiming() {
+    try {
+        const T = await ApiClient.getBidTimingForensics();
+        let html = '';
+        for (const ta of T.tender_analysis) {
+            const riskCls = ta.risk_level === 'CRITICAL' ? 'br' : ta.risk_level === 'HIGH' ? 'ba' : 'bg';
+            html += `<div style="margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px solid rgba(255,255,255,0.04)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <div><span class="mono" style="font-size:0.75rem;color:#64748b">${ta.tender}</span>
+                    <span style="font-size:0.85rem;font-weight:600;margin-left:8px">${(ta.title||'').substring(0,40)}</span></div>
+                    <span class="b ${riskCls}">${ta.risk_level}</span>
+                </div>
+                <div style="display:flex;gap:20px;margin-bottom:8px;font-size:0.75rem;color:#475569">
+                    <span>Total Bids: ${ta.total_bids}</span>
+                    <span>Last-Minute: <span class="${ta.last_minute_pct > 40 ? 'red' : 'grn'}">${ta.last_minute_bids} (${ta.last_minute_pct}%)</span></span>
+                </div>`;
+            // Bid timeline bars
+            const maxH = Math.max(...ta.bid_timings.map(b => b.hours_before_close), 1);
+            html += '<div style="display:flex;gap:6px;align-items:flex-end;height:50px;margin-bottom:6px">';
+            for (const bt of ta.bid_timings) {
+                const h = Math.max(8, (bt.hours_before_close / maxH) * 50);
+                const col = bt.is_last_minute ? '#ef4444' : bt.is_early ? '#4ade80' : '#60a5fa';
+                html += `<div title="${bt.vendor}: ${bt.hours_before_close}h before close" style="width:${100/ta.bid_timings.length}%;height:${h}px;background:${col};border-radius:4px 4px 0 0;cursor:help"></div>`;
+            }
+            html += '</div>';
+            // Clusters
+            if (ta.coordinated_clusters.length > 0) {
+                html += '<div style="margin-top:8px;padding:8px;background:rgba(251,191,36,0.08);border-left:3px solid #fbbf24;border-radius:6px">';
+                for (const c of ta.coordinated_clusters) {
+                    html += `<div style="font-size:0.75rem;color:#fbbf24">⚠ ${c.vendors.join(' & ')} submitted within ${c.gap_minutes} min — ${c.risk}</div>`;
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+        document.getElementById('timing-section').innerHTML = html || '<p style="color:#334155;text-align:center;padding:20px">No timing data</p>';
+    } catch(e) { console.error('Timing error:', e); }
+}
+
+async function recalcPerf() {
+    const btn = document.getElementById('recalc-btn');
+    btn.disabled = true; btn.textContent = '⏳ Recalculating...';
+    try {
+        const R = await ApiClient.recalcVendorPerformance();
+        let html = `<p style="font-size:0.8rem;color:#4ade80;margin-bottom:12px">✅ Recalculated ${R.recalculated} vendor scores</p>`;
+        html += '<table><thead><tr><th>Vendor</th><th>Old</th><th>New</th><th>Δ</th><th>Win</th><th>Tech</th><th>Consistency</th><th>Delivery</th><th>Rep</th></tr></thead><tbody>';
+        for (const v of R.vendors) {
+            const dc = v.delta > 0 ? 'grn' : v.delta < 0 ? 'red' : '';
+            html += `<tr><td>${v.vendor.substring(0,22)}</td><td>${v.old_score}</td><td class="${dc}" style="font-weight:700">${v.new_score}</td>
+                <td class="${dc}">${v.delta > 0 ? '+' : ''}${v.delta}</td>
+                <td>${v.factors.win_rate}</td><td>${v.factors.technical}</td>
+                <td>${v.factors.consistency}</td><td>${v.factors.delivery}</td><td>${v.factors.reputation}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        document.getElementById('recalc-results').innerHTML = html;
+    } catch(e) { document.getElementById('recalc-results').innerHTML = `<span class="red">Error: ${e.message}</span>`; }
+    btn.disabled = false; btn.textContent = '⚡ Recalculate All Vendor Scores';
+}
+
+async function runVisionScan(input) {
+    if(!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const btn = document.getElementById('vision-btn');
+    const resBox = document.getElementById('vision-results');
+    const imgPreview = document.getElementById('ela-preview');
+    const placeholder = document.getElementById('ela-placeholder');
+    
+    btn.disabled = true; btn.innerHTML = '<i data-lucide="loader"></i> Scanning Pixels...';
+    lucide.createIcons();
+    
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        // Use fetch directly for FormData
+        const response = await fetch(API_BASE_URL + '/reports/vision-scan', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + ApiClient.getToken() },
+            body: formData
+        });
+        
+        if(!response.ok) throw new Error("Vision scan failed");
+        const data = await response.json();
+        
+        resBox.style.display = 'block';
+        placeholder.style.display = 'none';
+        imgPreview.style.display = 'block';
+        
+        document.getElementById('v-verdict').textContent = data.verdict;
+        document.getElementById('v-verdict').className = data.risk_score > 70 ? 'big red' : data.risk_score > 40 ? 'big amb' : 'big grn';
+        document.getElementById('v-score').textContent = data.risk_score;
+        document.getElementById('v-stddev').textContent = data.std_dev;
+        
+        imgPreview.src = 'data:image/jpeg;base64,' + data.ela_base64;
+        
+    } catch(e) {
+        alert("Computer Vision Error: " + e.message);
+    }
+    
+    btn.disabled = false; btn.innerHTML = '<i data-lucide="upload"></i> Upload Document Image';
+    lucide.createIcons();
+    input.value = '';
+}
+
+async function uploadDossier(input) {
+    if(!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const btn = document.getElementById('rag-upload-btn');
+    const status = document.getElementById('rag-status');
+    
+    btn.disabled = true; btn.innerHTML = '<i data-lucide="loader"></i> Vectorizing Document...';
+    lucide.createIcons();
+    
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const response = await fetch(API_BASE_URL + '/c3/upload-dossier', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + ApiClient.getToken() },
+            body: formData
+        });
+        
+        const data = await response.json();
+        if(!response.ok) throw new Error(data.detail || "Failed to vectorize");
+        
+        status.style.display = 'block';
+        status.textContent = "✅ " + data.message;
+        document.getElementById('rag-chat-log').innerHTML = '<div style="color:#a78bfa;text-align:center;margin-top:40px">Dossier vectorized. Ask me anything about it.</div>';
+    } catch(e) {
+        alert("RAG Upload Error: " + e.message);
+    }
+    
+    btn.disabled = false; btn.innerHTML = '<i data-lucide="file-text"></i> Upload Vendor PDF Dossier';
+    lucide.createIcons();
+    input.value = '';
+}
+
+async function askRag() {
+    const input = document.getElementById('rag-input');
+    const q = input.value.trim();
+    if(!q) return;
+    
+    const log = document.getElementById('rag-chat-log');
+    const btn = document.getElementById('rag-ask-btn');
+    
+    // Add user msg
+    log.innerHTML += `<div style="align-self:flex-end;background:rgba(59,130,246,0.2);padding:10px 14px;border-radius:12px 12px 0 12px;border:1px solid rgba(59,130,246,0.3);max-width:80%">${q}</div>`;
+    input.value = '';
+    btn.disabled = true;
+    
+    // Add loading
+    const loadId = 'rag-load-' + Date.now();
+    log.innerHTML += `<div id="${loadId}" style="align-self:flex-start;background:rgba(139,92,246,0.1);padding:10px 14px;border-radius:12px 12px 12px 0;border:1px solid rgba(139,92,246,0.2);max-width:80%;color:#a78bfa">Querying FAISS Index...</div>`;
+    log.scrollTop = log.scrollHeight;
+    
+    try {
+        const response = await fetch(API_BASE_URL + '/c3/chat-dossier', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + ApiClient.getToken(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: q })
+        });
+        
+        const data = await response.json();
+        document.getElementById(loadId).remove();
+        
+        if(!response.ok || !data.success) throw new Error(data.detail || data.error || "Query failed");
+        
+        let citations = '';
+        if(data.citations && data.citations.length > 0) {
+            const files = [...new Set(data.citations.map(c => c.filename))];
+            citations = `<div style="font-size:0.65rem;color:#64748b;margin-top:8px;border-top:1px solid rgba(255,255,255,0.05);padding-top:6px">Sources: ${files.join(', ')}</div>`;
+        }
+        
+        log.innerHTML += `<div style="align-self:flex-start;background:rgba(255,255,255,0.05);padding:10px 14px;border-radius:12px 12px 12px 0;border:1px solid rgba(255,255,255,0.1);max-width:80%;line-height:1.5">${data.answer}${citations}</div>`;
+        
+    } catch(e) {
+        document.getElementById(loadId).remove();
+        log.innerHTML += `<div style="align-self:flex-start;background:rgba(239,68,68,0.1);padding:10px 14px;border-radius:12px 12px 12px 0;border:1px solid rgba(239,68,68,0.2);max-width:80%;color:#f87171">Error: ${e.message}</div>`;
+    }
+    
+    log.scrollTop = log.scrollHeight;
+    btn.disabled = false;
+}
+
+function kp(l,v,c,s) { return `<div class="c"><div class="ct">${l}</div><div class="big ${c}">${v}</div><div class="sub">${s}</div></div>`; }
+
+window.onload = init;
+</script>
+</body>
+</html>

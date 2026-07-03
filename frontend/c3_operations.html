@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Operations (C3) - GEM Ecosystem</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <link rel="stylesheet" href="vendor/css/leaflet.css">
+    <script src="vendor/js/leaflet.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background-color: #050505; color: #f8fafc; }
+        .c3-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px; padding: 24px; margin-bottom: 24px;
+            display: flex; align-items: center; justify-content: space-between; gap: 20px;
+        }
+        .c3-logo {
+            width: 64px; height: 64px; border-radius: 12px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.5rem; color: white;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .metric-card {
+            background: rgba(255,255,255,0.03); border: 1px solid #333;
+            border-radius: 12px; padding: 20px; text-align: center;
+        }
+        .metric-value { font-size: 2rem; font-weight: 700; color: #60a5fa; font-family: monospace; }
+        .metric-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
+
+        #map { height: 500px; border-radius: 12px; border: 1px solid #333; z-index: 1; }
+        
+        .pulse-marker {
+            width: 15px; height: 15px; border-radius: 50%;
+            background: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse-red 2s infinite;
+        }
+        .static-marker { width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; border: 2px solid #fff; }
+        
+        @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .terminal {
+            background: #000; border: 1px solid #333; border-radius: 12px;
+            padding: 15px; font-family: monospace; color: #10b981;
+            height: 500px; overflow-y: auto; font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be dynamically injected by sidebar.js -->
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Command & Control Center (C3)</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Real-time Telemetry & IoT Supply Chain Digital Twin</p>
+                </div>
+            </header>
+
+            <div class="c3-header">
+                <div style="display:flex; align-items:center; gap:20px;">
+                    <div class="c3-logo">C3</div>
+                    <div>
+                        <h2 style="color: #60a5fa; margin: 0 0 4px 0;">Live Operations Matrix</h2>
+                        <p style="color: #94a3b8; margin: 0;">Monitoring Server Health, Database Load, and Live Delivery Tracking.</p>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; padding: 8px 16px; font-size: 1rem;">
+                        <i data-lucide="radio" style="width:16px;height:16px; display:inline; margin-bottom:-3px;"></i> SYSTEM SECURE
+                    </span>
+                </div>
+            </div>
+
+            <!-- Active PO shipment tracking select box -->
+            <div class="card mb-4" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; padding: 15px;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                        <label style="font-weight: 600; color: #60a5fa; font-size: 0.95rem; white-space: nowrap;"><i data-lucide="truck" style="display:inline; margin-right:4px;"></i> Track Active PO Delivery:</label>
+                        <select id="po-select" class="form-control" style="max-width: 350px; background: rgba(0,0,0,0.3); color: white; border: 1px solid #333;" onchange="selectPOTrack(this.value)">
+                            <option value="">-- Select Active PO Delivery --</option>
+                        </select>
+                    </div>
+                    <div id="shipment-status-badge" style="display: none;">
+                        <span class="badge" id="shipment-status-lbl">ON SCHEDULE</span>
+                    </div>
+                </div>
+                
+                <!-- Shipment Info Strip -->
+                <div id="shipment-info-strip" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 15px; border-top: 1px solid #333; background: rgba(0,0,0,0.2);">
+                    <div style="font-size: 0.85rem;"><span style="color:#64748b;">Vendor:</span> <strong id="ship-vendor" style="color:white;">N/A</strong></div>
+                    <div style="font-size: 0.85rem;"><span style="color:#64748b;">Tender:</span> <strong id="ship-title" style="color:white;">N/A</strong></div>
+                    <div style="font-size: 0.85rem;"><span style="color:#64748b;">Speed:</span> <strong id="ship-speed" style="color:#3b82f6;">N/A</strong></div>
+                    <div style="font-size: 0.85rem;"><span style="color:#64748b;">ETA:</span> <strong id="ship-eta" style="color:#10b981;">N/A</strong></div>
+                </div>
+            </div>
+
+            <!-- Telemetry Metrics -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px;">
+                <div class="metric-card" id="card-sensor-1">
+                    <div class="metric-value" id="m-cpu">0%</div>
+                    <div class="metric-label" id="label-sensor-1">Server CPU Load</div>
+                </div>
+                <div class="metric-card" id="card-sensor-2">
+                    <div class="metric-value" id="m-ram">0 GB</div>
+                    <div class="metric-label" id="label-sensor-2">Memory Usage</div>
+                </div>
+                <div class="metric-card" id="card-sensor-3">
+                    <div class="metric-value" id="m-db">0ms</div>
+                    <div class="metric-label" id="label-sensor-3">DB Latency</div>
+                </div>
+                <div class="metric-card" id="card-sensor-4">
+                    <div class="metric-value" id="m-ops" style="color: #10b981;">0</div>
+                    <div class="metric-label" id="label-sensor-4">Active Network Ops</div>
+                </div>
+            </div>
+
+            <!-- AI Logistics Alert Banner -->
+            <div id="ai-logistics-alert" class="card mb-4" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 15px;">
+                <h4 style="color: #fca5a5; display:flex; align-items:center; gap:8px; margin-bottom: 6px;"><i data-lucide="shield-alert"></i> AI Logistics Alert</h4>
+                <p id="ai-alert-desc" style="color: white; font-size: 0.9rem; margin-bottom: 10px;"></p>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-warning btn-sm" id="btn-reroute" onclick="applyReroute()" style="background:#f59e0b; border:none; color:white;"><i data-lucide="navigation"></i> Engage SH-8 Reroute Bypass</button>
+                    <button class="btn btn-outline btn-sm" onclick="dismissAlert()">Acknowledge Warning</button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:24px;">
+                <!-- 3D IoT Map -->
+                <div class="card" style="flex: 2; padding: 0; overflow: hidden; border: 1px solid #333;">
+                    <div style="padding: 15px; border-bottom: 1px solid #333; background: rgba(255,255,255,0.02);">
+                        <h3 style="margin:0;"><i data-lucide="map" style="color:#60a5fa; display:inline;"></i> Supply Chain Digital Twin</h3>
+                    </div>
+                    <div id="map"></div>
+                </div>
+
+                <!-- Live Logs -->
+                <div class="card" style="flex: 1; padding: 0; overflow: hidden; border: 1px solid #333;">
+                    <div style="padding: 15px; border-bottom: 1px solid #333; background: rgba(255,255,255,0.02);">
+                        <h3 style="margin:0;"><i data-lucide="terminal" style="color:#10b981; display:inline;"></i> System Firewall Stream</h3>
+                    </div>
+                    <div class="terminal" id="sys-logs"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        lucide.createIcons();
+
+        // Initialize Map
+        const map = L.map('map').setView([23.5937, 80.9629], 5); // Center of India
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        let markers = [];
+        let activeRoutePolyline = null;
+        let activeTruckMarker = null;
+        let activeOriginMarker = null;
+        let activeDestMarker = null;
+        let trackingPoId = null;
+        let bypassEngaged = false;
+
+        // Load active POs into dropdown
+        async function loadActivePOs() {
+            try {
+                const pos = await ApiClient.getPurchaseOrders();
+                const select = document.getElementById('po-select');
+                pos.forEach(po => {
+                    select.innerHTML += `<option value="${po.id}">${po.po_number} (${po.status})</option>`;
+                });
+            } catch(e) { console.error("Error loading POs", e); }
+        }
+
+        async function selectPOTrack(poId) {
+            trackingPoId = poId;
+            bypassEngaged = false;
+            
+            // Clear existing route layers
+            if (activeRoutePolyline) { map.removeLayer(activeRoutePolyline); activeRoutePolyline = null; }
+            if (activeTruckMarker) { map.removeLayer(activeTruckMarker); activeTruckMarker = null; }
+            if (activeOriginMarker) { map.removeLayer(activeOriginMarker); activeOriginMarker = null; }
+            if (activeDestMarker) { map.removeLayer(activeDestMarker); activeDestMarker = null; }
+            document.getElementById('ai-logistics-alert').style.display = 'none';
+
+            if (!poId) {
+                document.getElementById('shipment-status-badge').style.display = 'none';
+                document.getElementById('shipment-info-strip').style.display = 'none';
+                resetMetricCardsToSystem();
+                map.setView([23.5937, 80.9629], 5);
+                return;
+            }
+
+            document.getElementById('shipment-status-badge').style.display = 'block';
+            document.getElementById('shipment-info-strip').style.display = 'grid';
+            
+            // Run immediate update
+            await updatePOTracking();
+        }
+
+        async function updatePOTracking() {
+            if (!trackingPoId) return;
+            try {
+                const res = await ApiClient.request(`/c3/telemetry/${trackingPoId}`);
+                
+                // Update text fields
+                document.getElementById('ship-vendor').textContent = res.vendor_name;
+                document.getElementById('ship-title').textContent = res.tender_title;
+                document.getElementById('ship-speed').textContent = (bypassEngaged ? 62 : res.speed_kmh) + " km/h";
+                document.getElementById('ship-eta').textContent = (bypassEngaged ? (res.eta_hours - 2.5).toFixed(1) : res.eta_hours) + " Hours";
+                
+                const statusLbl = document.getElementById('shipment-status-lbl');
+                statusLbl.textContent = bypassEngaged ? "ON SCHEDULE (REROUTED)" : res.route_status;
+                statusLbl.className = `badge ${res.route_status === 'Delayed' && !bypassEngaged ? 'bg-danger' : 'bg-success'}`;
+                
+                // Update sensors in metric cards
+                document.getElementById('m-cpu').textContent = res.sensors.temperature_celsius + ' °C';
+                document.getElementById('label-sensor-1').textContent = "Truck Cargo Temp";
+                document.getElementById('card-sensor-1').style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                
+                document.getElementById('m-ram').textContent = res.sensors.humidity_pct + ' %';
+                document.getElementById('label-sensor-2').textContent = "Cargo Humidity";
+                
+                document.getElementById('m-db').textContent = res.sensors.vibration_g + ' G';
+                document.getElementById('label-sensor-3').textContent = "Telemetry Vibration";
+                
+                document.getElementById('m-ops').textContent = res.progression_pct + ' %';
+                document.getElementById('label-sensor-4').textContent = "Transit Progression";
+                
+                // Update alerts
+                const alertBanner = document.getElementById('ai-logistics-alert');
+                const btnReroute = document.getElementById('btn-reroute');
+                if (res.ai_routing.active && !bypassEngaged) {
+                    alertBanner.style.display = 'block';
+                    document.getElementById('ai-alert-desc').innerHTML = `<b>Alert:</b> ${res.alert}<br/><br/><b>${res.ai_routing.recommendation}</b>`;
+                    btnReroute.style.display = 'inline-flex';
+                } else if (bypassEngaged) {
+                    alertBanner.style.display = 'block';
+                    alertBanner.style.background = 'rgba(16, 185, 129, 0.1)';
+                    alertBanner.style.borderColor = '#10b981';
+                    document.getElementById('ai-alert-desc').innerHTML = `<b>AI Mitigation Successful:</b> Vehicle has rerouted via SH-8 bypass to avoid flooding. Expected delay penalty avoided.`;
+                    btnReroute.style.display = 'none';
+                } else {
+                    alertBanner.style.display = 'none';
+                }
+
+                // Render Route on Leaflet
+                const latlngs = res.route_points.map(pt => [pt.lat, pt.lon]);
+                if (!activeRoutePolyline) {
+                    activeRoutePolyline = L.polyline(latlngs, {color: '#8b5cf6', weight: 4, opacity: 0.6}).addTo(map);
+                }
+                
+                const curPos = [res.current_position.lat, res.current_position.lon];
+                
+                if (!activeTruckMarker) {
+                    const truckIcon = L.divIcon({
+                        className: 'pulse-marker',
+                        html: '<div style="background:#ef4444; width:14px; height:14px; border-radius:50%; border:2px solid #fff;"></div>',
+                        iconSize: [14, 14]
+                    });
+                    activeTruckMarker = L.marker(curPos, {icon: truckIcon}).addTo(map);
+                    activeTruckMarker.bindPopup(`<b>Truck ${res.po_number}</b><br/>Status: ${res.route_status}`);
+                    
+                    activeOriginMarker = L.marker([res.origin.lat, res.origin.lon]).addTo(map)
+                        .bindPopup(`<b>Origin: ${res.origin.name}</b>`);
+                        
+                    activeDestMarker = L.marker([res.destination.lat, res.destination.lon]).addTo(map)
+                        .bindPopup(`<b>Destination: ${res.destination.name}</b>`);
+                        
+                    // Zoom map to cover the route
+                    const bounds = L.latLngBounds(latlngs);
+                    map.fitBounds(bounds, {padding: [50, 50]});
+                } else {
+                    activeTruckMarker.setLatLng(curPos);
+                }
+                
+                logToTerminal(`[LOGISTICS] Tracked PO: ${res.po_number} | progress: ${res.progression_pct}% | Temp: ${res.sensors.temperature_celsius}°C`);
+            } catch(e) { console.error("Error fetching PO telemetry", e); }
+        }
+
+        function applyReroute() {
+            bypassEngaged = true;
+            showToast("Bypass route engaged! Simulating GPS redirection...", "success");
+            logToTerminal(`[AI MITIGATION] Rerouted cargo truck via SH-8 to bypass monsoon floods on NH-31.`);
+            updatePOTracking();
+        }
+
+        function dismissAlert() {
+            document.getElementById('ai-logistics-alert').style.display = 'none';
+        }
+
+        function resetMetricCardsToSystem() {
+            document.getElementById('label-sensor-1').textContent = "Server CPU Load";
+            document.getElementById('label-sensor-2').textContent = "Memory Usage";
+            document.getElementById('label-sensor-3').textContent = "DB Latency";
+            document.getElementById('label-sensor-4').textContent = "Active Network Ops";
+            updateTelemetry();
+        }
+
+        async function updateTelemetry() {
+            if (trackingPoId) return; // Skip if tracking PO
+            try {
+                const data = await ApiClient.getC3Metrics();
+                document.getElementById('m-cpu').textContent = data.server.cpu_usage_percent + '%';
+                document.getElementById('m-ram').textContent = data.server.ram_used_gb + ' GB';
+                document.getElementById('m-db').textContent = data.database.query_latency_ms + 'ms';
+                document.getElementById('m-ops').textContent = data.database.total_transactions;
+                
+                logToTerminal(`[TELEMETRY] CPU: ${data.server.cpu_usage_percent}% | Connections: ${data.database.active_connections} | Swarm: ${data.operations.ai_agents_active} nodes active`);
+            } catch(e) { console.error(e); }
+        }
+
+        async function updateMap() {
+            if (trackingPoId) return; // Skip standard IoT points if tracking specific PO
+            try {
+                const nodes = await ApiClient.getIoTNodes();
+                
+                // Clear old markers
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+
+                nodes.forEach(node => {
+                    const iconClass = node.pulse ? 'pulse-marker' : 'static-marker';
+                    const icon = L.divIcon({ className: iconClass, iconSize: [12, 12] });
+                    const marker = L.marker([node.lat, node.lng], { icon }).addTo(map);
+                    marker.bindPopup(`<b>${node.id}</b><br>${node.type}<br>Status: ${node.status}`);
+                    markers.push(marker);
+                });
+                
+                logToTerminal(`[IoT SYNC] Synced ${nodes.length} GPS nodes across logistics network.`);
+            } catch(e) { console.error(e); }
+        }
+
+        function logToTerminal(msg) {
+            const term = document.getElementById('sys-logs');
+            const time = new Date().toISOString().split('T')[1].split('.')[0];
+            term.innerHTML += `[${time}] ${msg}\n`;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        async function updateAgentLogs() {
+            try {
+                const data = await ApiClient.getAgentHeartbeat();
+                const agents = data.agents || [];
+                const actions = ["Evaluating encrypted bid block...", "Validating IOCL PAC signatures...", "Running zero-knowledge proof for Web3...", "Ping received from Truck MRN-1044", "Syncing ledger to SAP MM..."];
+                
+                if (Math.random() > 0.5 && agents.length > 0) {
+                    const randomAgent = agents[Math.floor(Math.random() * agents.length)];
+                    logToTerminal(`[SWARM] ${randomAgent.name} is ${randomAgent.status} | Load: ${randomAgent.metrics.cpu_load_pct}%`);
+                } else {
+                    logToTerminal("[SYS] " + actions[Math.floor(Math.random()*actions.length)]);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // Loop
+        setInterval(() => {
+            if (trackingPoId) {
+                updatePOTracking();
+            } else {
+                updateTelemetry();
+            }
+        }, 3000);
+
+        setInterval(() => {
+            if (!trackingPoId) updateMap();
+        }, 6000);
+
+        setInterval(updateAgentLogs, 4000);
+        
+        // Initial load
+        loadActivePOs();
+        updateTelemetry();
+        updateMap();
+        updateAgentLogs();
+    </script>
+</body>
+</html>

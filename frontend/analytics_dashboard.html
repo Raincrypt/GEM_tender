@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Intelligence Dashboard | GEM Tender</title>
+    <link href="vendor/css/fonts.css" rel="stylesheet">
+    <script src="vendor/js/lucide.js"></script>
+    <script src="vendor/js/chart.js"></script>
+    <script type="text/javascript" src="vendor/js/vis-network.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --glass: rgba(15, 23, 42, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent-glow: rgba(59, 130, 246, 0.3);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 32px var(--accent-glow);
+        }
+
+        .col-4 { grid-column: span 4; }
+        .col-6 { grid-column: span 6; }
+        .col-8 { grid-column: span 8; }
+        .col-12 { grid-column: span 12; }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        #cartel-network {
+            height: 400px;
+            width: 100%;
+        }
+
+        .timeline {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 24px;
+            padding-bottom: 20px;
+            border-left: 1px solid var(--border);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 0;
+            width: 9px;
+            height: 9px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .timeline-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .timeline-content {
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .badge-warning { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        input, select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-right: 10px;
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="padding: 24px 48px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="background: var(--primary); padding: 10px; border-radius: 12px; box-shadow: 0 0 20px var(--primary)">
+                <i data-lucide="brain-circuit" style="color: white"></i>
+            </div>
+            <div>
+                <h1 style="margin:0; font-size: 1.5rem;">GEM Intelligence Hub</h1>
+                <p style="margin:0; color: var(--text-muted); font-size: 0.9rem;">Predictive Analytics & Forensics Engine</p>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <select id="tender-selector" onchange="loadDossier(this.value)">
+                <option value="1">Tender #882 (Haldia Refinery)</option>
+            </select>
+            <button class="btn btn-ai" onclick="refreshAll()">
+                <i data-lucide="refresh-cw"></i> Refresh Intelligence
+            </button>
+            <a href="test_everything.html" class="btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border)">
+                <i data-lucide="arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- TOP ROW: Key Intelligence Stats -->
+        <div class="glass-card col-4">
+            <div class="stat-header">
+                <span class="stat-title">Price Prediction</span>
+                <i data-lucide="trending-down" style="color: #4ade80"></i>
+            </div>
+            <div id="forecast-insight" style="margin-bottom: 20px;">
+                <h2 id="prediction-text" style="color: #4ade80; margin: 0;">WAIT</h2>
+                <p id="prediction-desc" style="font-size: 0.85rem; color: var(--text-muted);">AI predicts a price drop of 12% in the next 90 days.</p>
+            </div>
+            <div class="chart-container" style="height: 180px;">
+                <canvas id="forecastChart"></canvas>
+            </div>
+        </div>
+
+        <div class="glass-card col-4">
+            <div class="stat-header">
+                <span class="stat-title">Fraud Vulnerability</span>
+                <i data-lucide="shield-alert" style="color: #facc15"></i>
+            </div>
+            <div style="text-align: center; padding: 10px;">
+                <h1 id="fraud-score" style="font-size: 3rem; margin: 0;">04</h1>
+                <p style="color: var(--text-muted);">Potential Anomalies Detected</p>
+                <div id="fraud-alerts-list" style="text-align: left; margin-top: 10px; font-size: 0.75rem;">
+                    <!-- Alerts populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card col-4">
+            <div class="stat-header">
+                <span class="stat-title">Market Savings</span>
+                <i data-lucide="piggy-bank" style="color: #4ade80"></i>
+            </div>
+            <div style="text-align: center; padding: 10px;">
+                <h1 id="savings-amt" style="font-size: 2.5rem; margin: 0; color: #4ade80;">₹6.4L</h1>
+                <p style="color: var(--text-muted);">Potential Savings Identified</p>
+                <div style="margin-top: 20px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                    <div style="width: 28%; height: 100%; background: #4ade80;"></div>
+                </div>
+                <p style="font-size: 0.7rem; margin-top: 8px;">28% below estimated market value</p>
+            </div>
+        </div>
+
+        <!-- SECOND ROW: Radar & Network -->
+        <div class="glass-card col-8">
+            <div class="stat-header">
+                <span class="stat-title">QCBS Deep-Dive Matrix (L1 vs L2)</span>
+                <div style="display: flex; gap: 10px;">
+                    <span class="badge badge-success" id="qcbs-l1-badge">L1 Vendor</span>
+                    <span class="badge badge-warning" id="qcbs-l2-badge">L2 Vendor</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 1; height: 350px;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div style="flex: 1; font-size: 0.85rem;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted);">
+                                <th align="left" style="padding-bottom: 10px;">Parameter</th>
+                                <th align="right" id="qcbs-col-l1">L1 Vendor</th>
+                                <th align="right" id="qcbs-col-l2">L2 Vendor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="qcbs-table-body">
+                            <!-- Rows populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card col-4">
+            <div class="stat-header">
+                <span class="stat-title">Cartel Intelligence Graph</span>
+                <i data-lucide="share-2" style="color: var(--primary)"></i>
+            </div>
+            <div id="cartel-network"></div>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 10px;">
+                <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i> 
+                Nodes represent vendors. Red edges indicate high-frequency co-bidding patterns.
+            </p>
+        </div>
+
+        <!-- THIRD ROW: Timeline & Logs -->
+        <div class="glass-card col-12">
+            <div class="stat-header">
+                <span class="stat-title">Blockchain Audit Timeline (Immutable)</span>
+                <span class="badge badge-success" style="display: flex; align-items: center; gap: 5px;">
+                    <i data-lucide="check-circle" style="width: 12px;"></i> Chain Verified: 100% Secure
+                </span>
+            </div>
+            <div id="dossier-timeline" class="timeline" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; overflow-x: auto;">
+                <!-- Timeline items populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        let radarChart = null;
+        let forecastChart = null;
+        let network = null;
+
+        async function populateTendersDropdown() {
+            try {
+                const tenders = await ApiClient.getTenders();
+                const selector = document.getElementById('tender-selector');
+                selector.innerHTML = '';
+                if (tenders && tenders.length > 0) {
+                    tenders.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = `${t.bid_number} (${t.title})`;
+                        selector.appendChild(opt);
+                    });
+                } else {
+                    const opt = document.createElement('option');
+                    opt.value = '1';
+                    opt.textContent = 'No Active Tenders';
+                    selector.appendChild(opt);
+                }
+            } catch (err) {
+                console.error("Failed to load tenders list:", err);
+            }
+        }
+
+        async function refreshAll() {
+            const selector = document.getElementById('tender-selector');
+            if (selector.options.length <= 1 && selector.options[0]?.text.includes("Haldia Refinery")) {
+                await populateTendersDropdown();
+            }
+            const tenderId = selector.value;
+            await Promise.all([
+                loadDossier(tenderId),
+                loadForecast(),
+                loadFraud(),
+                loadCartel()
+            ]);
+        }
+
+        async function loadDossier(tenderId) {
+            try {
+                const dossier = await ApiClient.getCycleDossier(tenderId);
+                
+                // Update Savings
+                document.getElementById('savings-amt').textContent = `₹${(dossier.savings.amount / 100000).toFixed(1)}L`;
+                
+                // Update Radar Chart
+                updateRadarChart(dossier.qcbs_matrix);
+                
+                // Update Table
+                const tableBody = document.getElementById('qcbs-table-body');
+                tableBody.innerHTML = '';
+                if (dossier.qcbs_matrix && dossier.qcbs_matrix.length > 0) {
+                    const l1 = dossier.qcbs_matrix[0];
+                    const l2 = dossier.qcbs_matrix[1] || l1;
+
+                    // Dynamically update vendor name badges from actual API data
+                    const l1Name = l1.vendor_name || 'L1 Vendor';
+                    const l2Name = (l2 && l2.vendor_name) ? l2.vendor_name : 'L2 Vendor';
+                    const l1Badge = document.getElementById('qcbs-l1-badge');
+                    const l2Badge = document.getElementById('qcbs-l2-badge');
+                    const l1Col = document.getElementById('qcbs-col-l1');
+                    const l2Col = document.getElementById('qcbs-col-l2');
+                    if (l1Badge) l1Badge.textContent = `${l1Name} (L1)`;
+                    if (l2Badge) l2Badge.textContent = `${l2Name} (L2)`;
+                    if (l1Col) l1Col.textContent = l1Name;
+                    if (l2Col) l2Col.textContent = l2Name;
+                    
+                    const params = ["tech_weighted", "fin_weighted", "esg_score", "supply_resilience", "geo_risk"];
+                    const labels = ["Technical (Weighted)", "Financial (Weighted)", "ESG Score", "Supply Resilience", "Geo Risk"];
+                    
+                    labels.forEach((label, idx) => {
+                        const key = params[idx];
+                        tableBody.innerHTML += `
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 10px 0;">${label}</td>
+                                <td align="right" style="color: #4ade80;">${l1[key]}</td>
+                                <td align="right" style="color: #facc15;">${l2 ? l2[key] : '--'}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Update Timeline
+                const timeline = document.getElementById('dossier-timeline');
+                timeline.innerHTML = '';
+                dossier.timeline.forEach(item => {
+                    const date = new Date(item.time).toLocaleDateString();
+                    const time = new Date(item.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    timeline.innerHTML += `
+                        <div class="glass-card" style="padding: 15px; min-width: 200px;">
+                            <div class="timeline-time">${date} ${time}</div>
+                            <div class="timeline-content" style="font-weight: 600; color: var(--primary);">${item.action}</div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-family: monospace; overflow: hidden; text-overflow: ellipsis;">
+                                HASH: ${item.hash || 'N/A'}
+                            </div>
+                        </div>
+                    `;
+                });
+
+            } catch (err) {
+                console.error("Dossier Load Error:", err);
+            }
+        }
+
+        async function loadForecast() {
+            try {
+                const forecast = await ApiClient.getPredictiveForecast("Valves & Fittings");
+                
+                // Update Insight
+                document.getElementById('prediction-text').textContent = forecast.ai_insight.action;
+                document.getElementById('prediction-text').style.color = forecast.ai_insight.action === 'DEFER' ? '#4ade80' : '#f87171';
+                document.getElementById('prediction-desc').textContent = forecast.ai_insight.recommendation;
+
+                // Update Chart
+                updateForecastChart(forecast.historical_series, forecast.forecast_series);
+            } catch (err) {
+                console.error("Forecast Error:", err);
+            }
+        }
+
+        async function loadFraud() {
+            try {
+                const fraud = await ApiClient.getFraudAnalysis();
+                document.getElementById('fraud-score').textContent = fraud.fraud_alerts.length.toString().padStart(2, '0');
+                
+                const list = document.getElementById('fraud-alerts-list');
+                list.innerHTML = '';
+                fraud.fraud_alerts.forEach(alert => {
+                    list.innerHTML += `
+                        <div style="padding: 8px; background: rgba(239, 68, 68, 0.1); border-left: 2px solid #ef4444; margin-bottom: 5px;">
+                            <strong>${alert.bid_number}</strong>: ${alert.issue}
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error("Fraud Error:", err);
+            }
+        }
+
+        async function loadCartel() {
+            try {
+                const data = await ApiClient.getCartelGraph();
+                
+                const container = document.getElementById('cartel-network');
+                const visData = {
+                    nodes: new vis.DataSet(data.nodes),
+                    edges: new vis.DataSet(data.edges)
+                };
+                const options = {
+                    nodes: {
+                        shape: 'dot',
+                        size: 16,
+                        font: { size: 12, color: '#ffffff' },
+                        borderWidth: 2
+                    },
+                    edges: {
+                        width: 2,
+                        smooth: { type: 'continuous' }
+                    },
+                    groups: {
+                        normal: { color: { background: '#3b82f6', border: '#1d4ed8' } },
+                        suspicious: { color: { background: '#f59e0b', border: '#d97706' } },
+                        blacklisted: { color: { background: '#ef4444', border: '#b91c1c' } }
+                    },
+                    physics: {
+                        enabled: true,
+                        solver: 'forceAtlas2Based'
+                    }
+                };
+                network = new vis.Network(container, visData, options);
+            } catch (err) {
+                console.error("Cartel Error:", err);
+            }
+        }
+
+        function updateRadarChart(matrix) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            const labels = ["Technical", "Financial", "ESG Score", "Supply Resilience", "Geo Risk"];
+            
+            const datasets = matrix.slice(0, 2).map((v, i) => ({
+                label: v.vendor_name,
+                data: [v.tech_weighted, v.fin_score_raw, v.esg_score, v.supply_resilience, v.geo_risk],
+                fill: true,
+                backgroundColor: i === 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                borderColor: i === 0 ? '#4ade80' : '#facc15',
+                pointBackgroundColor: i === 0 ? '#4ade80' : '#facc15',
+            }));
+
+            if (radarChart) radarChart.destroy();
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: { labels, datasets },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255,255,255,0.1)' },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            pointLabels: { color: '#94a3b8' },
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function updateForecastChart(hist, fore) {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            const labels = [...hist.map(d => d.month), ...fore.map(d => d.month)];
+            const histData = [...hist.map(d => d.avg_price), ...fore.map(() => null)];
+            const foreData = [...hist.map((d, i) => i === hist.length - 1 ? d.avg_price : null), ...fore.map(d => d.predicted_price)];
+            
+            if (forecastChart) forecastChart.destroy();
+
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Historical',
+                            data: histData,
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Forecast',
+                            data: foreData,
+                            borderColor: '#8b5cf6',
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Init
+        window.onload = refreshAll;
+    </script>
+</body>
+</html>
